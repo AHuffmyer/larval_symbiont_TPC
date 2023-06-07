@@ -50,3 +50,6 @@ rsconnect/
 
 #DS Store
 .DS_Store
+
+#plots we don't want to commit
+output/tpc_sdr/RespirationPlots
