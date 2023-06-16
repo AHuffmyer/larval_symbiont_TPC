@@ -188,6 +188,8 @@ Resp.Rates$Run<-as.integer(Resp.Rates$Run) #format as # rather than run #, set a
 Merge P and R files with sample info for testing and manipulation.  
 
 ```{r, warning=FALSE, message=FALSE}
+Sample.Info$Date<-as.factor(Sample.Info$Date)
+Resp.Rates$Date<-as.factor(Resp.Rates$Date)
 oxygen<-dplyr::full_join(Sample.Info, Resp.Rates) #add respiration data
 colnames(oxygen)[colnames(oxygen) == 'Intercept'] <- 'Resp.Intercept' #rename to specify R
 colnames(oxygen)[colnames(oxygen) == 'umol.L.min'] <- 'R.umol.L.min' #rename to specify R
@@ -228,6 +230,17 @@ Remove samples that have inaccurate slope extraction for respiration rates (dete
 ```
 
 Account for volume to obtain umol per minute.   
+
+
+
+
+
+
+
+
+
+LEFT OFF HERE , NEED TO QC BELOW SECTION 
+
 
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
 

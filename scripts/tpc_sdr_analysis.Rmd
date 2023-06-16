@@ -14,6 +14,8 @@ editor_options:
   chunk_output_type: console
 ---
 
+Note: Will need to add copy/paste for different days once we have multiple days represented in the dataset 
+
 # Setup  
 
 Set up workspace, set options, and load required packages.    
@@ -107,13 +109,14 @@ tpc_data<-tpc_data%>%
 Plot data with means   
 ```{r}
 r_plot1<-tpc_data %>%
-    group_by(Temp.C, Symbiont)%>%
+    group_by(Temperature, Symbiont, Date)%>%
     dplyr::summarise(mean=mean(abs(R.nmol.org.min), na.rm=TRUE), sd=sd(abs(R.nmol.org.min), na.rm=TRUE), N=length(R.nmol.org.min), se=sd/sqrt(N))%>%
     
-    ggplot(., aes(x = as.factor(Temp.C), y = abs(mean), group=interaction(Temp.C, Symbiont))) +
+    ggplot(., aes(x = as.factor(Temperature), y = abs(mean), group=interaction(Temperature, Symbiont))) +
+    facet_wrap(~Date)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
-    geom_point(aes(group=interaction(Temp.C, Symbiont), colour=Symbiont), size=6, position = position_dodge(0.4)) + 
-    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Temp.C, Symbiont)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
+    geom_point(aes(group=interaction(Temperature, Symbiont), colour=Symbiont), size=6, position = position_dodge(0.4)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Temperature, Symbiont)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
     xlab("Temperature") + 
     scale_color_manual(name="Symbiont", values=c("orange","brown4"))+
     ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
@@ -134,7 +137,8 @@ Plot data with a loess line
 ```{r}
 r_plot2<-tpc_data %>%
     
-    ggplot(., aes(x = as.factor(Temp.C), y = abs(R.nmol.org.min), group=Symbiont)) +
+    ggplot(., aes(x = as.factor(Temperature), y = abs(R.nmol.org.min), group=Symbiont)) +
+    facet_wrap(~Date)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_smooth(aes(color=Symbiont, group=Symbiont), method="loess", alpha=0.4, se=TRUE)+
     xlab("Temperature") + 
@@ -155,12 +159,17 @@ ggsave("figures/tpc_sdr/tpc_loess.png", r_plot2, dpi=300, w=7, h=5, units="in")
 
 # Apply TPC calculations and models 
 
+INSERT DATE FILTER HERE AND DUPLICATE BELOW ANALYSES 
+
+
+
+
 ## Look for outliers 
 
 View and remove outliers.   
 ```{r, warning=FALSE, message=FALSE}
 #identify outliers by Temperature and Treatment groups
-outlier.plot <- ggbetweenstats(tpc_data, Temp.C, R.nmol.org.min, outlier.tagging = TRUE)
+outlier.plot <- ggbetweenstats(tpc_data, Temperature, R.nmol.org.min, outlier.tagging = TRUE)
 outlier.plot
 
 ggsave("figures/tpc_sdr/outliersbygroup.png", outlier.plot, dpi=300, w=16, h=8, units="in")
@@ -170,13 +179,13 @@ q <- c(0.25, 0.75)
 
 # calculate quantile values by Temperature and Treatment groups
 Quants <- tpc_data %>%
-  group_by(Temp.C, Symbiont) %>%
+  group_by(Temperature, Symbiont) %>%
   summarize(quant25 = quantile(R.nmol.org.min, probs = q[1], na.rm=TRUE),
             quant75 = quantile(R.nmol.org.min, probs = q[2], na.rm=TRUE),
             IQRbyGroup=IQR(R.nmol.org.min, na.rm=TRUE))
 
 # add a group name by pasting Temperature and Treatment
-Quants$group <-paste0(Quants$Temp.C,"_", Quants$Symbiont)
+Quants$group <-paste0(Quants$Temperature,"_", Quants$Symbiont)
 
 #Calculate Quantile upper and lower ranges 
 Quants$upper <-  Quants$quant75+1.5*Quants$IQRbyGroup # Upper Range  
@@ -192,7 +201,7 @@ tpc_data <- tpc_data %>%
   #filter(rate < 0.125)
 
 # Visualize data following outlier removal
-outlier.plot2 <- ggbetweenstats(tpc_data, Temp.C, R.nmol.org.min, outlier.tagging = TRUE)
+outlier.plot2 <- ggbetweenstats(tpc_data, Temperature, R.nmol.org.min, outlier.tagging = TRUE)
 outlier.plot2
 
 ggsave("figures/tpc_sdr/removed_outliersbygroup.png", outlier.plot2, dpi=300, w=16, h=8, units="in")
@@ -213,11 +222,11 @@ get_model_names()
 #sharpeschoolhigh_1981
 
 # get start vals
-start_vals <- get_start_vals(tpc_data$Temp.C,tpc_data$R.nmol.org.min, model_name = 'sharpeschoolhigh_1981')
+start_vals <- get_start_vals(tpc_data$Temperature,tpc_data$R.nmol.org.min, model_name = 'sharpeschoolhigh_1981')
 
 # get limits
-low_lims <- get_lower_lims(tpc_data$Temp.C,tpc_data$R.nmol.org.min, model_name = 'sharpeschoolhigh_1981')
-upper_lims <- get_upper_lims(tpc_data$Temp.C,tpc_data$R.nmol.org.min, model_name = 'sharpeschoolhigh_1981')
+low_lims <- get_lower_lims(tpc_data$Temperature,tpc_data$R.nmol.org.min, model_name = 'sharpeschoolhigh_1981')
+upper_lims <- get_upper_lims(tpc_data$Temperature,tpc_data$R.nmol.org.min, model_name = 'sharpeschoolhigh_1981')
 
 #view values
 start_vals
@@ -234,7 +243,7 @@ C_data<-tpc_data%>%
   filter(Symbiont=="Cladocopium")
 
 #fit 
-C.fit <- nls_multstart(R.nmol.org.min~sharpeschoolhigh_1981(temp = Temp.C, r_tref,e,eh,th, tref = 28),
+C.fit <- nls_multstart(R.nmol.org.min~sharpeschoolhigh_1981(temp = Temperature, r_tref,e,eh,th, tref = 28),
                                                      data = C_data,
                                                      iter = 500,
                                                      start_lower = start_vals - 1,
@@ -246,9 +255,9 @@ C.fit <- nls_multstart(R.nmol.org.min~sharpeschoolhigh_1981(temp = Temp.C, r_tre
 C.fit
 
 #generate the predicted data
-C.new_data <- data.frame(temp = seq(from=min(C_data$Temp.C), to=max(C_data$Temp.C), by=((max(C_data$Temp.C)-min(C_data$Temp.C))/(nrow(C_data)-1)))) #set min and max temperatures and add prediction for number of rows in data frame 
+C.new_data <- data.frame(temp = seq(from=min(C_data$Temperature), to=max(C_data$Temperature), by=((max(C_data$Temperature)-min(C_data$Temperature))/(nrow(C_data)-1)))) #set min and max temperatures and add prediction for number of rows in data frame 
 
-#C.new_data <- data.frame(temp = seq(from=min(C_data$Temp.C), to=max(C_data$Temp.C), by=0.071)) #manual interval if required
+#C.new_data <- data.frame(temp = seq(from=min(C_data$Temperature), to=max(C_data$Temperature), by=0.071)) #manual interval if required
 
 C.preds <- augment(C.fit, newdata = C.new_data)
 
@@ -263,7 +272,7 @@ C.TCP.res
 Bootstrap the curve fit by resampling the original data with replacement. 
 ```{r}
 # refit model using nlsLM
-C.fit_nlsLM <- minpack.lm::nlsLM(R.nmol.org.min~sharpeschoolhigh_1981(temp = Temp.C, r_tref,e,eh,th, tref = 28),
+C.fit_nlsLM <- minpack.lm::nlsLM(R.nmol.org.min~sharpeschoolhigh_1981(temp = Temperature, r_tref,e,eh,th, tref = 28),
                         data = C_data,
                         start = coef(C.fit),
                         lower = low_lims,
@@ -283,7 +292,7 @@ C.boot1_preds <- C.boot1$t %>%
   drop_na() %>%
   mutate(iter = 1:n()) %>%
   group_by_all() %>%
-  do(data.frame(temp = seq(min(C_data$Temp.C), max(C_data$Temp.C), length.out = 100))) %>%
+  do(data.frame(temp = seq(min(C_data$Temperature), max(C_data$Temperature), length.out = 100))) %>%
   ungroup() %>%
   mutate(pred = sharpeschoolhigh_1981(temp, r_tref, e, eh, th, tref = 28))
 
@@ -297,7 +306,7 @@ C.boot1_conf_preds <- group_by(C.boot1_preds, temp) %>%
 C.CI.plot <- ggplot() +
   geom_line(aes(temp, .fitted), C.preds, col = 'orange') +
   geom_ribbon(aes(temp, ymin = conf_lower, ymax = conf_upper), C.boot1_conf_preds, fill = 'orange', alpha = 0.3) +
-  geom_point(aes(Temp.C, R.nmol.org.min), C_data, size = 2, alpha = 0.5,col = 'orange') +
+  geom_point(aes(Temperature, R.nmol.org.min), C_data, size = 2, alpha = 0.5,col = 'orange') +
   theme_bw(base_size = 12) +
   labs(x = 'Temperature (ºC)',
        y = 'Respiration Rate (nmol O2/larva/min');C.CI.plot 
@@ -313,7 +322,7 @@ D_data<-tpc_data%>%
   filter(Symbiont=="Durusdinium")
 
 #fit 
-D.fit <- nls_multstart(R.nmol.org.min~sharpeschoolhigh_1981(temp = Temp.C, r_tref,e,eh,th, tref = 28),
+D.fit <- nls_multstart(R.nmol.org.min~sharpeschoolhigh_1981(temp = Temperature, r_tref,e,eh,th, tref = 28),
                                                      data = D_data,
                                                      iter = 500,
                                                      start_lower = start_vals - 1,
@@ -325,9 +334,9 @@ D.fit <- nls_multstart(R.nmol.org.min~sharpeschoolhigh_1981(temp = Temp.C, r_tre
 D.fit
 
 #generate the predicted data
-D.new_data <- data.frame(temp = seq(from=min(D_data$Temp.C), to=max(D_data$Temp.C), by=((max(D_data$Temp.C)-min(D_data$Temp.C))/(nrow(D_data)-1)))) #set min and max temperatures and add prediction for number of rows in data frame 
+D.new_data <- data.frame(temp = seq(from=min(D_data$Temperature), to=max(D_data$Temperature), by=((max(D_data$Temperature)-min(D_data$Temperature))/(nrow(D_data)-1)))) #set min and max temperatures and add prediction for number of rows in data frame 
 
-#C.new_data <- data.frame(temp = seq(from=min(C_data$Temp.C), to=max(C_data$Temp.C), by=0.071)) #manual interval if required
+#C.new_data <- data.frame(temp = seq(from=min(C_data$Temperature), to=max(C_data$Temperature), by=0.071)) #manual interval if required
 
 D.preds <- augment(D.fit, newdata = D.new_data)
 
@@ -342,7 +351,7 @@ D.TCP.res
 Bootstrap the curve fit by resampling the original data with replacement. 
 ```{r}
 # refit model using nlsLM
-D.fit_nlsLM <- minpack.lm::nlsLM(R.nmol.org.min~sharpeschoolhigh_1981(temp = Temp.C, r_tref,e,eh,th, tref = 28),
+D.fit_nlsLM <- minpack.lm::nlsLM(R.nmol.org.min~sharpeschoolhigh_1981(temp = Temperature, r_tref,e,eh,th, tref = 28),
                         data = D_data,
                         start = coef(D.fit),
                         lower = low_lims,
@@ -362,7 +371,7 @@ D.boot1_preds <- D.boot1$t %>%
   drop_na() %>%
   mutate(iter = 1:n()) %>%
   group_by_all() %>%
-  do(data.frame(temp = seq(min(D_data$Temp.C), max(D_data$Temp.C), length.out = 100))) %>%
+  do(data.frame(temp = seq(min(D_data$Temperature), max(D_data$Temperature), length.out = 100))) %>%
   ungroup() %>%
   mutate(pred = sharpeschoolhigh_1981(temp, r_tref, e, eh, th, tref = 28))
 
@@ -376,7 +385,7 @@ D.boot1_conf_preds <- group_by(D.boot1_preds, temp) %>%
 D.CI.plot <- ggplot() +
   geom_line(aes(temp, .fitted), D.preds, col = 'brown4') +
   geom_ribbon(aes(temp, ymin = conf_lower, ymax = conf_upper), D.boot1_conf_preds, fill = 'brown4', alpha = 0.3) +
-  geom_point(aes(Temp.C, R.nmol.org.min), D_data, size = 2, alpha = 0.5,col = 'brown4') +
+  geom_point(aes(Temperature, R.nmol.org.min), D_data, size = 2, alpha = 0.5,col = 'brown4') +
   theme_bw(base_size = 12) +
   labs(x = 'Temperature (ºC)',
        y = 'Respiration Rate (nmol O2/larva/min');D.CI.plot 
@@ -390,9 +399,9 @@ D.CI.plot <- ggplot() +
 cols <- c("Cladocopium"="orange", "Durusdinium"="brown4")
   
 # plot data and model fit
-TPC.plot <- ggplot(data=tpc_data, aes(x=Temp.C)) +
-   geom_point(aes(Temp.C, R.nmol.org.min, color="Cladocopium"), C_data, size = 2, alpha = 0.5) +
-   geom_point(aes(Temp.C, R.nmol.org.min, color="Durusdinium"), D_data, size = 2, alpha = 0.5) +
+TPC.plot <- ggplot(data=tpc_data, aes(x=Temperature)) +
+   geom_point(aes(Temperature, R.nmol.org.min, color="Cladocopium"), C_data, size = 2, alpha = 0.5) +
+   geom_point(aes(Temperature, R.nmol.org.min, color="Durusdinium"), D_data, size = 2, alpha = 0.5) +
    geom_line(aes(temp, .fitted), C.preds, col = 'orange', size=2) +
    geom_line(aes(temp, .fitted), D.preds, col = "brown4", size=2) +
    geom_ribbon(aes(temp, ymin = conf_lower, ymax = conf_upper), C.boot1_conf_preds, fill = "orange", alpha = 0.3) +

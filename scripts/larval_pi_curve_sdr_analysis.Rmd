@@ -14,6 +14,8 @@ editor_options:
   chunk_output_type: console
 ---
 
+Note: Will need to add filter by date once we have multiple days represented in the dataset 
+
 # Setup  
 
 Set up workspace, set options, and load required packages.    
@@ -78,6 +80,8 @@ Look for outliers in the data.
 boxplot(pi_data$P.nmol.org.min)
 #pi_data<-pi_data%>%filter(P.nmol.org.min > -0.10)
 #boxplot(pi_data$P.nmol.org.min)
+
+boxplot(pi_data$P.nmol.org.min~pi_data$PAR)
 ```
 
 Calculate mean temperature values for each run.    
@@ -108,9 +112,9 @@ Plot data with means
 ```{r}
 pi_plot1<-pi_data %>%
     group_by(PAR, Symbiont)%>%
-    dplyr::summarise(mean=mean(abs(P.nmol.org.min), na.rm=TRUE), sd=sd(abs(P.nmol.org.min), na.rm=TRUE), N=length(P.nmol.org.min), se=sd/sqrt(N))%>%
+    dplyr::summarise(mean=mean(P.nmol.org.min, na.rm=TRUE), sd=sd(P.nmol.org.min, na.rm=TRUE), N=length(P.nmol.org.min), se=sd/sqrt(N))%>%
     
-    ggplot(., aes(x = as.factor(PAR), y = abs(mean), group=interaction(PAR, Symbiont))) +
+    ggplot(., aes(x = as.factor(PAR), y = mean, group=interaction(PAR, Symbiont))) +
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_point(aes(group=interaction(PAR, Symbiont), colour=Symbiont), size=6, position = position_dodge(0.4)) + 
     geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(PAR, Symbiont)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
@@ -134,7 +138,7 @@ Plot data with a loess line
 ```{r}
 pi_plot2<-pi_data %>%
     
-    ggplot(., aes(x = as.factor(PAR), y = abs(P.nmol.org.min), group=Symbiont)) +
+    ggplot(., aes(x = as.factor(PAR), y = P.nmol.org.min, group=Symbiont)) +
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_smooth(aes(color=Symbiont, group=Symbiont), method="loess", alpha=0.4, se=TRUE)+
     xlab("Light (PAR)") + 
@@ -163,23 +167,17 @@ View and remove outliers.
 outlier.plot <- ggbetweenstats(pi_data, PAR, P.nmol.org.min, outlier.tagging = TRUE)
 outlier.plot
 
-ggsave("figures/larval_pi_curves/outliersbygroup.png", outlier.plot, dpi=300, w=16, h=8, units="in")
+ggsave("figures/larval_pi_curves/outliersbygroup.png", outlier.plot, dpi=300, w=8, h=8, units="in")
 
 #set quantile values
 q <- c(0.25, 0.75)
 
 # calculate quantile values by PAR and Treatment groups
 Quants <- pi_data %>%
-  group_by(PAR, Symbiont)%>%
-  summarise(quant25 = quantile(P.nmol.org.min, probs = q[1], na.rm=TRUE),
+  dplyr::group_by(PAR, Symbiont)%>%
+  dplyr::summarise(quant25 = quantile(P.nmol.org.min, probs = q[1], na.rm=TRUE),
             quant75 = quantile(P.nmol.org.min, probs = q[2], na.rm=TRUE),
             IQRbyGroup=IQR(P.nmol.org.min, na.rm=TRUE))
-
-# NOT WORKING 
-
-
-
-
 
 
 # add a group name by pasting PAR and Treatment
@@ -192,340 +190,131 @@ Quants$lower <- Quants$quant25-1.5*Quants$IQRbyGroup # Lower Range
 #join outlier cutoffs with rate data
 pi_data <- left_join(pi_data, Quants)
 
-
-
-
-
-
-
 #remove outliers from rates
-tpc_data <- tpc_data %>%
-  filter(R.nmol.org.min < upper) %>%
-  filter(R.nmol.org.min > lower) #%>%
+pi_data <- pi_data %>%
+  filter(P.nmol.org.min < upper) %>%
+  filter(P.nmol.org.min > lower) #%>%
   #filter(rate < 0.125)
 
 # Visualize data following outlier removal
-outlier.plot2 <- ggbetweenstats(tpc_data, Temp.C, R.nmol.org.min, outlier.tagging = TRUE)
+outlier.plot2 <- ggbetweenstats(pi_data, PAR, P.nmol.org.min, outlier.tagging = TRUE)
 outlier.plot2
 
-ggsave("figures/tpc_sdr/removed_outliersbygroup.png", outlier.plot2, dpi=300, w=16, h=8, units="in")
+ggsave("figures/larval_pi_curves/removed_outliersbygroup.png", outlier.plot2, dpi=300, w=8, h=8, units="in")
 ```
 
-## Fitting TPC    
+## Fitting PI Curves 
 
-TPC fitting 
-Padifeld et al **rTPC and nls.multstart: A new pipeline to fit thermal performance curves in r**  
-https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/2041-210X.13585  
+Scripts for this section based on E5 PI curve analysis in the time series repository. 
 
-Sharpe Schoolfield 1981 model
-Schoolfield, R. M., Sharpe, P. J. H., & Magnuson, C. E. (1981). Non-linear regression of biological temperature-dependent rate models based on absolute reaction-rate theory. Journal of theoretical biology, 88(4), 719-731. https://doi.org/10.1016/0022-5193(81)90246-0
-
+Define data 
 ```{r}
-# choose model
-get_model_names()
-#sharpeschoolhigh_1981
-
-# get start vals
-start_vals <- get_start_vals(tpc_data$Temp.C,tpc_data$R.nmol.org.min, model_name = 'sharpeschoolhigh_1981')
-
-# get limits
-low_lims <- get_lower_lims(tpc_data$Temp.C,tpc_data$R.nmol.org.min, model_name = 'sharpeschoolhigh_1981')
-upper_lims <- get_upper_lims(tpc_data$Temp.C,tpc_data$R.nmol.org.min, model_name = 'sharpeschoolhigh_1981')
-
-#view values
-start_vals
-low_lims
-upper_lims
+#specify data
+pi_data$PAR <- as.numeric(pi_data$PAR)
+pi_data$Pc <- as.numeric(pi_data$P.nmol.org.min)
 ```
 
-### Cladocopium TPC 
+Define PI curve function as a nonlinear Least Squares regression of a quadratic fit, test nls fit
 
-Run a model fit for Cladocopium. 
+Aquatic Photosynthesis, Falkowski   
+Pmax = max photosynthesis (Am from Bayesian script)  
+alpha = quantum yeild (AQY from Bayesian script)  
+I/E = irradiance (PAR from Bayesian script)  
+Rd = dark respiration   
+
+Next run NLS models.
+
+Using fixed initial values (not using, but keeping for reference):  
+
+
+Not working with current data, keep scripts to try with real data 
+
 ```{r}
-# CURVE FIT 
-C_data<-tpc_data%>%
-  filter(Symbiont=="Cladocopium")
+nest <- nest_legacy
+unnest <- unnest_legacy
 
-#fit 
-C.fit <- nls_multstart(R.nmol.org.min~sharpeschoolhigh_1981(temp = Temp.C, r_tref,e,eh,th, tref = 28),
-                                                     data = C_data,
-                                                     iter = 500,
-                                                     start_lower = start_vals - 1,
-                                                     start_upper = start_vals + 1,
-                                                     lower = low_lims,
-                                                     upper = upper_lims,
-                                                     supp_errors = 'Y')
+nls_data <- pi_data %>% 
+   mutate(new_Pc=Pc+1)%>%
+   group_by(Tank) %>%
+   nest(-Tank) %>%
+   mutate(model1 = map(data, ~ 
+                        nls(new_Pc ~ (Am*((AQY*PAR)/(sqrt(Am^2 + (AQY*PAR)^2)))-Rd), data=., start=list(Am=0.05,  AQY=0.001, Rd=-0.02)) %>%
+                             tidy %>%
+                             dplyr::select(term, estimate) %>% 
+                             spread(term, estimate))) %>%
+  unnest(model1) %>%
+  mutate(Ik = Am/AQY) 
 
-C.fit
-
-#generate the predicted data
-C.new_data <- data.frame(temp = seq(from=min(C_data$Temp.C), to=max(C_data$Temp.C), by=((max(C_data$Temp.C)-min(C_data$Temp.C))/(nrow(C_data)-1)))) #set min and max temperatures and add prediction for number of rows in data frame 
-
-#C.new_data <- data.frame(temp = seq(from=min(C_data$Temp.C), to=max(C_data$Temp.C), by=0.071)) #manual interval if required
-
-C.preds <- augment(C.fit, newdata = C.new_data)
-
-#calculate TPC parameters
-C.TCP.res <- calc_params(C.fit) %>%
-  mutate_all(round, 2)   # round 
-
-C.TCP.res 
+#save
 
 ```
 
-Bootstrap the curve fit by resampling the original data with replacement. 
+Using flexible initial values based on input data:  
+
 ```{r}
-# refit model using nlsLM
-C.fit_nlsLM <- minpack.lm::nlsLM(R.nmol.org.min~sharpeschoolhigh_1981(temp = Temp.C, r_tref,e,eh,th, tref = 28),
-                        data = C_data,
-                        start = coef(C.fit),
-                        lower = low_lims,
-                        upper = upper_lims,
-                        weights = rep(1, times = nrow(C_data)))
+nest <- nest_legacy
+unnest <- unnest_legacy
 
-# bootstrap using case resampling
-C.boot1 <- Boot(C.fit_nlsLM, method = 'case')
+pi_data<-pi_data%>%
+  mutate(new_Pc=Pc+1)
 
-# look at the data
-head(C.boot1$t)
+nls_data <- pi_data %>% 
+   group_by(Symbiont) %>%
+   nest(-Symbiont) %>%
+   mutate(model1 = map(data, ~ 
+                         nls(new_Pc ~ (Am*((AQY*PAR)/(sqrt(Am^2 + (AQY*PAR)^2)))-Rd), data=., start=list(Am=(max(.$new_Pc)-min(.$new_Pc)),  AQY=0.001, Rd=-min(.$new_Pc)), trace=TRUE) %>%
+                              tidy %>%
+                              dplyr::select(term, estimate) %>% 
+                              spread(term, estimate))) %>%
+  unnest(model1) %>%
+  mutate(Ik = Am/AQY) 
 
-
-# create predictions of each bootstrapped model
-C.boot1_preds <- C.boot1$t %>%
-  as.data.frame() %>%
-  drop_na() %>%
-  mutate(iter = 1:n()) %>%
-  group_by_all() %>%
-  do(data.frame(temp = seq(min(C_data$Temp.C), max(C_data$Temp.C), length.out = 100))) %>%
-  ungroup() %>%
-  mutate(pred = sharpeschoolhigh_1981(temp, r_tref, e, eh, th, tref = 28))
-
-# calculate bootstrapped confidence intervals
-C.boot1_conf_preds <- group_by(C.boot1_preds, temp) %>%
-  summarise(conf_lower = quantile(pred, 0.025),
-            conf_upper = quantile(pred, 0.975)) %>%
-  ungroup()
-
-# plot bootstrapped CIs
-C.CI.plot <- ggplot() +
-  geom_line(aes(temp, .fitted), C.preds, col = 'orange') +
-  geom_ribbon(aes(temp, ymin = conf_lower, ymax = conf_upper), C.boot1_conf_preds, fill = 'orange', alpha = 0.3) +
-  geom_point(aes(Temp.C, R.nmol.org.min), C_data, size = 2, alpha = 0.5,col = 'orange') +
-  theme_bw(base_size = 12) +
-  labs(x = 'Temperature (ºC)',
-       y = 'Respiration Rate (nmol O2/larva/min');C.CI.plot 
+#save 
 
 ```
 
-### Durusdinium TPC 
+ERROR ABOVE THIS POINT NEED TO OPTIMIZE 
 
-Run a model fit for Durusdinium 
+
+Plot curve over data points.  
 ```{r}
-# CURVE FIT 
-D_data<-tpc_data%>%
-  filter(Symbiont=="Durusdinium")
+augmented <- pi_data %>% 
+  nest(-Symbiont) %>% 
+  mutate(
+    fit = map(data, ~ nls(Pc ~ (Am*((AQY*PAR)/(sqrt(Am^2 + (AQY*PAR)^2)))-Rd), data=., start=list(Am=0.7,  AQY=0.001, Rd=.4))),
+    augmented = map(fit, augment),
+  ) %>% 
+  unnest(augmented)
 
-#fit 
-D.fit <- nls_multstart(R.nmol.org.min~sharpeschoolhigh_1981(temp = Temp.C, r_tref,e,eh,th, tref = 28),
-                                                     data = D_data,
-                                                     iter = 500,
-                                                     start_lower = start_vals - 1,
-                                                     start_upper = start_vals + 1,
-                                                     lower = low_lims,
-                                                     upper = upper_lims,
-                                                     supp_errors = 'Y')
 
-D.fit
+#all tanks together
+augmented %>%
+  group_by(Symbiont)%>%
+  qplot(PAR, Pc, data = ., geom = 'point', colour = Symbiont) +
+  geom_line(aes(y=.fitted))+
+  theme(legend.position="none")
 
-#generate the predicted data
-D.new_data <- data.frame(temp = seq(from=min(D_data$Temp.C), to=max(D_data$Temp.C), by=((max(D_data$Temp.C)-min(D_data$Temp.C))/(nrow(D_data)-1)))) #set min and max temperatures and add prediction for number of rows in data frame 
 
-#C.new_data <- data.frame(temp = seq(from=min(C_data$Temp.C), to=max(C_data$Temp.C), by=0.071)) #manual interval if required
-
-D.preds <- augment(D.fit, newdata = D.new_data)
-
-#calculate TPC parameters
-D.TCP.res <- calc_params(D.fit) %>%
-  mutate_all(round, 2)   # round 
-
-D.TCP.res 
+#view individual plots
+by(augmented,augmented$colony_id, function(i) {
+  ggplot(i) +
+          geom_point(aes(PAR, Pc, group=Symbiont)) + 
+          geom_line(aes(y=.fitted, x=PAR)) + 
+          theme_classic()+
+          labs(x = expression(paste('PAR (', mu, "mol photons m"^-2, 's'^-1,")")),
+               y = expression(paste('Photosynthetic rate (nmol larva'^-1, 'min'^-1,")")),
+               title = paste0("PIcurve_", augmented$Symbiont))
+})
 
 ```
 
-Bootstrap the curve fit by resampling the original data with replacement. 
-```{r}
-# refit model using nlsLM
-D.fit_nlsLM <- minpack.lm::nlsLM(R.nmol.org.min~sharpeschoolhigh_1981(temp = Temp.C, r_tref,e,eh,th, tref = 28),
-                        data = D_data,
-                        start = coef(D.fit),
-                        lower = low_lims,
-                        upper = upper_lims,
-                        weights = rep(1, times = nrow(D_data)))
 
-# bootstrap using case resampling
-D.boot1 <- Boot(D.fit_nlsLM, method = 'case')
+## Further plotting 
 
-# look at the data
-head(D.boot1$t)
+ADD HERE AS THE DATA BECOMES AVAILABLE 
 
 
-# create predictions of each bootstrapped model
-D.boot1_preds <- D.boot1$t %>%
-  as.data.frame() %>%
-  drop_na() %>%
-  mutate(iter = 1:n()) %>%
-  group_by_all() %>%
-  do(data.frame(temp = seq(min(D_data$Temp.C), max(D_data$Temp.C), length.out = 100))) %>%
-  ungroup() %>%
-  mutate(pred = sharpeschoolhigh_1981(temp, r_tref, e, eh, th, tref = 28))
 
-# calculate bootstrapped confidence intervals
-D.boot1_conf_preds <- group_by(D.boot1_preds, temp) %>%
-  summarise(conf_lower = quantile(pred, 0.025),
-            conf_upper = quantile(pred, 0.975)) %>%
-  ungroup()
-
-# plot bootstrapped CIs
-D.CI.plot <- ggplot() +
-  geom_line(aes(temp, .fitted), D.preds, col = 'brown4') +
-  geom_ribbon(aes(temp, ymin = conf_lower, ymax = conf_upper), D.boot1_conf_preds, fill = 'brown4', alpha = 0.3) +
-  geom_point(aes(Temp.C, R.nmol.org.min), D_data, size = 2, alpha = 0.5,col = 'brown4') +
-  theme_bw(base_size = 12) +
-  labs(x = 'Temperature (ºC)',
-       y = 'Respiration Rate (nmol O2/larva/min');D.CI.plot 
-
-```
-
-## Plot TPC parameters
-
-```{r}
- #set plot colors
-cols <- c("Cladocopium"="orange", "Durusdinium"="brown4")
-  
-# plot data and model fit
-TPC.plot <- ggplot(data=tpc_data, aes(x=Temp.C)) +
-   geom_point(aes(Temp.C, R.nmol.org.min, color="Cladocopium"), C_data, size = 2, alpha = 0.5) +
-   geom_point(aes(Temp.C, R.nmol.org.min, color="Durusdinium"), D_data, size = 2, alpha = 0.5) +
-   geom_line(aes(temp, .fitted), C.preds, col = 'orange', size=2) +
-   geom_line(aes(temp, .fitted), D.preds, col = "brown4", size=2) +
-   geom_ribbon(aes(temp, ymin = conf_lower, ymax = conf_upper), C.boot1_conf_preds, fill = "orange", alpha = 0.3) +
-   geom_ribbon(aes(temp, ymin = conf_lower, ymax = conf_upper), D.boot1_conf_preds, fill = 'brown4', alpha = 0.3) +
-   #xlim(21,33)+
-   #scale_x_continuous(breaks=c(22,24,26,28,30,32,34,36))+
-   theme_bw(base_size = 12) +
-   scale_colour_manual(name="Symbiont",values=cols)+
-   theme(legend.position = "right",
-         panel.border = element_blank(), panel.grid.major = element_blank(),
-         panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))+
-   labs(x = 'Temperature (ºC)',
-        y = expression("Respiration Rate"~nmol~O[2] ~larva^{-1}~min^{-1}));TPC.plot 
-
-ggsave("figures/tpc_sdr/TPC_SharpSchool.png", TPC.plot, dpi=300, w=8, h=8, units="in")
-
-```
-
-## Confidence intervals of TPC parameters   
-
-```{r}
-broom::tidy(C.fit_nlsLM)
-broom::tidy(D.fit_nlsLM)
-
-```
-
-Cladocopium parameters
-```{r}
-#Cladocopium
-#calculate all the TPC parameters
-C.extra_params <- calc_params(C.fit_nlsLM) %>%
-  pivot_longer(everything(), names_to =  'param', values_to = 'estimate')
-
-#calculate CIs for all the TPC parameters
-C.ci_extra_params <- Boot(C.fit_nlsLM, f = function(x){unlist(calc_params(x))}, labels = names(calc_params(C.fit_nlsLM)), R = 200, method = 'case') %>%
-  confint(., method = 'bca') %>%
-  as.data.frame() %>%
-  rename(conf_lower = 1, conf_upper = 2) %>%
-  rownames_to_column(., var = 'param') %>%
-  mutate(method = 'case bootstrap')
-
-#join the parameters and CIs  
-C.ci_extra_params <- left_join(C.ci_extra_params, C.extra_params)
-C.ci_extra_params$Symbiont <- "Cladocopium"
-```
-
-Durusdinium parameters 
-```{r}
-#Durusdinium
-#calculate all the TPC parameters
-D.extra_params <- calc_params(D.fit_nlsLM) %>%
-  pivot_longer(everything(), names_to =  'param', values_to = 'estimate')
-
-#calculate CIs for all the TPC parameters
-D.ci_extra_params <- Boot(D.fit_nlsLM, f = function(x){unlist(calc_params(x))}, labels = names(calc_params(D.fit_nlsLM)), R = 200, method = 'case') %>%
-  confint(., method = 'bca') %>%
-  as.data.frame() %>%
-  rename(conf_lower = 1, conf_upper = 2) %>%
-  rownames_to_column(., var = 'param') %>%
-  mutate(method = 'case bootstrap')
-  
-#join the parameters and CIs  
-D.ci_extra_params <- left_join(D.ci_extra_params, D.extra_params)
-D.ci_extra_params$Symbiont <- "Durusdinium"
-
-#Join Ambient and High estimates and CIs
-All_params <- rbind(C.ci_extra_params, D.ci_extra_params)
-All_params <- All_params %>% 
- mutate_if(is.numeric, round, 2)
-
-#Plot all of the estimates
-estimate.plots <- ggplot(All_params, aes(Symbiont, estimate, color=Symbiont)) +
-  geom_point(size = 2) +
-  scale_color_manual(name="Symbiont", values=c("orange","brown4"))+
-  geom_linerange(aes(ymin = conf_lower, ymax = conf_upper)) +
-  theme_bw() +
-  facet_wrap(~param, scales = 'free_y') +
-  scale_x_discrete('');estimate.plots
-
-#filter to only the most relavent and well characterized parameters
-All_params <- All_params %>% 
-  filter(!param=="ctmin") %>%
-  filter(!param=="ctmax") %>%
-  filter(!param=="skewness") %>%
-  filter(!param=="thermal_safety_margin") %>%
-  filter(!param=="thermal_tolerance") %>%
-  filter(!param=="q10")%>%
-  filter(!param=="breadth")
-  
-#view estimate plots
-estimate.plots <- ggplot(All_params, aes(Symbiont, estimate, color=Symbiont)) +
-  geom_point(size = 2) +
-  scale_color_manual(name="Synmbiont", values=c("orange","brown4"))+
-  geom_linerange(aes(ymin = conf_lower, ymax = conf_upper)) +
-  theme_bw() +
-  labs(y = NULL)+
-  theme(axis.title.x=element_blank(),
-        axis.text.x=element_blank(),
-        legend.position = "none",
-        strip.background = element_blank(), 
-        strip.placement = "outside") +
-  facet_wrap(~param, scales = 'free_y', nrow=1, 
-             labeller = as_labeller(c(e = "e (Energy)", eh = " eh (Energy)", rmax= "Rmax (~nmol~O[2] ~larva^{-1}~min^{-1})",topt="Topt (Temperature °C)")), strip.position = "left") +
-  scale_x_discrete('');estimate.plots
-
-ggsave("figures/tpc_sdr/TPC_estimates_SharpSchool.png", estimate.plots, dpi=300, w=6, h=2, units="in")
-``` 
-
-
-```{r}
-#generate a combined figure of TPCs and estimate plots
-figure <- ggarrange(TPC.plot, estimate.plots,
-                    labels = c("A", "B"),
-                    ncol = 1, nrow = 2,
-                    heights=c(1,0.5)); figure
-
-ggsave("figures/tpc_sdr/TPC_combined_plot.png", figure, dpi=300, w=6, h=8, units="in")
-ggsave("figures/tpc_sdr/TPC_combined_plot.pdf", figure, dpi=300, w=6, h=8, units="in")
-
-``` 
 
 
 
