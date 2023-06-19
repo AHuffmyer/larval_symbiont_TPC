@@ -39,34 +39,34 @@ library(cowplot)
 Read in daily measurements file.  
 
 ```{r}
-daily<-read_csv("data/environmental/example_daily_measurements.csv")
+daily<-read_csv("data/environmental/daily_measurements.csv")
 daily$date<-as.Date(daily$date, format="%m/%d/%y")
 daily$tank<-as.factor(daily$tank)
 daily$tris.date<-as.character(daily$tris.date)
 ```
 
-## Calculate pH  
+## Calculate total pH  
 
 Calculate the calibration curve from the Tris calibration and calculate pH on the total scale from pH.mV.   
 ```{r}
-pHcalib<-read_csv("data/environmental/example_Tris_Calibration.csv")
+pHcalib<-read_csv("data/environmental/Tris_Calibration.csv")
 pHcalib$tris.date<-as.character(pHcalib$tris.date)
 
 pHSlope<-pHcalib %>%
   nest_by(tris.date)%>%
-  mutate(fitpH = list(lm(mVTris~TTris, data = pHcalib))) %>% # linear regression of mV and temp of the tris
+  mutate(fitpH = list(lm(mVTris~Ttris, data = pHcalib))) %>% # linear regression of mV and temp of the tris
   reframe(broom::tidy(fitpH)) %>% # make the output tidy
   select(tris.date, term, estimate) %>%
   pivot_wider(names_from = term, values_from = estimate) %>%# put slope and intercept in their own column
   left_join(daily, ., by="tris.date") %>% # join with the pH sample data
-  mutate(mVTris = temp.C*TTris + `(Intercept)`) %>%# calculate the mV of the tris at temperature in which the pH of the tanks were measured
-  mutate(pH = pH(Ex=pH.mV, Etris=mVTris, S=sal.psu, T=temp.C)) # calculate pH of the tanks using the pH seacarb function
+  mutate(mVTris = temp.C*Ttris + `(Intercept)`) %>%# calculate the mV of the tris at temperature in which the pH of the tanks were measured
+  mutate(pH.total = pH(Ex=pH.mV, Etris=mVTris, S=sal.psu, T=temp.C)) # calculate pH of the tanks using the pH seacarb function
 ```
 
 pH is now calculated as Total pH in the "pH" column. Now select the desired columns to analyze further.  
 ```{r}
 daily_calc<-pHSlope%>%
-  select(date, time, tank, symbiont, temp.C, pH, sal.psu, flow.mL.5s, par)
+  select(date, time, tank, group, temp.C, pH.total, pH.nbs, sal.psu, flow.mL.5s, par)
 ```
 
 ## Calculate flow  
@@ -92,13 +92,13 @@ daily_calc.long <-daily_calc %>% pivot_longer(cols=temp.C:flow.L.min,
 Plot by tank colored by symbiont treatment.      
 ```{r}
 daily_tanks<-daily_calc.long %>%
-  ggplot(aes(x=date, y=value, colour=symbiont))+
+  ggplot(aes(x=date, y=value, colour=group))+
   geom_point(size=2)+
   #geom_vline(xintercept = as.numeric(ymd("2022-10-19")), linetype="dashed", 
                 #color = "black", size=0.5)+
   #geom_vline(xintercept = as.numeric(ymd("2022-10-24")), linetype="solid", 
                 #color = "black", size=0.5)+
-  scale_colour_manual(values=c("orange", "brown4"))+
+  #scale_colour_manual(values=c("orange", "brown4"))+
   xlab("Date")+
   facet_grid(metric ~ ., scales = "free")+
   theme_bw(); daily_tanks
@@ -107,17 +107,17 @@ ggsave(filename="figures/environmental/tank_daily_measurements.png", plot=daily_
 
 ```
 
-Plot by treatment summarizing tanks within each treatment.    
+Plot by treatment summarizing tanks within each group    
 ```{r}
 daily_treatment<-daily_calc.long %>%
-  ggplot(aes(x=date, y=value, colour=symbiont, group=interaction(symbiont, date)))+
+  ggplot(aes(x=date, y=value, colour=group, group=interaction(group, date)))+
   geom_point()+
   geom_boxplot()+
   #geom_vline(xintercept = as.numeric(ymd("2022-10-19")), linetype="dashed", 
                 #color = "black", size=0.5)+
   #geom_vline(xintercept = as.numeric(ymd("2022-10-24")), linetype="solid", 
                 #color = "black", size=0.5)+
-  scale_colour_manual(values=c("orange", "brown4"))+
+  #scale_colour_manual(values=c("orange", "brown4"))+
   xlab("Date")+
   facet_grid(metric ~ ., scales = "free")+
   theme_bw(); daily_treatment
@@ -145,7 +145,11 @@ daily_calc.short%>%
   summary()
 
 daily_calc.short%>%
-  aov(pH~tank, data=.)%>%
+  aov(pH.total~tank, data=.)%>%
+  summary()
+
+daily_calc.short%>%
+  aov(pH.nbs~tank, data=.)%>%
   summary()
 
 daily_calc.short%>%
@@ -161,23 +165,27 @@ daily_calc.short%>%
 
 ```{r}
 daily_calc.short%>%
-  aov(flow.L.min~symbiont, data=.)%>%
+  aov(flow.L.min~group, data=.)%>%
   summary()
  
 daily_calc.short%>%
-  aov(par~symbiont, data=.)%>%
+  aov(par~group, data=.)%>%
   summary()
 
 daily_calc.short%>%
-  aov(pH~symbiont, data=.)%>%
+  aov(pH.total~group, data=.)%>%
   summary()
 
 daily_calc.short%>%
-  aov(sal.psu~symbiont, data=.)%>%
+  aov(pH.nbs~group, data=.)%>%
   summary()
 
 daily_calc.short%>%
-  aov(temp.C~symbiont, data=.)%>%
+  aov(sal.psu~group, data=.)%>%
+  summary()
+
+daily_calc.short%>%
+  aov(temp.C~group, data=.)%>%
   summary()
 ```
 
@@ -186,7 +194,7 @@ daily_calc.short%>%
 Calculate descriptive statistics   
 ```{r}
 summary<-daily_calc.short%>%
-  group_by(symbiont)%>%
+  group_by(group)%>%
   select(!tank)%>%
   select(!date)%>%
   select(!time)%>%
@@ -194,6 +202,14 @@ summary<-daily_calc.short%>%
 
 write_csv(summary, "output/environmental/daily_measurements_summary.csv")
 ```
+
+
+
+
+
+
+
+
 
 # Tidbit analysis (NEED TO EDIT WITH TIDBIT FILE STRUCTURE)   
 
