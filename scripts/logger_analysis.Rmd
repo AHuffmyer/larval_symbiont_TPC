@@ -32,7 +32,7 @@ library(broom)
 library(cowplot)
 ```
 
-# Tidbit analysis (NEED TO EDIT WITH TIDBIT FILE STRUCTURE)   
+# Tidbit analysis 
 
 ## Read in files  
 
@@ -43,7 +43,7 @@ tidbit.files <- list.files(path="data/environmental/tidbit_loggers", pattern="*.
 #will need to change to HST time 
 tidbits <- setNames(tidbit.files, tidbit.files) %>%
     map_dfr(read_csv, .id = "logger") %>%
-    rename(DateTime=`Date-Time (PDT)`, temp.C=`Ch: 1 - Temperature   (°C)`)%>%
+    rename(DateTime=`Date-Time (HST)`, temp.C=`Ch: 1 - Temperature   (°C)`)%>%
     select(!`#`)%>%
     select(logger, DateTime, temp.C)%>%
     mutate(logger=sub(".*/", "", logger))%>% #remove the path name
@@ -77,84 +77,74 @@ Assign treatment information to logger data.
 ```{r}
 tidbits<-left_join(tidbits, metadata, by="logger")
 tidbits$tank<-as.factor(tidbits$tank)
+tidbits$group<-as.factor(tidbits$group)
+tidbits$project<-as.factor(tidbits$project)
+tidbits$type<-as.factor(tidbits$type)
 ```
 
-## Plot temperature    
+# Developmental time series project 
 
-Plot raw data over time by tank colored by symbiont type.    
+Plot temperature by incubator colored by treatment. 
+
 ```{r}
-temp_plot<-tidbits%>%
+temp_plot1<-tidbits%>%
+  filter(project=="dev_timeseries")%>%
   
-  ggplot(aes(x=DateTime, y=temp.C, colour=symbiont))+
+  ggplot(aes(x=DateTime, y=temp.C, colour=group))+
   geom_point()+
   #ylim(26, 30)+
-  scale_colour_manual(values=c("orange", "brown4"), name="Symbiont")+
+  scale_colour_manual(values=c("blue", "red"), name="Temperature")+
   ylab("Temperature (°C)")+
   xlab("Date Time")+
-  theme_classic(); temp_plot
-
-ggsave("figures/environmental/tidbit_temp.png", temp_plot, width=8, height=6)
+  theme_classic(); temp_plot1
 ```
 
 Summarize by treatment with error shading for standard error.  
 ```{r}
-temp_plot_treatment<-tidbits%>%
-  group_by(symbiont, DateTime)%>%
+temp_plot_treatment1<-tidbits%>%
+  filter(project=="dev_timeseries")%>%
+  group_by(group, DateTime)%>%
   summarise(mean=mean(temp.C, na.rm=TRUE), sd=sd(temp.C, na.rm=TRUE), sem=sd/sqrt(6), upper=mean+sd, lower=mean-sd)%>%
   
-  ggplot(aes(x=DateTime, y=mean, colour=symbiont, fill=symbiont))+
+  ggplot(aes(x=DateTime, y=mean, colour=group, fill=group))+
   #geom_line()+
-  geom_ribbon(aes(ymin = lower, ymax = upper, colour=symbiont), alpha = 0.4, colour = NA, show.legend=FALSE) +
-  geom_smooth(method="glm", span=0.1, se=FALSE, aes(colour=symbiont), alpha=1, show.legend=TRUE) +
+  geom_ribbon(aes(ymin = lower, ymax = upper, colour=group), alpha = 0.4, colour = NA, show.legend=FALSE) +
+  geom_smooth(method="loess", span=0.1, se=FALSE, aes(colour=group), alpha=1, show.legend=TRUE) +
   #ylim(26, 30)+
   ylab("Temperature (°C)")+
   xlab("Date Time")+
-  scale_colour_manual(values=c("orange", "brown4"), name="Symbiont")+
-  scale_fill_manual(values=c("orange", "brown4"), name="Symbiont")+
-  theme_classic(); temp_plot_treatment
+  scale_colour_manual(values=c("blue", "red"), name="Temperature")+
+  scale_fill_manual(values=c("blue", "red"), name="Temperature")+
+  theme_classic(); temp_plot_treatment1
 
-ggsave("figures/environmental/tidbit_temperature_smooth.png", temp_plot_treatment, width=8, height=6)
+#ggsave("figures/environmental/tidbit_temperature_smooth.png", temp_plot_treatment, width=8, height=6)
 ```
 
-Calculate the mean difference in temperature treatments between symbiont types.  
+Calculate the mean difference in temperature treatments between groups.  
 ```{r}
 tidbits%>%
-  group_by(symbiont, DateTime)%>%
+  filter(project=="dev_timeseries")%>%
+  group_by(group, DateTime)%>%
   summarise(mean=mean(temp.C, na.rm=TRUE))%>%
-  spread(key=symbiont, value=mean)%>%
-  reframe(difference=Cladocopium-Durusdinium)%>%
+  spread(key=group, value=mean)%>%
+  reframe(difference=high-ambient)%>%
   reframe(mean=mean(difference))
 ```
 
-Calculate mean daily maximum temperature for each symbiont type.     
+Calculate mean temperature for each symbiont type.     
 ```{r}
 tidbits %>%
+  filter(project=="dev_timeseries")%>%
   mutate(day = floor_date(DateTime, "day")) %>%
-           group_by(day, tank, symbiont) %>%
-           summarise(max = max(temp.C))%>%
-          group_by(symbiont) %>%
-           summarise(mean_daily_max=mean(max))
+           group_by(day, tank, group) %>%
+           summarise(mean = mean(temp.C))%>%
+          group_by(group) %>%
+           summarise(mean=mean(mean))
 ```
 
-Calculate mean daily minimum temperature for each symbiont type.     
-```{r}
-tidbits %>%
-  mutate(day = floor_date(DateTime, "day")) %>%
-           group_by(day, tank, symbiont) %>%
-           summarise(min = min(temp.C))%>%
-          group_by(symbiont) %>%
-           summarise(mean_daily_max=mean(min))
-```
 
-Calculate mean daily fluctuation in temperature for each symbiont type.     
-```{r}
-tidbits %>%
-  mutate(day = floor_date(DateTime, "day")) %>%
-           group_by(day, tank, symbiont) %>%
-           summarise(max=max(temp.C), min = min(temp.C), change=max-min)%>%
-            group_by(symbiont) %>%
-           summarise(mean_cycle=mean(change))
-```
+
+
 
 # Black logger analysis (NEED TO ADD)
 

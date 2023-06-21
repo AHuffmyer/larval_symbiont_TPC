@@ -1,1 +1,9 @@
-logger,tank,symbiont,type
+date.start,date.end ,logger,tank,group,project,type
+20230616,20230620,21723476,incubator1,ambient,dev_timeseries,tidbit
+20230616,20230620,21723475,incubator1,ambient,dev_timeseries,tidbit
+20230616,20230620,21723473,incubator2,high,dev_timeseries,tidbit
+20230616,20230620,21723474,incubator2,high,dev_timeseries,tidbit
+20230616,20230620,21723472,incubator3,high,dev_timeseries,tidbit
+20230616,20230620,20987156,incubator3,high,dev_timeseries,U22
+20230616,20230620,21723477,incubator4,ambient,dev_timeseries,tidbit
+20230616,20230620,20444042,incubator4,ambient,dev_timeseries,U22
