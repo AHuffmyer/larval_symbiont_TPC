@@ -186,6 +186,13 @@ r_plot3<-tpc_data %>%
 ggsave("figures/tpc_sdr/tpc_dots.png", r_plot3, dpi=300, w=7, h=5, units="in")
 ```
 
+## Running anova on respiration rates 
+
+```{r}
+summary(aov(R.nmol.org.min~Temperature*Symbiont, data=tpc_data))
+```
+No significant difference 
+
 # Apply TPC calculations and models 
 
 INSERT DATE FILTER HERE AND DUPLICATE BELOW ANALYSES 
