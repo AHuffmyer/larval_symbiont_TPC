@@ -110,9 +110,11 @@ Plot data with means
 ```{r}
 r_plot1<-tpc_data %>%
     group_by(Temperature, Symbiont, Date)%>%
-    dplyr::summarise(mean=mean(abs(R.nmol.org.min), na.rm=TRUE), sd=sd(abs(R.nmol.org.min), na.rm=TRUE), N=length(R.nmol.org.min), se=sd/sqrt(N))%>%
+    filter(R.nmol.org.min<0.01)%>%
+    dplyr::summarise(mean=mean(R.nmol.org.min, na.rm=TRUE), sd=sd(R.nmol.org.min, na.rm=TRUE), N=length(R.nmol.org.min), se=sd/sqrt(N))%>%
+    mutate(mean=mean*-1)%>%
     
-    ggplot(., aes(x = as.factor(Temperature), y = abs(mean), group=interaction(Temperature, Symbiont))) +
+    ggplot(., aes(x = as.factor(Temperature), y = mean, group=interaction(Temperature, Symbiont))) +
     facet_wrap(~Date)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_point(aes(group=interaction(Temperature, Symbiont), colour=Symbiont), size=6, position = position_dodge(0.4)) + 
@@ -136,11 +138,12 @@ ggsave("figures/tpc_sdr/tpc_means.png", r_plot1, dpi=300, w=7, h=5, units="in")
 Plot data with a loess line   
 ```{r}
 r_plot2<-tpc_data %>%
+  filter(R.nmol.org.min<0.01)%>%
     
-    ggplot(., aes(x = as.factor(Temperature), y = abs(R.nmol.org.min), group=Symbiont)) +
+    ggplot(., aes(x = as.factor(Temperature), y = (R.nmol.org.min*-1), group=Symbiont)) +
     facet_wrap(~Date)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
-    geom_smooth(aes(color=Symbiont, group=Symbiont), method="loess", alpha=0.4, se=TRUE)+
+    geom_smooth(aes(color=Symbiont, group=Symbiont), method="loess", alpha=0.4, se=FALSE)+
     xlab("Temperature") + 
     scale_color_manual(name="Symbiont", values=c("orange","brown4"))+
     ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
@@ -157,16 +160,48 @@ r_plot2<-tpc_data %>%
 ggsave("figures/tpc_sdr/tpc_loess.png", r_plot2, dpi=300, w=7, h=5, units="in")
 ```
 
+Plot data with means   
+```{r}
+r_plot3<-tpc_data %>%
+  filter(R.nmol.org.min<0.01)%>%
+    
+    ggplot(., aes(x = as.factor(Temperature), y = (R.nmol.org.min*-1), group=interaction(Temperature, Symbiont))) +
+    facet_wrap(~Date)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_point(aes(group=interaction(Temperature, Symbiont), colour=Symbiont), size=4, position = position_jitterdodge(0.4)) + 
+    #geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Temperature, Symbiont)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
+    xlab("Temperature") + 
+    scale_color_manual(name="Symbiont", values=c("orange","brown4"))+
+    ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    #ylim(0, 0.05)+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); r_plot3
+
+ggsave("figures/tpc_sdr/tpc_dots.png", r_plot3, dpi=300, w=7, h=5, units="in")
+```
+
 # Apply TPC calculations and models 
 
 INSERT DATE FILTER HERE AND DUPLICATE BELOW ANALYSES 
 
 ## Look for outliers 
 
+Change respiration to inverse. 
+```{r}
+tpc_data<-tpc_data%>%
+  mutate(R.inverse=R.nmol.org.min*-1)
+```
+
 View and remove outliers.   
 ```{r, warning=FALSE, message=FALSE}
 #identify outliers by Temperature and Treatment groups
-outlier.plot <- ggbetweenstats(tpc_data, Temperature, R.nmol.org.min, outlier.tagging = TRUE)
+outlier.plot <- ggbetweenstats(tpc_data, Temperature, R.inverse, outlier.tagging = TRUE)
 outlier.plot
 
 ggsave("figures/tpc_sdr/outliersbygroup.png", outlier.plot, dpi=300, w=16, h=8, units="in")
@@ -177,9 +212,9 @@ q <- c(0.25, 0.75)
 # calculate quantile values by Temperature and Treatment groups
 Quants <- tpc_data %>%
   group_by(Temperature, Symbiont) %>%
-  summarize(quant25 = quantile(R.nmol.org.min, probs = q[1], na.rm=TRUE),
-            quant75 = quantile(R.nmol.org.min, probs = q[2], na.rm=TRUE),
-            IQRbyGroup=IQR(R.nmol.org.min, na.rm=TRUE))
+  summarize(quant25 = quantile(R.inverse, probs = q[1], na.rm=TRUE),
+            quant75 = quantile(R.inverse, probs = q[2], na.rm=TRUE),
+            IQRbyGroup=IQR(R.inverse, na.rm=TRUE))
 
 # add a group name by pasting Temperature and Treatment
 Quants$group <-paste0(Quants$Temperature,"_", Quants$Symbiont)
@@ -198,7 +233,7 @@ tpc_data <- tpc_data %>%
   #filter(rate < 0.125)
 
 # Visualize data following outlier removal
-outlier.plot2 <- ggbetweenstats(tpc_data, Temperature, R.nmol.org.min, outlier.tagging = TRUE)
+outlier.plot2 <- ggbetweenstats(tpc_data, Temperature, R.inverse, outlier.tagging = TRUE)
 outlier.plot2
 
 ggsave("figures/tpc_sdr/removed_outliersbygroup.png", outlier.plot2, dpi=300, w=16, h=8, units="in")
