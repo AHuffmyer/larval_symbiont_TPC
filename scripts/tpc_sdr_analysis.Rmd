@@ -71,7 +71,7 @@ tpc_data$Temperature<-as.factor(tpc_data$Temperature)
 tpc_data$Tank<-as.factor(tpc_data$Tank)
 tpc_data$Symbiont<-as.factor(tpc_data$Symbiont)
 tpc_data$SDR<-as.factor(tpc_data$SDR)
-tpc_data$Run<-as.factor(tpc_data$Run)
+tpc_data$Plate<-as.factor(tpc_data$Plate)
 ```
 
 Look for outliers in the data.  
@@ -90,9 +90,9 @@ resp.temps = subset(resp.temps, select = -c(X) ) #remove empty column
 
 #format "run" column
 resp.temps<-resp.temps %>% #Format as "#" rather than "Run#"
-  mutate(Run = str_sub(Run, 4, -1))
-resp.temps$Run<-as.integer(resp.temps$Run) #format as integer
-resp.temps$Run<-as.factor(resp.temps$Run) #format as factor
+  mutate(Plate = str_sub(Plate, 6, -1))
+resp.temps$Plate<-as.integer(resp.temps$Plate) #format as integer
+resp.temps$Plate<-as.factor(resp.temps$Plate) #format as factor
 ```
 
 Add temperature data to master data frame.  
@@ -161,9 +161,6 @@ ggsave("figures/tpc_sdr/tpc_loess.png", r_plot2, dpi=300, w=7, h=5, units="in")
 
 INSERT DATE FILTER HERE AND DUPLICATE BELOW ANALYSES 
 
-
-
-
 ## Look for outliers 
 
 View and remove outliers.   
@@ -222,11 +219,11 @@ get_model_names()
 #sharpeschoolhigh_1981
 
 # get start vals
-start_vals <- get_start_vals(tpc_data$Temperature,tpc_data$R.nmol.org.min, model_name = 'sharpeschoolhigh_1981')
+start_vals <- get_start_vals(as.character(tpc_data$Temperature),tpc_data$R.nmol.org.min, model_name = 'sharpeschoolhigh_1981')
 
 # get limits
-low_lims <- get_lower_lims(tpc_data$Temperature,tpc_data$R.nmol.org.min, model_name = 'sharpeschoolhigh_1981')
-upper_lims <- get_upper_lims(tpc_data$Temperature,tpc_data$R.nmol.org.min, model_name = 'sharpeschoolhigh_1981')
+low_lims <- get_lower_lims(as.character(tpc_data$Temperature),tpc_data$R.nmol.org.min, model_name = 'sharpeschoolhigh_1981')
+upper_lims <- get_upper_lims(as.character(tpc_data$Temperature),tpc_data$R.nmol.org.min, model_name = 'sharpeschoolhigh_1981')
 
 #view values
 start_vals
@@ -240,7 +237,7 @@ Run a model fit for Cladocopium.
 ```{r}
 # CURVE FIT 
 C_data<-tpc_data%>%
-  filter(Symbiont=="Cladocopium")
+  filter(Symbiont=="C")
 
 #fit 
 C.fit <- nls_multstart(R.nmol.org.min~sharpeschoolhigh_1981(temp = Temperature, r_tref,e,eh,th, tref = 28),
@@ -319,7 +316,7 @@ Run a model fit for Durusdinium
 ```{r}
 # CURVE FIT 
 D_data<-tpc_data%>%
-  filter(Symbiont=="Durusdinium")
+  filter(Symbiont=="D")
 
 #fit 
 D.fit <- nls_multstart(R.nmol.org.min~sharpeschoolhigh_1981(temp = Temperature, r_tref,e,eh,th, tref = 28),
