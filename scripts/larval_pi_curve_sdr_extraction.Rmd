@@ -59,7 +59,7 @@ library('respR')
 Set the path of all respirometry files within the R project.   
 
 ```{r, warning=FALSE, message=FALSE}
-path.p<-"data/larvae_pi_curves/runs" #location of files
+path.p<-"data/larval_pi_curves/runs" #location of files
 ```
 
 Bring in the file names.
@@ -76,10 +76,10 @@ Generate photosynthesis data frames.
 #generate a 6 column dataframe with specific column names
 #photosynthesis
 Photo.R <- data.frame(matrix(NA, ncol=6))
-colnames(Photo.R) <- c("Date", "Run","Sample.ID","Chamber.ID","Intercept", "umol.L.min")
+colnames(Photo.R) <- c("Date", "Run","Sample.ID","Chamber.ID","Intercept", "Interval", "umol.L.min")
 
 Photo.Rb <- data.frame(matrix(NA, ncol=6))
-colnames(Photo.Rb) <- c("Date", "Run","Sample.ID","Chamber.ID","Intercept", "umol.L.min")
+colnames(Photo.Rb) <- c("Date", "Run","Sample.ID","Chamber.ID","Intercept", "Interval", "umol.L.min")
 
 ```
 

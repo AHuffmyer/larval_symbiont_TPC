@@ -76,10 +76,10 @@ Generate respiration data frames.
 #generate a 6 column dataframe with specific column names
 #respiration
 Resp.R <- data.frame(matrix(NA, ncol=6))
-colnames(Resp.R) <- c("Date", "Run","Sample.ID","Chamber.ID","Intercept", "umol.L.min")
+colnames(Resp.R) <- c("Date", "Plate","Sample.ID","Chamber.ID","Intercept", "umol.L.min")
 
 Resp.Rb <- data.frame(matrix(NA, ncol=6))
-colnames(Resp.Rb) <- c("Date", "Run","Sample.ID","Chamber.ID","Intercept", "umol.L.min")
+colnames(Resp.Rb) <- c("Date", "Plate","Sample.ID","Chamber.ID","Intercept", "umol.L.min")
 
 ```
 
@@ -89,8 +89,8 @@ Load in the sample information file. It is important to have chambers in the ord
 Sample.Info<-read.csv("data/tpc_sdr/TPC_SDR_Sample_Info.csv") #information on life stage, number of individuals, runs, etc.
 rename <- Sample.Info$Chamber.ID
 samp <- Sample.Info$Sample.ID
-run <- str_sub(file.names, 17, 21) #grab run from file name
-date <- str_sub(file.names, 1, str_length(file.names)-24) #grab date from file name
+plate <- str_sub(file.names, 17, 23) #grab run from file name
+date <- str_sub(file.names, 1, str_length(file.names)-29) #grab date from file name
 ```
 
 Run loop to extract slopes from respiration data. 
@@ -114,12 +114,12 @@ for(i in 1:length(file.names)) { # for every file in list start at the first and
       xall=Resp.Data$Time.Min, yall=as.numeric(Resp.Data.N[, j]), 
       alpha=0.4, method="pc", verbose=TRUE) #extract slopes, percentile rank method with minimum window size of 0.4. This means that in order to fit a slope, it has to encompass at least 40% of available datapoints. 
     
-    pdf(paste0("output/tpc_sdr/RespirationPlots/",date[i], "_",run[i],"_",rename[j],"_regression_trunc.pdf")) #generate output file names
+    pdf(paste0("output/tpc_sdr/RespirationPlots/",date[i], "_",plate[i],"_",rename[j],"_regression_trunc.pdf")) #generate output file names
     plot(model)
     dev.off()
     
     Resp.Rb[j,1] <- as.character(date[i]) #stores the date
-    Resp.Rb[j,2] <- as.character(run[i]) #stores the run number
+    Resp.Rb[j,2] <- as.character(plate[i]) #stores the run number
     Resp.Rb[j,3] <- as.character(samp[j+(i-1)*ncol(Resp.Data.N)]) #stores the sample ID
     Resp.Rb[j,4] <- as.character(rename[j]) #stores the chamber ID
     Resp.Rb[j,5:6] <- model$allRegs[i,c(4,5)] #inserts slope and intercept in the dataframe
@@ -137,10 +137,10 @@ file.names<-basename(list.files(path = path.p, pattern = "csv$", recursive = TRU
 
 #generate matrix to populate
 Temp.R <- data.frame(matrix(NA, ncol=3))
-colnames(Temp.R) <- c("Date", "Run","Temp.C")
+colnames(Temp.R) <- c("Date", "Plate","Temp.C")
 
 Temp.Rb <- data.frame(matrix(NA, ncol=3))
-colnames(Temp.Rb) <- c("Date", "Run","Temp.C")
+colnames(Temp.Rb) <- c("Date", "Plate","Temp.C")
 
 #read in temps and generate mean values  
 for(i in 1:length(file.names)) { # for every file in list start at the first and run this following function
@@ -169,9 +169,16 @@ Resp.R <- Resp.R[-1,] #remove empty column
 
 write.csv(Resp.R, paste0("output/tpc_sdr/tpc_sdr_respiration_rates_raw.csv")) #save respiration rate data
 
-plot(Resp.R$umol.L.min~as.factor(Resp.R$Run), side = 2, las = 2, xlab="" )
+plot(Resp.R$umol.L.min~as.factor(Resp.R$Plate), side = 2, las = 2, xlab="" )
 
 ```
+
+
+
+
+
+
+
 
 ```{r, warning=FALSE, message=FALSE}
 Resp.Rates <- read.csv(file = "output/tpc_sdr/tpc_sdr_respiration_rates_raw.csv") #read file back in so slopes don't have to be generated every time
