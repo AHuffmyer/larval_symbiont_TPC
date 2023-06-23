@@ -129,6 +129,31 @@ pi_plot1<-pi_data %>%
 ggsave("figures/larval_pi_curves/pi_means.png", pi_plot1, dpi=300, w=7, h=5, units="in")
 ```
 
+Display with plate. 
+```{r}
+pi_plot1<-pi_data %>%
+    group_by(PAR, Symbiont, Plate)%>%
+    dplyr::summarise(mean=mean(P.nmol.org.min, na.rm=TRUE), sd=sd(P.nmol.org.min, na.rm=TRUE), N=length(P.nmol.org.min), se=sd/sqrt(N))%>%
+    
+    ggplot(., aes(x = as.factor(PAR), y = mean, group=interaction(PAR, Symbiont))) +
+    facet_wrap(~Plate)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_point(aes(group=interaction(PAR, Symbiont), colour=Symbiont), size=6, position = position_dodge(0.4)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(PAR, Symbiont)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
+    xlab("Light (PAR)") + 
+    scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
+    ylab(expression(bold(paste("P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    #ylim(0, 0.05)+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); pi_plot1
+```
+
 Plot data with a loess line   
 ```{r}
 pi_plot2<-pi_data %>%
@@ -151,6 +176,59 @@ pi_plot2<-pi_data %>%
 
 ggsave("figures/larval_pi_curves/pi_loess.png", pi_plot2, dpi=300, w=7, h=5, units="in")
 ```
+
+View by plate. 
+```{r}
+pi_plot2b<-pi_data %>%
+    
+    ggplot(., aes(x = as.factor(PAR), y = P.nmol.org.min, group=Symbiont)) +
+    facet_wrap(~Plate)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_smooth(aes(color=Symbiont, group=Symbiont), method="loess", alpha=0.4, se=FALSE)+
+    xlab("Light (PAR)") + 
+    scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
+    ylab(expression(bold(paste("P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    #ylim(0, 0.05)+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); pi_plot2b
+```
+
+Similar curves between plates, proceed with using average of the two plates. 
+
+# View dark respiration 
+
+View by plate. 
+```{r}
+pi_plot3<-pi_data %>%
+    group_by(PAR, Symbiont)%>%
+    filter(PAR=="0")%>%
+    dplyr::summarise(mean=mean(P.nmol.org.min, na.rm=TRUE)*-1, sd=sd(P.nmol.org.min, na.rm=TRUE), N=length(P.nmol.org.min), se=sd/sqrt(N))%>%
+    
+    ggplot(., aes(x = as.factor(PAR), y = mean, group=interaction(PAR, Symbiont))) +
+    #facet_wrap(~Plate)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_point(aes(group=interaction(PAR, Symbiont), colour=Symbiont), size=6, position = position_dodge(0.4)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(PAR, Symbiont)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
+    xlab("Light (PAR)") + 
+    scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
+    ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    #ylim(0, 0.05)+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); pi_plot3
+```
+
 
 # Apply PI curve calculations and models 
 
@@ -223,23 +301,20 @@ Next run NLS models.
 Using fixed initial values (not using, but keeping for reference):  
 
 ```{r}
-nest <- nest_legacy
-unnest <- unnest_legacy
+#nest <- nest_legacy
+#unnest <- unnest_legacy
 
-nls_data <- pi_data %>% 
-   mutate(new_Pc=Pc+1)%>%
-   group_by(Tank) %>%
-   nest(-Tank) %>%
-   mutate(model1 = map(data, ~ 
-                        nls(new_Pc ~ (Am*((AQY*PAR)/(sqrt(Am^2 + (AQY*PAR)^2)))-Rd), data=., start=list(Am=0.05,  AQY=0.001, Rd=-0.02)) %>%
-                             tidy %>%
-                             dplyr::select(term, estimate) %>% 
-                             spread(term, estimate))) %>%
-  unnest(model1) %>%
-  mutate(Ik = Am/AQY) 
-
-#save
-
+#nls_data <- pi_data %>% 
+#   mutate(new_Pc=Pc+1)%>%
+#   group_by(Tank) %>%
+#   nest(-Tank) %>%
+#   mutate(model1 = map(data, ~ 
+#                        nls(new_Pc ~ (Am*((AQY*PAR)/(sqrt(Am^2 + (AQY*PAR)^2)))-Rd), data=., start=list(Am=0.05,  AQY=0.001, Rd=-0.02)) %>%
+#                             tidy %>%
+#                             dplyr::select(term, estimate) %>% 
+#                             spread(term, estimate))) %>%
+#  unnest(model1) %>%
+#  mutate(Ik = Am/AQY) 
 ```
 
 Using flexible initial values based on input data:  
@@ -263,7 +338,9 @@ nls_data <- pi_data %>%
   mutate(Ik = Am/AQY) 
 
 #save 
-nls_data
+pi_results<-nls_data
+
+pi_results
 ```
 
 Plot curve over data points.  
@@ -276,7 +353,6 @@ augmented <- pi_data %>%
   ) %>% 
   unnest(augmented)
 
-
 #all together
 curve_plot1<-augmented %>%
   group_by(Symbiont)%>%
@@ -287,7 +363,10 @@ curve_plot1<-augmented %>%
   theme_classic();curve_plot1
 
 ggsave("figures/larval_pi_curves/nls_curves_all.png", width=6, height=6, dpi=500)
+```
 
+View separated by individual. 
+```{r}
 #view individual plots
 curve_plot2<-augmented %>%
   ggplot() +
@@ -302,6 +381,34 @@ curve_plot2<-augmented %>%
 ggsave("figures/larval_pi_curves/nls_curves_individual.png", width=10, height=6, dpi=500)
 ```
 
+Plot PI curve metrics. 
+
+```{r}
+metrics_plot1<-pi_results%>%
+  pivot_longer(values_to="Value", names_to="Parameter", cols=c(Am:Ik))%>%
+  filter(Parameter=="Ik")%>%
+  
+  ggplot(aes(x=Symbiont, y=Value, color=Symbiont))+
+    facet_wrap(~Parameter)+
+    geom_point(aes(), size=4) +
+    scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
+    theme_classic()+
+    theme(legend.position="none");metrics_plot1
+
+metrics_plot1a<-pi_results%>%
+  pivot_longer(values_to="Value", names_to="Parameter", cols=c(Am:Ik))%>%
+  filter(!Parameter=="Ik")%>%
+  
+  ggplot(aes(x=Symbiont, y=Value, color=Symbiont))+
+    facet_wrap(~Parameter)+
+    geom_point(aes(), size=4) +
+    scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
+    theme_classic();metrics_plot1a
+
+metrics_plot<-plot_grid(metrics_plot1, metrics_plot1a, nrow=1, ncol=2, rel_widths=c(0.6,1))
+
+ggsave("figures/larval_pi_curves/parameters.png", metrics_plot, width=8, height=6, dpi=300)
+```
 
 
 
