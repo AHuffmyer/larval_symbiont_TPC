@@ -61,6 +61,12 @@ Load data from LoLinR.
 tpc_data<-read.csv("output/tpc_sdr/calculated_normalized_rates.csv") #load data
 ```
 
+Keep only experimental plate (removing test plates).  
+```{r}
+tpc_data<-tpc_data%>%
+  filter(!Date=="20230621")
+```
+
 Separate project specific data.  
 ```{r, warning=FALSE, message=FALSE}
 #remove all rows of wells that did not have samples or blanks
@@ -110,7 +116,7 @@ Plot data with means
 ```{r}
 r_plot1<-tpc_data %>%
     group_by(Temperature, Symbiont, Date)%>%
-    filter(R.nmol.org.min<0.01)%>%
+    #filter(R.nmol.org.min<0.01)%>%
     dplyr::summarise(mean=mean(R.nmol.org.min, na.rm=TRUE), sd=sd(R.nmol.org.min, na.rm=TRUE), N=length(R.nmol.org.min), se=sd/sqrt(N))%>%
     mutate(mean=mean*-1)%>%
     
@@ -120,7 +126,7 @@ r_plot1<-tpc_data %>%
     geom_point(aes(group=interaction(Temperature, Symbiont), colour=Symbiont), size=6, position = position_dodge(0.4)) + 
     geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Temperature, Symbiont)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
     xlab("Temperature") + 
-    scale_color_manual(name="Symbiont", values=c("orange","brown4"))+
+    scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
     ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
     #ylim(0, 0.05)+
     theme_classic() + 
@@ -138,14 +144,14 @@ ggsave("figures/tpc_sdr/tpc_means.png", r_plot1, dpi=300, w=7, h=5, units="in")
 Plot data with a loess line   
 ```{r}
 r_plot2<-tpc_data %>%
-  filter(R.nmol.org.min<0.01)%>%
+  #filter(R.nmol.org.min<0.01)%>%
     
     ggplot(., aes(x = as.factor(Temperature), y = (R.nmol.org.min*-1), group=Symbiont)) +
     facet_wrap(~Date)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_smooth(aes(color=Symbiont, group=Symbiont), method="loess", alpha=0.4, se=FALSE)+
     xlab("Temperature") + 
-    scale_color_manual(name="Symbiont", values=c("orange","brown4"))+
+    scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
     ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
     #ylim(0, 0.05)+
     theme_classic() + 
@@ -163,7 +169,7 @@ ggsave("figures/tpc_sdr/tpc_loess.png", r_plot2, dpi=300, w=7, h=5, units="in")
 Plot data with means   
 ```{r}
 r_plot3<-tpc_data %>%
-  filter(R.nmol.org.min<0.01)%>%
+  #filter(R.nmol.org.min<0.01)%>%
     
     ggplot(., aes(x = as.factor(Temperature), y = (R.nmol.org.min*-1), group=interaction(Temperature, Symbiont))) +
     facet_wrap(~Date)+
@@ -171,7 +177,7 @@ r_plot3<-tpc_data %>%
     geom_point(aes(group=interaction(Temperature, Symbiont), colour=Symbiont), size=4, position = position_jitterdodge(0.4)) + 
     #geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Temperature, Symbiont)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
     xlab("Temperature") + 
-    scale_color_manual(name="Symbiont", values=c("orange","brown4"))+
+    scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
     ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
     #ylim(0, 0.05)+
     theme_classic() + 

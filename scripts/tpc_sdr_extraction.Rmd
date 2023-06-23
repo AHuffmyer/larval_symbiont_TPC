@@ -68,6 +68,11 @@ Bring in the file names.
 file.names<-basename(list.files(path = path.p, pattern = "csv$", recursive = TRUE)) 
 ```
 
+Only use files that are from experimental samples, not test runs. This can be altered to look at test runs. 
+```{r}
+file.names <- file.names[!grepl("20230621", file.names)]   # omit test data from files to be read in as data
+```
+
 ## Extract respiration rates  
 
 Generate respiration data frames.
@@ -95,15 +100,13 @@ date <- str_sub(file.names, 1, str_length(file.names)-29) #grab date from file n
 
 Run loop to extract slopes from respiration data. 
 
-Remember to save data as umol/L NOT % saturation. 
+Oxygen in umol/L concentration. 
 
 ```{r, results=FALSE, warning=FALSE, message=FALSE}
 for(i in 1:length(file.names)) { # for every file in list start at the first and run this following function
   Resp.Data <-read.table(file.path(path.p,file.names[i]), skip = 56, header=T, sep=",", na.string="NA", fill = TRUE, as.is=TRUE, fileEncoding="latin1") #reads in the data files
   Resp.Data$Temp <- Resp.Data[,31] #assigns temp column
   Resp.Data$Time.Min <- seq.int(from=0, to=((nrow(Resp.Data)*0.25)-0.25), by = 0.25) #set time in min
-  #Resp.Data <- Resp.Data %>% #filters data by phase (respiration only)
-     #filter(Time.Min > rtime[i])
   Resp.Data.N <- Resp.Data[,3:26] #subset desired columns
 
   #add column names back in 
