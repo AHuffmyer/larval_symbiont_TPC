@@ -67,11 +67,10 @@ Format data.
 pi_data<-pi_data[!is.na(pi_data$Type),]
 
 #format columns
-pi_data$PAR<-as.factor(pi_data$PAR)
 pi_data$Tank<-as.factor(pi_data$Tank)
 pi_data$Symbiont<-as.factor(pi_data$Symbiont)
 pi_data$SDR<-as.factor(pi_data$SDR)
-pi_data$Run<-as.factor(pi_data$Run)
+pi_data$Plate<-as.factor(pi_data$Plate)
 ```
 
 Look for outliers in the data.  
@@ -90,11 +89,7 @@ Calculate mean temperature values for each run.
 pi.temps<-read.csv("output/larval_pi_curves/runs_temp.csv")
 pi.temps = subset(pi.temps, select = -c(X) ) #remove empty column
 
-#format "run" column
-pi.temps<-pi.temps %>% #Format as "#" rather than "Run#"
-  mutate(Run = str_sub(Run, 4, -1))
-pi.temps$Run<-as.integer(pi.temps$Run) #format as integer
-pi.temps$Run<-as.factor(pi.temps$Run) #format as factor
+pi_data$Plate<-as.integer(pi_data$Plate)
 ```
 
 Add temperature data to master data frame.  
@@ -119,7 +114,7 @@ pi_plot1<-pi_data %>%
     geom_point(aes(group=interaction(PAR, Symbiont), colour=Symbiont), size=6, position = position_dodge(0.4)) + 
     geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(PAR, Symbiont)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
     xlab("Light (PAR)") + 
-    scale_color_manual(name="Symbiont", values=c("orange","brown4"))+
+    scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
     ylab(expression(bold(paste("P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
     #ylim(0, 0.05)+
     theme_classic() + 
@@ -140,9 +135,9 @@ pi_plot2<-pi_data %>%
     
     ggplot(., aes(x = as.factor(PAR), y = P.nmol.org.min, group=Symbiont)) +
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
-    geom_smooth(aes(color=Symbiont, group=Symbiont), method="loess", alpha=0.4, se=TRUE)+
+    geom_smooth(aes(color=Symbiont, group=Symbiont), method="loess", alpha=0.4, se=FALSE)+
     xlab("Light (PAR)") + 
-    scale_color_manual(name="Symbiont", values=c("orange","brown4"))+
+    scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
     ylab(expression(bold(paste("P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
     #ylim(0, 0.05)+
     theme_classic() + 
@@ -221,13 +216,11 @@ Pmax = max photosynthesis (Am from Bayesian script)
 alpha = quantum yeild (AQY from Bayesian script)  
 I/E = irradiance (PAR from Bayesian script)  
 Rd = dark respiration   
+Ik = saturating irradiance 
 
 Next run NLS models.
 
 Using fixed initial values (not using, but keeping for reference):  
-
-
-Not working with current data, keep scripts to try with real data 
 
 ```{r}
 nest <- nest_legacy
@@ -255,14 +248,14 @@ Using flexible initial values based on input data:
 nest <- nest_legacy
 unnest <- unnest_legacy
 
-pi_data<-pi_data%>%
-  mutate(new_Pc=Pc+1)
+#pi_data<-pi_data%>%
+  #mutate(new_Pc=Pc+1)
 
 nls_data <- pi_data %>% 
    group_by(Symbiont) %>%
    nest(-Symbiont) %>%
    mutate(model1 = map(data, ~ 
-                         nls(new_Pc ~ (Am*((AQY*PAR)/(sqrt(Am^2 + (AQY*PAR)^2)))-Rd), data=., start=list(Am=(max(.$new_Pc)-min(.$new_Pc)),  AQY=0.001, Rd=-min(.$new_Pc)), trace=TRUE) %>%
+                         nls(Pc ~ (Am*((AQY*PAR)/(sqrt(Am^2 + (AQY*PAR)^2)))-Rd), data=., start=list(Am=(max(.$Pc)-min(.$Pc)),  AQY=0.001, Rd=-min(.$Pc)), trace=TRUE) %>%
                               tidy %>%
                               dplyr::select(term, estimate) %>% 
                               spread(term, estimate))) %>%
@@ -270,11 +263,8 @@ nls_data <- pi_data %>%
   mutate(Ik = Am/AQY) 
 
 #save 
-
+nls_data
 ```
-
-ERROR ABOVE THIS POINT NEED TO OPTIMIZE 
-
 
 Plot curve over data points.  
 ```{r}
@@ -287,35 +277,30 @@ augmented <- pi_data %>%
   unnest(augmented)
 
 
-#all tanks together
-augmented %>%
+#all together
+curve_plot1<-augmented %>%
   group_by(Symbiont)%>%
   qplot(PAR, Pc, data = ., geom = 'point', colour = Symbiont) +
-  geom_line(aes(y=.fitted))+
-  theme(legend.position="none")
+  geom_line(aes(y=.fitted), size=2)+
+  scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
+  theme(legend.position="right")+
+  theme_classic();curve_plot1
 
+ggsave("figures/larval_pi_curves/nls_curves_all.png", width=6, height=6, dpi=500)
 
 #view individual plots
-by(augmented,augmented$colony_id, function(i) {
-  ggplot(i) +
-          geom_point(aes(PAR, Pc, group=Symbiont)) + 
-          geom_line(aes(y=.fitted, x=PAR)) + 
+curve_plot2<-augmented %>%
+  ggplot() +
+  facet_wrap(~Symbiont)+
+          geom_point(aes(PAR, Pc, group=Symbiont, color=Symbiont)) + 
+          geom_line(aes(y=.fitted, x=PAR), size=2) + 
+          scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
           theme_classic()+
           labs(x = expression(paste('PAR (', mu, "mol photons m"^-2, 's'^-1,")")),
-               y = expression(paste('Photosynthetic rate (nmol larva'^-1, 'min'^-1,")")),
-               title = paste0("PIcurve_", augmented$Symbiont))
-})
+               y = expression(paste('Photosynthetic rate (nmol larva'^-1, 'min'^-1,")")));curve_plot2
 
+ggsave("figures/larval_pi_curves/nls_curves_individual.png", width=10, height=6, dpi=500)
 ```
-
-
-## Further plotting 
-
-ADD HERE AS THE DATA BECOMES AVAILABLE 
-
-
-
-
 
 
 

@@ -363,22 +363,36 @@ upper_lims
 
 ### Cladocopium TPC 
 
+
+
+
+MODELS AREN'T WORKING NOW, ISSUE WITH STARTING PARAMETERS 
+
+
+
+
+
 Run a model fit for Cladocopium. 
 ```{r}
 # CURVE FIT 
 C_data<-tpc_data_outlier%>%
   filter(Symbiont=="C")%>%
-  mutate(R.inverse=as.numeric(R.inverse))
+  mutate(R.inverse=as.numeric(R.inverse))%>%
+  mutate(Temperature=as.numeric(as.character(Temperature)))
 
 #fit 
-C.fit <- nls_multstart(R.inverse~sharpeschoolhigh_1981(temp = Temperature, r_tref,e,eh,th, tref = 26),
+C.fit <- nls_multstart(R.inverse~sharpeschoolhigh_1981(temp = Temperature, r_tref, e, eh, th, tref = 26),
                                                      data = C_data,
-                                                     iter = 500,
-                                                     start_lower = start_vals - 1,
-                                                     start_upper = start_vals + 1,
+                                                     iter = 500) #,
+                                                     start_lower=c(r_tref=0.2, e=2, eh=10, th=2),
+                                                     start_upper=c(r_tref=0.3, e=10, eh=20, th=3), 
+                                                     lower=c(r_tref=0.01, e=1, eh=5, th=1))
+         
+                                                     #start_lower = start_vals - 1,
+                                                     #start_upper = start_vals + 1,
                                                      lower = low_lims,
-                                                     upper = upper_lims,
-                                                     supp_errors = 'Y')
+                                                     upper = upper_lims) #,
+                                                     #supp_errors = 'Y')
 
 C.fit
 
