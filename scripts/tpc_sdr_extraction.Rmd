@@ -137,6 +137,7 @@ Calculate average temperature of each run and export to a table.
 ```{r}
 # list files 
 file.names<-basename(list.files(path = path.p, pattern = "csv$", recursive = TRUE)) 
+file.names <- file.names[!grepl("20230621", file.names)] 
 
 #generate matrix to populate
 Temp.R <- data.frame(matrix(NA, ncol=3))

@@ -59,6 +59,7 @@ library('broom')
 Load data from LoLinR.    
 ```{r, warning=FALSE, message=FALSE}
 tpc_data<-read.csv("output/tpc_sdr/calculated_normalized_rates.csv") #load data
+sample_info<-read.csv("data/tpc_sdr/TPC_SDR_Sample_Info.csv")
 ```
 
 Keep only experimental plate (removing test plates).  
@@ -93,6 +94,8 @@ Calculate mean temperature values and reassign measurement treatment values if n
 ```{r}
 resp.temps<-read.csv("output/tpc_sdr/runs_temp.csv")
 resp.temps = subset(resp.temps, select = -c(X) ) #remove empty column
+resp.temps<-resp.temps%>%
+  filter(!Date=="20230621")
 
 #format "run" column
 resp.temps<-resp.temps %>% #Format as "#" rather than "Run#"
@@ -110,22 +113,27 @@ tpc_data<-tpc_data%>%
   mutate(Temp.C=round(Temp.C,1))
 ```
 
+Add temporary corrected temperature. 
+```{r}
+tpc_data$Temp_corrected<-sample_info$Temp_corrected[match(tpc_data$Plate, sample_info$Plate)]
+```
+
 # Plot respiration over temperature treatments  
 
 Plot data with means   
 ```{r}
 r_plot1<-tpc_data %>%
-    group_by(Temperature, Symbiont, Date)%>%
+    group_by(Temp_corrected, Symbiont, Date)%>%
     #filter(R.nmol.org.min<0.01)%>%
     dplyr::summarise(mean=mean(R.nmol.org.min, na.rm=TRUE), sd=sd(R.nmol.org.min, na.rm=TRUE), N=length(R.nmol.org.min), se=sd/sqrt(N))%>%
     mutate(mean=mean*-1)%>%
-    filter(!Temperature==28)%>%
+    filter(!Temp_corrected==27)%>%
     
-    ggplot(., aes(x = as.factor(Temperature), y = mean, group=interaction(Temperature, Symbiont))) +
+    ggplot(., aes(x = Temp_corrected, y = mean, group=interaction(Temp_corrected, Symbiont))) +
     facet_wrap(~Date)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
-    geom_point(aes(group=interaction(Temperature, Symbiont), colour=Symbiont), size=6, position = position_dodge(0.4)) + 
-    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Temperature, Symbiont)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
+    geom_point(aes(group=interaction(Temp_corrected, Symbiont), colour=Symbiont), size=6, position = position_dodge(0.4)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Temp_corrected, Symbiont)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
     xlab("Temperature") + 
     scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
     ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
@@ -148,7 +156,7 @@ r_plot2<-tpc_data %>%
   #filter(R.nmol.org.min<0.01)%>%
   filter(!Temperature==28)%>%
     
-    ggplot(., aes(x = as.factor(Temperature), y = (R.nmol.org.min*-1), group=Symbiont)) +
+    ggplot(., aes(x = Temp_corrected, y = (R.nmol.org.min*-1), group=Symbiont)) +
     facet_wrap(~Date)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_smooth(aes(color=Symbiont, group=Symbiont), method="loess", alpha=0.4, se=FALSE)+
@@ -174,10 +182,10 @@ r_plot3<-tpc_data %>%
   #filter(R.nmol.org.min<0.01)%>%
   filter(!Temperature==28)%>%
     
-    ggplot(., aes(x = as.factor(Temperature), y = (R.nmol.org.min*-1), group=interaction(Temperature, Symbiont))) +
+    ggplot(., aes(x = Temp_corrected, y = (R.nmol.org.min*-1), group=interaction(Temp_corrected, Symbiont))) +
     facet_wrap(~Date)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
-    geom_point(aes(group=interaction(Temperature, Symbiont), colour=Symbiont), size=4, position = position_jitterdodge(0.4)) + 
+    geom_point(aes(group=interaction(Temp_corrected, Symbiont), colour=Symbiont), size=4, position = position_jitterdodge(0.4)) + 
     #geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Temperature, Symbiont)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
     xlab("Temperature") + 
     scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
@@ -199,11 +207,18 @@ ggsave("figures/tpc_sdr/tpc_dots.png", r_plot3, dpi=300, w=7, h=5, units="in")
 
 ```{r}
 aov<-tpc_data%>%
-    filter(!Temperature==28)%>%
-    aov(R.nmol.org.min~Temperature*Symbiont, data=.)
+    #filter(!Temperature==28)%>%
+    aov(R.nmol.org.min~Temp_corrected*Symbiont, data=.)
 
 summary(aov)
 ```
+
+
+
+
+
+
+
 
 
 
@@ -228,21 +243,21 @@ tpc_data<-tpc_data%>%
 
 Filter temps. 
 ```{r}
-tpc_data_filt<-tpc_data%>%
-  filter(!Temperature==28)
+#tpc_data_filt<-tpc_data%>%
+  #filter(!Temperature==28)
 ```
 
 View and remove outliers.   
 ```{r, warning=FALSE, message=FALSE}
 #identify outliers by Temperature and Treatment groups
-outlier.plot <- ggbetweenstats(tpc_data_filt, Temperature, R.inverse, outlier.tagging = TRUE)
+outlier.plot <- ggbetweenstats(tpc_data_filt, Temp_corrected, R.inverse, outlier.tagging = TRUE)
 
 outlier.plot
 
 ggsave("figures/tpc_sdr/outliersbygroup.png", outlier.plot, dpi=300, w=16, h=8, units="in")
 
 #set quantile values
-q <- c(0.25, 0.75)
+q <- c(0.1, 0.9)
 
 # calculate quantile values by Temperature and Treatment groups
 Quants <- tpc_data_filt %>%
@@ -274,23 +289,39 @@ outlier.plot2
 ggsave("figures/tpc_sdr/removed_outliersbygroup.png", outlier.plot2, dpi=300, w=16, h=8, units="in")
 ```
 
+The outlier removal is not accurate, keep all data points for now removing strong outliers. 
+
+```{r}
+tpc_data_filt<-tpc_data%>%
+  filter(R.inverse>-0.035)%>%
+  filter(R.inverse<0.05)
+```
+
+```{r}
+#identify outliers by Temperature and Treatment groups
+outlier.plot <- ggbetweenstats(tpc_data_filt, Temp_corrected, R.inverse, outlier.tagging = TRUE)
+
+outlier.plot
+```
+
+
 ## Plot data again after outlier removal 
 
 # Plot respiration over temperature treatments  
 
 Plot data with means   
 ```{r}
-r_plot4<-tpc_data_outlier %>%
-    group_by(Temperature, Symbiont, Date)%>%
+r_plot4<-tpc_data_filt %>%
+    group_by(Temp_corrected, Symbiont, Date)%>%
     #filter(R.nmol.org.min<0.01)%>%
     dplyr::summarise(mean=mean(R.nmol.org.min, na.rm=TRUE), sd=sd(R.nmol.org.min, na.rm=TRUE), N=length(R.nmol.org.min), se=sd/sqrt(N))%>%
     mutate(mean=mean*-1)%>%
     
-    ggplot(., aes(x = as.factor(Temperature), y = mean, group=interaction(Temperature, Symbiont))) +
+    ggplot(., aes(x = Temp_corrected, y = mean, group=interaction(Temp_corrected, Symbiont))) +
     facet_wrap(~Date)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
-    geom_point(aes(group=interaction(Temperature, Symbiont), colour=Symbiont), size=6, position = position_dodge(0.4)) + 
-    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Temperature, Symbiont)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
+    geom_point(aes(group=interaction(Temp_corrected, Symbiont), colour=Symbiont), size=6, position = position_dodge(0.4)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Temp_corrected, Symbiont)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
     xlab("Temperature") + 
     scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
     ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
@@ -309,10 +340,12 @@ ggsave("figures/tpc_sdr/tpc_meanss_outlier_removed.png", r_plot1, dpi=300, w=7, 
 
 Plot data with a loess line   
 ```{r}
-r_plot5<-tpc_data_outlier %>%
+r_plot5<-tpc_data_filt %>%
   #filter(R.nmol.org.min<0.01)%>%
+  #filter(!Temperature==28)%>%
+  #filter(!Temperature==32)%>%
     
-    ggplot(., aes(x = as.factor(Temperature), y = (R.nmol.org.min*-1), group=Symbiont)) +
+    ggplot(., aes(x = as.factor(Temp_corrected), y = (R.nmol.org.min*-1), group=Symbiont)) +
     facet_wrap(~Date)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_smooth(aes(color=Symbiont, group=Symbiont), method="loess", alpha=0.4, se=FALSE)+
@@ -334,13 +367,13 @@ ggsave("figures/tpc_sdr/tpc_loesss_outlier_removed.png", r_plot2, dpi=300, w=7, 
 
 Plot data with means   
 ```{r}
-r_plot6<-tpc_data_outlier %>%
+r_plot6<-tpc_data_filt %>%
   #filter(R.nmol.org.min<0.01)%>%
     
-    ggplot(., aes(x = as.factor(Temperature), y = (R.nmol.org.min*-1), group=interaction(Temperature, Symbiont))) +
+    ggplot(., aes(x = Temp_corrected, y = (R.nmol.org.min*-1), group=interaction(Temperature, Symbiont))) +
     facet_wrap(~Date)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
-    geom_point(aes(group=interaction(Temperature, Symbiont), colour=Symbiont), size=4, position = position_jitterdodge(0.4)) + 
+    geom_point(aes(group=interaction(Temp_corrected, Symbiont), colour=Symbiont), size=4, position = position_jitterdodge(0.4)) + 
     #geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Temperature, Symbiont)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
     xlab("Temperature") + 
     scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
@@ -359,7 +392,7 @@ ggsave("figures/tpc_sdr/tpc_dots_outlier_removed.png", r_plot3, dpi=300, w=7, h=
 ```
 
 ```{r}
-summary(aov(R.nmol.org.min~Temperature*Symbiont, data=tpc_data_outlier))
+summary(aov(R.nmol.org.min~Temp_corrected*Symbiont, data=tpc_data_filt))
 ```
 
 ## Fitting TPC    
@@ -403,18 +436,18 @@ MODELS AREN'T WORKING NOW, ISSUE WITH STARTING PARAMETERS
 Run a model fit for Cladocopium. 
 ```{r}
 # CURVE FIT 
-C_data<-tpc_data_filt%>%
-  filter(Symbiont=="C")%>%
+all_data<-tpc_data_filt%>%
+  #filter(Symbiont=="C")%>%
   mutate(R.inverse=as.numeric(R.inverse))%>%
   mutate(Temperature=as.numeric(as.character(Temperature)))
 
 #fit 
-C.fit <- nls_multstart(R.inverse~sharpeschoolhigh_1981(temp = Temperature, r_tref, e, eh, th, tref = 26),
+C.fit <- nls_multstart(R.nmol.org.min~sharpeschoolhigh_1981(temp = Temperature, r_tref, e, eh, th, tref = 26),
                                                      data = C_data,
-                                                     iter = 500) #,
-                                                     start_lower=c(r_tref=0.2, e=2, eh=10, th=2),
-                                                     start_upper=c(r_tref=0.3, e=10, eh=20, th=3), 
-                                                     lower=c(r_tref=0.01, e=1, eh=5, th=1))
+                                                     iter = 500, #,
+                                                     start_lower=c(r_tref=-0.01, e=0, eh=0.15, th=3.6),
+                                                     lower=c(r_tref=0.00, e=0, eh=0, th=1),
+                                                     upper=c(r_tref=0.036, e=10, eh=20, th=6))
          
                                                      #start_lower = start_vals - 1,
                                                      #start_upper = start_vals + 1,
