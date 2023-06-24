@@ -119,6 +119,7 @@ r_plot1<-tpc_data %>%
     #filter(R.nmol.org.min<0.01)%>%
     dplyr::summarise(mean=mean(R.nmol.org.min, na.rm=TRUE), sd=sd(R.nmol.org.min, na.rm=TRUE), N=length(R.nmol.org.min), se=sd/sqrt(N))%>%
     mutate(mean=mean*-1)%>%
+    filter(!Temperature==28)%>%
     
     ggplot(., aes(x = as.factor(Temperature), y = mean, group=interaction(Temperature, Symbiont))) +
     facet_wrap(~Date)+
@@ -145,6 +146,7 @@ Plot data with a loess line
 ```{r}
 r_plot2<-tpc_data %>%
   #filter(R.nmol.org.min<0.01)%>%
+  filter(!Temperature==28)%>%
     
     ggplot(., aes(x = as.factor(Temperature), y = (R.nmol.org.min*-1), group=Symbiont)) +
     facet_wrap(~Date)+
@@ -170,6 +172,7 @@ Plot data with means
 ```{r}
 r_plot3<-tpc_data %>%
   #filter(R.nmol.org.min<0.01)%>%
+  filter(!Temperature==28)%>%
     
     ggplot(., aes(x = as.factor(Temperature), y = (R.nmol.org.min*-1), group=interaction(Temperature, Symbiont))) +
     facet_wrap(~Date)+
@@ -195,8 +198,20 @@ ggsave("figures/tpc_sdr/tpc_dots.png", r_plot3, dpi=300, w=7, h=5, units="in")
 ## Running anova on respiration rates 
 
 ```{r}
-summary(aov(R.nmol.org.min~Temperature*Symbiont, data=tpc_data))
+aov<-tpc_data%>%
+    filter(!Temperature==28)%>%
+    aov(R.nmol.org.min~Temperature*Symbiont, data=.)
+
+summary(aov)
 ```
+
+
+
+
+
+
+
+
 
 
 # Apply TPC calculations and models 
@@ -211,10 +226,17 @@ tpc_data<-tpc_data%>%
   mutate(R.inverse=R.nmol.org.min*-1)
 ```
 
+Filter temps. 
+```{r}
+tpc_data_filt<-tpc_data%>%
+  filter(!Temperature==28)
+```
+
 View and remove outliers.   
 ```{r, warning=FALSE, message=FALSE}
 #identify outliers by Temperature and Treatment groups
-outlier.plot <- ggbetweenstats(tpc_data, Temperature, R.inverse, outlier.tagging = TRUE)
+outlier.plot <- ggbetweenstats(tpc_data_filt, Temperature, R.inverse, outlier.tagging = TRUE)
+
 outlier.plot
 
 ggsave("figures/tpc_sdr/outliersbygroup.png", outlier.plot, dpi=300, w=16, h=8, units="in")
@@ -223,7 +245,7 @@ ggsave("figures/tpc_sdr/outliersbygroup.png", outlier.plot, dpi=300, w=16, h=8, 
 q <- c(0.25, 0.75)
 
 # calculate quantile values by Temperature and Treatment groups
-Quants <- tpc_data %>%
+Quants <- tpc_data_filt %>%
   group_by(Temperature, Symbiont) %>%
   summarize(quant25 = quantile(R.inverse, probs = q[1], na.rm=TRUE),
             quant75 = quantile(R.inverse, probs = q[2], na.rm=TRUE),
@@ -237,10 +259,10 @@ Quants$upper <-  Quants$quant75+1.5*Quants$IQRbyGroup # Upper Range
 Quants$lower <- Quants$quant25-1.5*Quants$IQRbyGroup # Lower Range
 
 #join outlier cutoffs with rate data
-tpc_data <- left_join(tpc_data, Quants)
+tpc_data_filt <- left_join(tpc_data_filt, Quants)
 
 #remove outliers from rates
-tpc_data_outlier <- tpc_data %>%
+tpc_data_outlier <- tpc_data_filt %>%
   filter(R.nmol.org.min < upper) %>%
   filter(R.nmol.org.min > lower) #%>%
   #filter(rate < 0.125)
@@ -260,7 +282,7 @@ Plot data with means
 ```{r}
 r_plot4<-tpc_data_outlier %>%
     group_by(Temperature, Symbiont, Date)%>%
-    filter(R.nmol.org.min<0.01)%>%
+    #filter(R.nmol.org.min<0.01)%>%
     dplyr::summarise(mean=mean(R.nmol.org.min, na.rm=TRUE), sd=sd(R.nmol.org.min, na.rm=TRUE), N=length(R.nmol.org.min), se=sd/sqrt(N))%>%
     mutate(mean=mean*-1)%>%
     
@@ -270,7 +292,7 @@ r_plot4<-tpc_data_outlier %>%
     geom_point(aes(group=interaction(Temperature, Symbiont), colour=Symbiont), size=6, position = position_dodge(0.4)) + 
     geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Temperature, Symbiont)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
     xlab("Temperature") + 
-    scale_color_manual(name="Symbiont", values=c("orange","brown4"))+
+    scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
     ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
     #ylim(0, 0.05)+
     theme_classic() + 
@@ -288,14 +310,14 @@ ggsave("figures/tpc_sdr/tpc_meanss_outlier_removed.png", r_plot1, dpi=300, w=7, 
 Plot data with a loess line   
 ```{r}
 r_plot5<-tpc_data_outlier %>%
-  filter(R.nmol.org.min<0.01)%>%
+  #filter(R.nmol.org.min<0.01)%>%
     
     ggplot(., aes(x = as.factor(Temperature), y = (R.nmol.org.min*-1), group=Symbiont)) +
     facet_wrap(~Date)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_smooth(aes(color=Symbiont, group=Symbiont), method="loess", alpha=0.4, se=FALSE)+
     xlab("Temperature") + 
-    scale_color_manual(name="Symbiont", values=c("orange","brown4"))+
+    scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
     ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
     #ylim(0, 0.05)+
     theme_classic() + 
@@ -313,7 +335,7 @@ ggsave("figures/tpc_sdr/tpc_loesss_outlier_removed.png", r_plot2, dpi=300, w=7, 
 Plot data with means   
 ```{r}
 r_plot6<-tpc_data_outlier %>%
-  filter(R.nmol.org.min<0.01)%>%
+  #filter(R.nmol.org.min<0.01)%>%
     
     ggplot(., aes(x = as.factor(Temperature), y = (R.nmol.org.min*-1), group=interaction(Temperature, Symbiont))) +
     facet_wrap(~Date)+
@@ -321,7 +343,7 @@ r_plot6<-tpc_data_outlier %>%
     geom_point(aes(group=interaction(Temperature, Symbiont), colour=Symbiont), size=4, position = position_jitterdodge(0.4)) + 
     #geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Temperature, Symbiont)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
     xlab("Temperature") + 
-    scale_color_manual(name="Symbiont", values=c("orange","brown4"))+
+    scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
     ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
     #ylim(0, 0.05)+
     theme_classic() + 
@@ -355,11 +377,11 @@ get_model_names()
 #sharpeschoolhigh_1981
 
 # get start vals
-start_vals <- get_start_vals(as.numeric(tpc_data_outlier$Temperature),tpc_data_outlier$R.nmol.org.min, model_name = 'sharpeschoolhigh_1981')
+start_vals <- get_start_vals(as.numeric(tpc_data_filt$Temperature),tpc_data_filt$R.nmol.org.min, model_name = 'sharpeschoolhigh_1981')
 
 # get limits
-low_lims <- get_lower_lims(as.numeric(tpc_data_outlier$Temperature),tpc_data_outlier$R.nmol.org.min, model_name = 'sharpeschoolhigh_1981')
-upper_lims <- get_upper_lims(as.numeric(tpc_data_outlier$Temperature),tpc_data_outlier$R.nmol.org.min, model_name = 'sharpeschoolhigh_1981')
+low_lims <- get_lower_lims(as.numeric(tpc_data_filt$Temperature),tpc_data_filt$R.nmol.org.min, model_name = 'sharpeschoolhigh_1981')
+upper_lims <- get_upper_lims(as.numeric(tpc_data_filt$Temperature),tpc_data_filt$R.nmol.org.min, model_name = 'sharpeschoolhigh_1981')
 
 #view values
 start_vals
@@ -381,7 +403,7 @@ MODELS AREN'T WORKING NOW, ISSUE WITH STARTING PARAMETERS
 Run a model fit for Cladocopium. 
 ```{r}
 # CURVE FIT 
-C_data<-tpc_data_outlier%>%
+C_data<-tpc_data_filt%>%
   filter(Symbiont=="C")%>%
   mutate(R.inverse=as.numeric(R.inverse))%>%
   mutate(Temperature=as.numeric(as.character(Temperature)))
