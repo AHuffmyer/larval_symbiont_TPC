@@ -484,6 +484,42 @@ summary(model)
 ```
 No effect on P net at low light. 
 
+Test effect of light on P:R ratio. 
+```{r}
+model<-pr_data_calc%>%
+  filter(Metric %in% c("ratio_low", "ratio_medium", "ratio_high"))%>%
+  aov(Value~Metric*Temperature*Group, data=.)
 
+summary(model)
 
+TukeyHSD(model, "Metric")
+```
+P:R ratios are significantly different by light. Ratios at high light are different than low and medium light. 
 
+Test effect of light on P gross.  
+```{r}
+model<-pr_data_calc%>%
+  filter(Metric %in% c("p_gross_low", "p_gross_medium", "p_gross_high"))%>%
+  aov(Value~Metric*Temperature*Group, data=.)
+
+summary(model)
+
+TukeyHSD(model, "Metric")
+TukeyHSD(model, "Temperature")
+
+emm<-emmeans(model, ~ Group | Temperature)
+pairs(emm)
+```
+P gross increases with light and is different between all light levels. P gross is also lower at high temperature. There is also an interaction betwen temperature and group. At 27 degrees, P gross is higher in F1 WT than F2 WT.  
+
+Test effect of light on P net.   
+```{r}
+model<-pr_data_calc%>%
+  filter(Metric %in% c("p_net_low", "p_net_medium", "p_net_high"))%>%
+  aov(Value~Metric*Temperature*Group, data=.)
+
+summary(model)
+
+TukeyHSD(model, "Metric")
+```
+P net is affected by light and increases with each light level. 
