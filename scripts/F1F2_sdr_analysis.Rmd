@@ -1,5 +1,5 @@
 ---
-title: "Larval PI Curve Plotting and Analysis - Hawaii 2023 - F1F2 project" 
+title: "Larval Respirometry Plotting and Analysis - Hawaii 2023 - F1F2 project" 
 author: "AS Huffmyer"
 date: '2023'
 output:
@@ -15,6 +15,7 @@ editor_options:
 ---
 
 Need to QC individual export plots 
+Need to run each metric (ratio, Pnet, Pgross, Rd, LER) against PAR - currently separated by PAR. 
 
 # Setup  
 
@@ -39,6 +40,7 @@ if ("rTPC" %in% rownames(installed.packages()) == 'FALSE') remotes::install_gith
 if ("ggstatsplot" %in% rownames(installed.packages()) == 'FALSE') remotes::install_github("IndrajeetPatil/ggstatsplot")
 if ("nls.multstart" %in% rownames(installed.packages()) == 'FALSE') install.packages('nls.multstart')
 if ("broom" %in% rownames(installed.packages()) == 'FALSE') install.packages('broom')
+if ("emmeans" %in% rownames(installed.packages()) == 'FALSE') install.packages('emmeans')
 
 #load packages
 library("ggplot2")
@@ -52,6 +54,7 @@ library('rTPC')
 library('ggstatsplot')
 library('nls.multstart')
 library('broom')
+library('emmeans')
 ```
 
 
@@ -74,33 +77,21 @@ pr_data$Plate<-as.factor(pr_data$Plate)
 pr_data$Temperature<-as.factor(pr_data$Temperature)
 ```
 
-Remove plate that didnt work 
-
-```{r}
-#pr_data<-pr_data%>%
-#  filter(!Plate==2)%>%
-#  filter(!Plate==1)
-```
-
 Change level of par factor. 
 ```{r}
 pr_data$PAR<-factor(pr_data$PAR, levels=c("0.1", "50", "100", "500", "0.2"))
 ```
 
-
 Look for outliers in the data.  
 
 ```{r}
 boxplot(pr_data$P.nmol.org.min)
-#pr_data<-pr_data%>%filter(P.nmol.org.min < 0.08)
-#boxplot(pr_data$P.nmol.org.min)
+pr_data<-pr_data%>%filter(P.nmol.org.min < 0.10)
+boxplot(pr_data$P.nmol.org.min)
 
 boxplot(pr_data$P.nmol.org.min~pr_data$PAR)
-
-pr_data$code<-paste(pr_data$Temperature, "_",pr_data$PAR)
-
-boxplot(pr_data$P.nmol.org.min~pr_data$code)
 ```
+Removed one outlier. 
 
 Calculate mean temperature values for each run.    
 
@@ -150,7 +141,7 @@ pr_plot1<-pr_data %>%
 ggsave("figures/F1F2_sdr/pr_means.png", pr_plot1, dpi=300, w=7, h=5, units="in")
 ```
 
-Display with plate. 
+Display by individual plate (duplicate plates at each temperature).  
 ```{r}
 pr_plot1a<-pr_data %>%
   filter(P.nmol.org.min<0.1)%>%
@@ -176,7 +167,7 @@ pr_plot1a<-pr_data %>%
       ); pr_plot1a
 ```
 
-View by plate. 
+View by plate with a loess line. 
 ```{r}
 pr_plot2b<-pr_data %>%
   filter(P.nmol.org.min<0.1)%>%
@@ -197,8 +188,9 @@ pr_plot2b<-pr_data %>%
       legend.text=element_text(size=12)
       ); pr_plot2b
 ```
+Plates look similar and consistent. 
 
-Plot data with dots   
+Plot data with individual data points.    
 ```{r}
 pr_plot3<-pr_data %>%
   filter(P.nmol.org.min<0.1)%>%
@@ -226,12 +218,13 @@ ggsave("figures/F1F2_sdr/pr_dots.png", pr_plot3, dpi=300, w=7, h=5, units="in")
 
 ## Conduct anova 
 
-Run anova on values at each temperature
+Run anova on effect of PAR, group, and temperature. 
 ```{r}
 summary(aov(P.nmol.org.min~PAR*Group*Temperature, data=pr_data))
 ```
+There are strong effects of temperature and light. 
 
-Run model for 27 
+Run model for 27 degrees. 
 ```{r}
 model<-pr_data%>%
   filter(Temperature==27)%>%
@@ -239,6 +232,7 @@ model<-pr_data%>%
 
 summary(model)
 ```
+Strong effect of light at 27C. 
 
 Run model for 33
 ```{r}
@@ -248,10 +242,11 @@ model<-pr_data%>%
 
 summary(model)
 ```
+Strong effect of light at 33C. 
 
 # Calculate R, P, and P:R 
 
-Calculate gross photosynthesis and P:R ratio. 
+Calculate gross and net photosynthesis, light enhanced respiration (LER), dark respiration (Rd), and P:R ratio at low (50 PAR), medium (100 PAR), and high (500 PAR) light. 
 ```{r}
 pr_data_calc<-pr_data%>%
   select(Date, Chamber.ID, Plate, Run, Temperature, Group, PAR, P.nmol.org.min)%>%
@@ -276,7 +271,9 @@ boxplot(pr_data_calc$Value)
 
 pr_data_calc<-pr_data_calc%>%
   filter(Value>-5)%>% #%>%
-  filter(Value<100)
+  filter(Value<10)%>%
+  filter(!c(Metric=="p_gross_low" & Value >0.1))%>%
+filter(!c(Metric=="p_net_low" & Value >0.1))
 
 boxplot(pr_data_calc$Value)
 ```
@@ -320,7 +317,7 @@ metric_plot1<-pr_data_calc%>%
 ggsave("figures/F1F2_sdr/pr_metrics.png", metric_plot1, dpi=300, w=7, h=5, units="in")
 ```
 
-View metrics. 
+View metrics across temperatures. 
 ```{r}
 metric_plot2<-pr_data_calc%>%
     filter(Metric %in% c("ratio_high", "ratio_low", "ratio_medium"))%>%
@@ -372,7 +369,7 @@ metric_plot3<-pr_data_calc%>%
 ggsave("figures/F1F2_sdr/ler_rd.png", metric_plot3, dpi=300, w=7, h=5, units="in")
 ```
 
-Run anova on differences. 
+## Run anova on differences. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -380,9 +377,8 @@ model<-pr_data_calc%>%
   aov(Value~Group*Temperature, data=.)
 
 summary(model)
-
-#TukeyHSD(model, c("Group", "Temperature"))
 ```
+No difference in P:R ratio at high (500 PAR) light. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -390,9 +386,8 @@ model<-pr_data_calc%>%
   aov(Value~Group*Temperature, data=.)
 
 summary(model)
-
-#TukeyHSD(model, c("Group", "Temperature"))
 ```
+No difference in P:R ratio in medium (100 PAR) light. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -401,9 +396,9 @@ model<-pr_data_calc%>%
 
 summary(model)
 
-#TukeyHSD(model, c("Group", "Temperature"))
+TukeyHSD(model, "Group")
 ```
-F2 NB has lower P:R ratios than WT F2 
+Significant effect of group (p=0.045) on P:R at low (50 PAR) light - F2 NB has lower P:R ratios than WT F2.  
 
 ```{r}
 model<-pr_data_calc%>%
@@ -412,8 +407,9 @@ model<-pr_data_calc%>%
 
 summary(model)
 
-#TukeyHSD(model, c("Group", "Temperature"))
+TukeyHSD(model, "Temperature")
 ```
+Light enhanced respiration is lower at 33 compared to 27. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -422,8 +418,11 @@ model<-pr_data_calc%>%
 
 summary(model)
 
-#TukeyHSD(model, c("Group", "Temperature"))
+TukeyHSD(model, "Temperature")
+
+TukeyHSD(model, "Group")
 ```
+Dark respiration is different by group and by temperature. Rd is higher at 33 degrees. Rd is also lower in the F2 NB than the F1 NB. The F2 NB also has lower Rd than the F2 WT. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -431,9 +430,8 @@ model<-pr_data_calc%>%
   aov(Value~Group*Temperature, data=.)
 
 summary(model)
-
-#TukeyHSD(model, c("Group", "Temperature"))
 ```
+No effect on gross photosynthesis at high light. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -442,8 +440,9 @@ model<-pr_data_calc%>%
 
 summary(model)
 
-#TukeyHSD(model, c("Group", "Temperature"))
+TukeyHSD(model, "Temperature")
 ```
+Gross photosynthesis at medium light (100) PAR is significantly affected by temperature. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -452,8 +451,9 @@ model<-pr_data_calc%>%
 
 summary(model)
 
-#TukeyHSD(model, c("Group", "Temperature"))
+TukeyHSD(model, "Temperature")
 ```
+Gross photosynthesis at low light is affected by temperature. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -462,8 +462,9 @@ model<-pr_data_calc%>%
 
 summary(model)
 
-#TukeyHSD(model, c("Group", "Temperature"))
+TukeyHSD(model, "Temperature")
 ```
+Net photosynthesis at high light is affected by temperature. P net increases at higher temperatures at high light. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -471,9 +472,8 @@ model<-pr_data_calc%>%
   aov(Value~Group*Temperature, data=.)
 
 summary(model)
-
-#TukeyHSD(model, c("Group", "Temperature"))
 ```
+No effect on P net at medium light. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -481,6 +481,9 @@ model<-pr_data_calc%>%
   aov(Value~Group*Temperature, data=.)
 
 summary(model)
-
-#TukeyHSD(model, c("Group", "Temperature"))
 ```
+No effect on P net at low light. 
+
+
+
+
