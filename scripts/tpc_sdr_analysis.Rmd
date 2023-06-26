@@ -218,20 +218,7 @@ summary(aov)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 # Apply TPC calculations and models 
-
-INSERT DATE FILTER HERE AND DUPLICATE BELOW ANALYSES 
 
 ## Look for outliers 
 
@@ -241,10 +228,10 @@ tpc_data<-tpc_data%>%
   mutate(R.inverse=R.nmol.org.min*-1)
 ```
 
-Filter temps. 
+Filter temps that didn't work. 
 ```{r}
-#tpc_data_filt<-tpc_data%>%
-  #filter(!Temperature==28)
+tpc_data_filt<-tpc_data%>%
+  filter(!Temperature==28)
 ```
 
 View and remove outliers.   
@@ -289,36 +276,19 @@ outlier.plot2
 ggsave("figures/tpc_sdr/removed_outliersbygroup.png", outlier.plot2, dpi=300, w=16, h=8, units="in")
 ```
 
-The outlier removal is not accurate, keep all data points for now removing strong outliers. 
-
-```{r}
-tpc_data_filt<-tpc_data%>%
-  filter(R.inverse>-0.035)%>%
-  filter(R.inverse<0.05)
-```
-
-```{r}
-#identify outliers by Temperature and Treatment groups
-outlier.plot <- ggbetweenstats(tpc_data_filt, Temp_corrected, R.inverse, outlier.tagging = TRUE)
-
-outlier.plot
-```
-
-
-## Plot data again after outlier removal 
-
-# Plot respiration over temperature treatments  
+The outlier removal is not accurate, keep all data points for now. 
 
 Plot data with means   
 ```{r}
 r_plot4<-tpc_data_filt %>%
     group_by(Temp_corrected, Symbiont, Date)%>%
     #filter(R.nmol.org.min<0.01)%>%
+    filter(!Temperature==28)%>%
     dplyr::summarise(mean=mean(R.nmol.org.min, na.rm=TRUE), sd=sd(R.nmol.org.min, na.rm=TRUE), N=length(R.nmol.org.min), se=sd/sqrt(N))%>%
     mutate(mean=mean*-1)%>%
     
     ggplot(., aes(x = Temp_corrected, y = mean, group=interaction(Temp_corrected, Symbiont))) +
-    facet_wrap(~Date)+
+    #facet_wrap(~Date)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_point(aes(group=interaction(Temp_corrected, Symbiont), colour=Symbiont), size=6, position = position_dodge(0.4)) + 
     geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Temp_corrected, Symbiont)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
@@ -334,15 +304,13 @@ r_plot4<-tpc_data_filt %>%
       legend.title=element_text(face="bold", size=14), 
       legend.text=element_text(size=12)
       ); r_plot4
-
-ggsave("figures/tpc_sdr/tpc_meanss_outlier_removed.png", r_plot1, dpi=300, w=7, h=5, units="in")
 ```
 
 Plot data with a loess line   
 ```{r}
 r_plot5<-tpc_data_filt %>%
   #filter(R.nmol.org.min<0.01)%>%
-  #filter(!Temperature==28)%>%
+  filter(!Temperature==28)%>%
   #filter(!Temperature==32)%>%
     
     ggplot(., aes(x = as.factor(Temp_corrected), y = (R.nmol.org.min*-1), group=Symbiont)) +
@@ -362,7 +330,6 @@ r_plot5<-tpc_data_filt %>%
       legend.text=element_text(size=12)
       ); r_plot5
 
-ggsave("figures/tpc_sdr/tpc_loesss_outlier_removed.png", r_plot2, dpi=300, w=7, h=5, units="in")
 ```
 
 Plot data with means   
@@ -387,15 +354,15 @@ r_plot6<-tpc_data_filt %>%
       legend.title=element_text(face="bold", size=14), 
       legend.text=element_text(size=12)
       ); r_plot6
-
-ggsave("figures/tpc_sdr/tpc_dots_outlier_removed.png", r_plot3, dpi=300, w=7, h=5, units="in")
 ```
 
 ```{r}
 summary(aov(R.nmol.org.min~Temp_corrected*Symbiont, data=tpc_data_filt))
 ```
 
-## Fitting TPC    
+Significant effect of temperature, no effect of symbiont. 
+
+# Fitting TPC    
 
 TPC fitting 
 Padifeld et al **rTPC and nls.multstart: A new pipeline to fit thermal performance curves in r**  
@@ -410,11 +377,11 @@ get_model_names()
 #sharpeschoolhigh_1981
 
 # get start vals
-start_vals <- get_start_vals(as.numeric(tpc_data_filt$Temperature),tpc_data_filt$R.nmol.org.min, model_name = 'sharpeschoolhigh_1981')
+start_vals <- get_start_vals(as.numeric(tpc_data_filt$Temp_corrected),tpc_data_filt$R.inverse, model_name = 'sharpeschoolhigh_1981')
 
 # get limits
-low_lims <- get_lower_lims(as.numeric(tpc_data_filt$Temperature),tpc_data_filt$R.nmol.org.min, model_name = 'sharpeschoolhigh_1981')
-upper_lims <- get_upper_lims(as.numeric(tpc_data_filt$Temperature),tpc_data_filt$R.nmol.org.min, model_name = 'sharpeschoolhigh_1981')
+low_lims <- get_lower_lims(as.numeric(tpc_data_filt$Temp_corrected),tpc_data_filt$R.inverse, model_name = 'sharpeschoolhigh_1981')
+upper_lims <- get_upper_lims(as.numeric(tpc_data_filt$Temp_corrected),tpc_data_filt$R.inverse, model_name = 'sharpeschoolhigh_1981')
 
 #view values
 start_vals
@@ -422,54 +389,42 @@ low_lims
 upper_lims
 ```
 
-### Cladocopium TPC 
 
 
 
+
+
+
+
+NEED TO CORRECT NA IN START VALUES 
 
 MODELS AREN'T WORKING NOW, ISSUE WITH STARTING PARAMETERS 
 
-
-
-
+### Cladocopium TPC 
 
 Run a model fit for Cladocopium. 
 ```{r}
 # CURVE FIT 
-all_data<-tpc_data_filt%>%
-  #filter(Symbiont=="C")%>%
-  mutate(R.inverse=as.numeric(R.inverse))%>%
-  mutate(Temperature=as.numeric(as.character(Temperature)))
+C_data<-tpc_data_filt%>%
+  filter(Symbiont=="C") #%>%
+  #mutate(R.inverse=as.numeric(R.inverse))%>%
+  #mutate(Temp_corrected=as.numeric(as.character(Temperature)))
 
 #fit 
-C.fit <- nls_multstart(R.nmol.org.min~sharpeschoolhigh_1981(temp = Temperature, r_tref, e, eh, th, tref = 26),
+C.fit <- nls_multstart(R.inverse~sharpeschoolhigh_1981(temp = Temp_corrected, r_tref, e, eh, th, tref = 26),
                                                      data = C_data,
-                                                     iter = 500, #,
-                                                     start_lower=c(r_tref=-0.01, e=0, eh=0.15, th=3.6),
-                                                     lower=c(r_tref=0.00, e=0, eh=0, th=1),
-                                                     upper=c(r_tref=0.036, e=10, eh=20, th=6))
-         
-                                                     #start_lower = start_vals - 1,
-                                                     #start_upper = start_vals + 1,
+                                                     iter = 500,
+                                                     start_lower = start_vals - 1,
+                                                     start_upper = start_vals + 1,
                                                      lower = low_lims,
-                                                     upper = upper_lims) #,
-                                                     #supp_errors = 'Y')
+                                                     upper = upper_lims)
 
 C.fit
 
-
-
-
-
-
-
-
-
-
 #generate the predicted data
-C.new_data <- data.frame(temp = seq(from=min(C_data$Temperature), to=max(C_data$Temperature), by=((max(C_data$Temperature)-min(C_data$Temperature))/(nrow(C_data)-1)))) #set min and max temperatures and add prediction for number of rows in data frame 
+C.new_data <- data.frame(temp = seq(from=min(C_data$Temp_corrected), to=max(C_data$Temp_corrected), by=((max(C_data$Temp_corrected)-min(C_data$Temp_corrected))/(nrow(C_data)-1)))) #set min and max temperatures and add prediction for number of rows in data frame 
 
-#C.new_data <- data.frame(temp = seq(from=min(C_data$Temperature), to=max(C_data$Temperature), by=0.071)) #manual interval if required
+#C.new_data <- data.frame(temp = seq(from=min(C_data$Temp_corrected), to=max(C_data$Temp_corrected), by=0.071)) #manual interval if required
 
 C.preds <- augment(C.fit, newdata = C.new_data)
 
@@ -484,7 +439,7 @@ C.TCP.res
 Bootstrap the curve fit by resampling the original data with replacement. 
 ```{r}
 # refit model using nlsLM
-C.fit_nlsLM <- minpack.lm::nlsLM(R.nmol.org.min~sharpeschoolhigh_1981(temp = Temperature, r_tref,e,eh,th, tref = 28),
+C.fit_nlsLM <- minpack.lm::nlsLM(R.nmol.org.min~sharpeschoolhigh_1981(temp = Temp_corrected, r_tref,e,eh,th, tref = 28),
                         data = C_data,
                         start = coef(C.fit),
                         lower = low_lims,
@@ -504,7 +459,7 @@ C.boot1_preds <- C.boot1$t %>%
   drop_na() %>%
   mutate(iter = 1:n()) %>%
   group_by_all() %>%
-  do(data.frame(temp = seq(min(C_data$Temperature), max(C_data$Temperature), length.out = 100))) %>%
+  do(data.frame(temp = seq(min(C_data$Temp_corrected), max(C_data$Temp_corrected), length.out = 100))) %>%
   ungroup() %>%
   mutate(pred = sharpeschoolhigh_1981(temp, r_tref, e, eh, th, tref = 28))
 
@@ -518,32 +473,31 @@ C.boot1_conf_preds <- group_by(C.boot1_preds, temp) %>%
 C.CI.plot <- ggplot() +
   geom_line(aes(temp, .fitted), C.preds, col = 'orange') +
   geom_ribbon(aes(temp, ymin = conf_lower, ymax = conf_upper), C.boot1_conf_preds, fill = 'orange', alpha = 0.3) +
-  geom_point(aes(Temperature, R.nmol.org.min), C_data, size = 2, alpha = 0.5,col = 'orange') +
+  geom_point(aes(Temp_corrected, R.inverse), C_data, size = 2, alpha = 0.5,col = 'orange') +
   theme_bw(base_size = 12) +
   labs(x = 'Temperature (ºC)',
        y = 'Respiration Rate (nmol O2/larva/min');C.CI.plot 
 
 ```
 
-### Durusdinium TPC 
+### Mixed TPC 
 
-Run a model fit for Durusdinium 
+Run a model fit for Mixed symbionts 
 ```{r}
 # CURVE FIT 
-D_data<-tpc_data_outlier%>%
-  filter(Symbiont=="D")
+MIX_data<-tpc_data_filt%>%
+  filter(Symbiont=="MIX")
 
 #fit 
-D.fit <- nls_multstart(R.nmol.org.min~sharpeschoolhigh_1981(temp = Temperature, r_tref,e,eh,th, tref = 28),
-                                                     data = D_data,
+MIX.fit <- nls_multstart(R.nmol.org.min~sharpeschoolhigh_1981(temp = Temp_corrected, r_tref,e,eh,th, tref = 28),
+                                                     data = MIX_data,
                                                      iter = 500,
                                                      start_lower = start_vals - 1,
                                                      start_upper = start_vals + 1,
                                                      lower = low_lims,
-                                                     upper = upper_lims,
-                                                     supp_errors = 'Y')
+                                                     upper = upper_lims)
 
-D.fit
+MIX.fit
 
 #generate the predicted data
 D.new_data <- data.frame(temp = seq(from=min(D_data$Temperature), to=max(D_data$Temperature), by=((max(D_data$Temperature)-min(D_data$Temperature))/(nrow(D_data)-1)))) #set min and max temperatures and add prediction for number of rows in data frame 

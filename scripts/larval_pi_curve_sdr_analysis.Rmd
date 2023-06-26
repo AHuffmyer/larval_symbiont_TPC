@@ -15,6 +15,7 @@ editor_options:
 ---
 
 Note: Will need to add filter by date once we have multiple days represented in the dataset 
+QC all plots, check all blanks for every run 
 
 # Setup  
 
@@ -101,6 +102,13 @@ pi_data<-pi_data%>%
   mutate(Temp.C=round(Temp.C,1))
 ```
 
+Filter out high light runs (inconsistent temprature and O2 readings)
+```{r}
+pi_data<-pi_data%>%
+  filter(PAR<1100)%>%
+  filter(P.nmol.org.min>-0.03)
+```
+
 # Plot photosynthesis over PAR treatments  
 
 Plot data with means   
@@ -131,7 +139,7 @@ ggsave("figures/larval_pi_curves/pi_means.png", pi_plot1, dpi=300, w=7, h=5, uni
 
 Display with plate. 
 ```{r}
-pi_plot1<-pi_data %>%
+pi_plot1a<-pi_data %>%
     group_by(PAR, Symbiont, Plate)%>%
     dplyr::summarise(mean=mean(P.nmol.org.min, na.rm=TRUE), sd=sd(P.nmol.org.min, na.rm=TRUE), N=length(P.nmol.org.min), se=sd/sqrt(N))%>%
     
@@ -151,7 +159,7 @@ pi_plot1<-pi_data %>%
       axis.text=element_text(size=12, color="black"), 
       legend.title=element_text(face="bold", size=14), 
       legend.text=element_text(size=12)
-      ); pi_plot1
+      ); pi_plot1a
 ```
 
 Plot data with a loess line   
@@ -201,7 +209,7 @@ pi_plot2b<-pi_data %>%
 
 Similar curves between plates, proceed with using average of the two plates. 
 
-# View dark respiration 
+# View respiration 
 
 View by plate. 
 ```{r}
@@ -229,6 +237,10 @@ pi_plot3<-pi_data %>%
       ); pi_plot3
 ```
 
+Run anova on values 
+```{r}
+summary(aov(P.nmol.org.min~PAR*Symbiont, data=pi_data))
+```
 
 # Apply PI curve calculations and models 
 
@@ -348,7 +360,7 @@ Plot curve over data points.
 augmented <- pi_data %>% 
   nest(-Symbiont) %>% 
   mutate(
-    fit = map(data, ~ nls(Pc ~ (Am*((AQY*PAR)/(sqrt(Am^2 + (AQY*PAR)^2)))-Rd), data=., start=list(Am=0.7,  AQY=0.001, Rd=.4))),
+    fit = map(data, ~ nls(Pc ~ (Am*((AQY*PAR)/(sqrt(Am^2 + (AQY*PAR)^2)))-Rd), data=., start=list(Am=0.5,  AQY=0.001, Rd=.4))),
     augmented = map(fit, augment),
   ) %>% 
   unnest(augmented)

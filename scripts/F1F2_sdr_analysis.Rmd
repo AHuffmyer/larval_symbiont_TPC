@@ -1,0 +1,486 @@
+---
+title: "Larval PI Curve Plotting and Analysis - Hawaii 2023 - F1F2 project" 
+author: "AS Huffmyer"
+date: '2023'
+output:
+  html_document:
+    code_folding: hide
+    toc: yes
+    toc_depth: 6
+    toc_float: yes
+  pdf_document:
+    keep_tex: yes
+editor_options: 
+  chunk_output_type: console
+---
+
+Need to QC individual export plots 
+
+# Setup  
+
+Set up workspace, set options, and load required packages.    
+```{r}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r, warning=FALSE, message=FALSE}
+## install packages if you dont already have them in your library
+if ("tidyverse" %in% rownames(installed.packages()) == 'FALSE') install.packages('tidyverse') 
+if ("car" %in% rownames(installed.packages()) == 'FALSE') install.packages('car') 
+if ("lme4" %in% rownames(installed.packages()) == 'FALSE') install.packages('lme4') 
+if ("lmerTest" %in% rownames(installed.packages()) == 'FALSE') install.packages('lmerTest') 
+if ("scales" %in% rownames(installed.packages()) == 'FALSE') install.packages('scales') 
+if ("cowplot" %in% rownames(installed.packages()) == 'FALSE') install.packages('cowplot') 
+if ("ggplot2" %in% rownames(installed.packages()) == 'FALSE') install.packages('ggplot2') 
+if ("effects" %in% rownames(installed.packages()) == 'FALSE') install.packages('effects') 
+if ("emmeans" %in% rownames(installed.packages()) == 'FALSE') install.packages('emmeans') 
+if ("multcomp" %in% rownames(installed.packages()) == 'FALSE') install.packages('multcomp') 
+if ("rTPC" %in% rownames(installed.packages()) == 'FALSE') remotes::install_github("padpadpadpad/rTPC")
+if ("ggstatsplot" %in% rownames(installed.packages()) == 'FALSE') remotes::install_github("IndrajeetPatil/ggstatsplot")
+if ("nls.multstart" %in% rownames(installed.packages()) == 'FALSE') install.packages('nls.multstart')
+if ("broom" %in% rownames(installed.packages()) == 'FALSE') install.packages('broom')
+
+#load packages
+library("ggplot2")
+library("tidyverse")
+library('car')
+library('lme4')
+library('lmerTest')
+library('scales')
+library('cowplot')
+library('rTPC')
+library('ggstatsplot')
+library('nls.multstart')
+library('broom')
+```
+
+
+# Data visualization and manipulation  
+
+Load data from LoLinR.    
+```{r, warning=FALSE, message=FALSE}
+pr_data<-read.csv("output/F1F2_sdr/F1F2_calculated_normalized_photo_rates.csv") #load data
+```
+
+Format data. 
+```{r, warning=FALSE, message=FALSE}
+#remove all rows of wells that did not have samples or blanks
+pr_data<-pr_data[!is.na(pr_data$Type),]
+
+#format columns
+pr_data$Group<-as.factor(pr_data$Group)
+pr_data$SDR<-as.factor(pr_data$SDR)
+pr_data$Plate<-as.factor(pr_data$Plate)
+pr_data$Temperature<-as.factor(pr_data$Temperature)
+```
+
+Remove plate that didnt work 
+
+```{r}
+#pr_data<-pr_data%>%
+#  filter(!Plate==2)%>%
+#  filter(!Plate==1)
+```
+
+Change level of par factor. 
+```{r}
+pr_data$PAR<-factor(pr_data$PAR, levels=c("0.1", "50", "100", "500", "0.2"))
+```
+
+
+Look for outliers in the data.  
+
+```{r}
+boxplot(pr_data$P.nmol.org.min)
+#pr_data<-pr_data%>%filter(P.nmol.org.min < 0.08)
+#boxplot(pr_data$P.nmol.org.min)
+
+boxplot(pr_data$P.nmol.org.min~pr_data$PAR)
+
+pr_data$code<-paste(pr_data$Temperature, "_",pr_data$PAR)
+
+boxplot(pr_data$P.nmol.org.min~pr_data$code)
+```
+
+Calculate mean temperature values for each run.    
+
+```{r}
+pr.temps<-read.csv("output/F1F2_sdr/runs_temp.csv")
+pr.temps = subset(pr.temps, select = -c(X) ) #remove empty column
+
+pr_data$Plate<-as.integer(pr_data$Plate)
+```
+
+Add temperature data to master data frame.  
+```{r}
+pr_data<-left_join(pr_data,pr.temps)
+
+#round to 0.1°C 
+pr_data<-pr_data%>%
+  mutate(Temp.C=round(Temp.C,1))
+```
+
+# Plot photosynthesis over PAR and temperature treatments  
+
+Plot data with means   
+```{r}
+pr_plot1<-pr_data %>%
+  filter(P.nmol.org.min<0.1)%>%
+    group_by(PAR, Group, Temperature)%>%
+    dplyr::summarise(mean=mean(P.nmol.org.min, na.rm=TRUE), sd=sd(P.nmol.org.min, na.rm=TRUE), N=length(P.nmol.org.min), se=sd/sqrt(N))%>%
+    
+    ggplot(., aes(x = as.factor(PAR), y = mean, group=interaction(PAR, Group))) +
+    facet_wrap(~Temperature)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_point(aes(group=interaction(PAR, Group), colour=Group), size=6, position = position_dodge(0.4)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(PAR, Group)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
+    xlab("Light (PAR)") + 
+    scale_color_manual(name="Group", values=c("brown4", "darkblue", "orange", "lightblue"))+
+    ylab(expression(bold(paste("P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    #ylim(0, 0.05)+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); pr_plot1
+
+ggsave("figures/F1F2_sdr/pr_means.png", pr_plot1, dpi=300, w=7, h=5, units="in")
+```
+
+Display with plate. 
+```{r}
+pr_plot1a<-pr_data %>%
+  filter(P.nmol.org.min<0.1)%>%
+    group_by(PAR, Group, Plate)%>%
+    dplyr::summarise(mean=mean(P.nmol.org.min, na.rm=TRUE), sd=sd(P.nmol.org.min, na.rm=TRUE), N=length(P.nmol.org.min), se=sd/sqrt(N))%>%
+    
+    ggplot(., aes(x = as.factor(PAR), y = mean, group=interaction(PAR, Group))) +
+    facet_wrap(~Plate)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_point(aes(group=interaction(PAR, Group), colour=Group), size=6, position = position_dodge(0.4)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(PAR, Group)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
+    xlab("Light (PAR)") + 
+    scale_color_manual(name="Group", values=c("brown4", "darkblue", "orange", "lightblue"))+
+    ylab(expression(bold(paste("P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    #ylim(0, 0.05)+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); pr_plot1a
+```
+
+View by plate. 
+```{r}
+pr_plot2b<-pr_data %>%
+  filter(P.nmol.org.min<0.1)%>%
+    ggplot(., aes(x = as.factor(PAR), y = P.nmol.org.min, group=Group)) +
+    facet_wrap(~Plate)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_smooth(aes(color=Group, group=Group), method="loess", alpha=0.4, se=FALSE)+
+    xlab("Light (PAR)") + 
+    scale_color_manual(name="Group", values=c("brown4", "darkblue", "orange", "lightblue"))+
+    ylab(expression(bold(paste("P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    #ylim(0, 0.05)+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); pr_plot2b
+```
+
+Plot data with dots   
+```{r}
+pr_plot3<-pr_data %>%
+  filter(P.nmol.org.min<0.1)%>%
+    
+    ggplot(., aes(x = as.factor(PAR), y = P.nmol.org.min, group=interaction(PAR, Group))) +
+    facet_wrap(~Temperature)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_point(aes(group=interaction(PAR, Group), color=Group), size=3, fill="white", position = position_jitterdodge(0.4), shape=21) + 
+    geom_smooth(aes(color=Group, group=Group), method="loess", size=2, alpha=0.4, se=FALSE)+
+    xlab("Light (PAR)") + 
+    scale_color_manual(name="Group", values=c("brown4", "darkblue", "orange", "lightblue"))+
+    ylab(expression(bold(paste("P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    #ylim(0, 0.05)+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); pr_plot3
+
+ggsave("figures/F1F2_sdr/pr_dots.png", pr_plot3, dpi=300, w=7, h=5, units="in")
+```
+
+## Conduct anova 
+
+Run anova on values at each temperature
+```{r}
+summary(aov(P.nmol.org.min~PAR*Group*Temperature, data=pr_data))
+```
+
+Run model for 27 
+```{r}
+model<-pr_data%>%
+  filter(Temperature==27)%>%
+  aov(P.nmol.org.min~PAR*Group, data=.)
+
+summary(model)
+```
+
+Run model for 33
+```{r}
+model<-pr_data%>%
+  filter(Temperature==33)%>%
+  aov(P.nmol.org.min~PAR*Group, data=.)
+
+summary(model)
+```
+
+# Calculate R, P, and P:R 
+
+Calculate gross photosynthesis and P:R ratio. 
+```{r}
+pr_data_calc<-pr_data%>%
+  select(Date, Chamber.ID, Plate, Run, Temperature, Group, PAR, P.nmol.org.min)%>%
+  pivot_wider(names_from=PAR, values_from=P.nmol.org.min)%>%
+  mutate(ler=`0.1`)%>%
+  mutate(rd=`0.2`)%>%
+  mutate(ler_inverse=ler*-1)%>%
+  mutate(rd_inverse=rd*-1)%>%
+  mutate(p_net_low=`50`)%>%
+  mutate(p_net_medium=`100`)%>%
+  mutate(p_net_high=`500`)%>%
+  mutate(p_gross_low=p_net_low-ler)%>%
+  mutate(p_gross_medium=p_net_medium-ler)%>%
+  mutate(p_gross_high=p_net_high-ler)%>%
+  mutate(ratio_low=p_gross_low/(ler_inverse))%>%
+  mutate(ratio_medium=p_gross_medium/(ler_inverse))%>%
+  mutate(ratio_high=p_gross_high/(ler_inverse))%>%
+  pivot_longer(names_to="Metric", values_to="Value", cols=c(ler:ratio_high))%>%
+  select(!c(`0.1`, `100`, `500`, `0.2`))
+
+boxplot(pr_data_calc$Value)
+
+pr_data_calc<-pr_data_calc%>%
+  filter(Value>-5)%>% #%>%
+  filter(Value<100)
+
+boxplot(pr_data_calc$Value)
+```
+
+Set level of factors. 
+```{r}
+levels(as.factor(pr_data_calc$Metric))
+
+pr_data_calc$Metric<-factor(pr_data_calc$Metric, levels=c("p_gross_low", "p_gross_medium", "p_gross_high", "p_net_low", "p_net_medium", "p_net_high", "ratio_low", "ratio_medium", "ratio_high", "rd", "rd_inverse", "ler", "ler_inverse"))
+```
+
+View metrics. 
+```{r}
+metric_plot1<-pr_data_calc%>%
+    filter(!Metric=="ratio_high")%>%
+    filter(!Metric=="ratio_medium")%>%
+    filter(!Metric=="ratio_low")%>%
+    filter(!Metric=="ler")%>%
+    filter(!Metric=="rd")%>%
+    filter(!Metric=="rd_inverse")%>%
+    filter(!Metric=="ler_inverse")%>%
+  
+    ggplot(., aes(x = Temperature, y = Value)) +
+    facet_wrap(~Metric)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_point(aes(group=interaction(Temperature, Group), color=Group), size=3, fill="white", position = position_jitterdodge(0.4), shape=21) + 
+    geom_smooth(aes(color=Group, group=Group), method="loess", size=2, alpha=0.4, se=FALSE)+
+    xlab("Temperature") + 
+    scale_color_manual(name="Group", values=c("brown4", "darkblue", "orange", "lightblue"))+
+    ylab(expression(bold(paste("Value")))) +
+    #ylim(0, 0.05)+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); metric_plot1
+
+ggsave("figures/F1F2_sdr/pr_metrics.png", metric_plot1, dpi=300, w=7, h=5, units="in")
+```
+
+View metrics. 
+```{r}
+metric_plot2<-pr_data_calc%>%
+    filter(Metric %in% c("ratio_high", "ratio_low", "ratio_medium"))%>%
+  
+    ggplot(., aes(x = Temperature, y = Value)) +
+    facet_wrap(~Metric)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_point(aes(group=interaction(Temperature, Group), color=Group), size=3, fill="white", position = position_jitterdodge(0.4), shape=21) + 
+    geom_smooth(aes(color=Group, group=Group), method="loess", size=2, alpha=0.4, se=FALSE)+
+    xlab("Temperature") + 
+    scale_color_manual(name="Group", values=c("brown4", "darkblue", "orange", "lightblue"))+
+    ylab(expression(bold(paste("Value")))) +
+    #ylim(0, 0.05)+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); metric_plot2
+
+ggsave("figures/F1F2_sdr/pr_ratio.png", metric_plot2, dpi=300, w=7, h=5, units="in")
+```
+
+View metrics. 
+```{r}
+metric_plot3<-pr_data_calc%>%
+    filter(Metric %in% c("ler_inverse", "rd_inverse"))%>%
+  
+    ggplot(., aes(x = Temperature, y = Value)) +
+    facet_wrap(~Metric)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_point(aes(group=interaction(Temperature, Group), color=Group), size=3, fill="white", position = position_jitterdodge(0.4), shape=21) + 
+    geom_smooth(aes(color=Group, group=Group), method="loess", size=2, alpha=0.4, se=FALSE)+
+    xlab("Temperature") + 
+    scale_color_manual(name="Group", values=c("brown4", "darkblue", "orange", "lightblue"))+
+    ylab(expression(bold(paste("Value")))) +
+    #ylim(0, 0.05)+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); metric_plot3
+
+ggsave("figures/F1F2_sdr/ler_rd.png", metric_plot3, dpi=300, w=7, h=5, units="in")
+```
+
+Run anova on differences. 
+
+```{r}
+model<-pr_data_calc%>%
+  filter(Metric=="ratio_high")%>%
+  aov(Value~Group*Temperature, data=.)
+
+summary(model)
+
+#TukeyHSD(model, c("Group", "Temperature"))
+```
+
+```{r}
+model<-pr_data_calc%>%
+  filter(Metric=="ratio_medium")%>%
+  aov(Value~Group*Temperature, data=.)
+
+summary(model)
+
+#TukeyHSD(model, c("Group", "Temperature"))
+```
+
+```{r}
+model<-pr_data_calc%>%
+  filter(Metric=="ratio_low")%>%
+  aov(Value~Group*Temperature, data=.)
+
+summary(model)
+
+#TukeyHSD(model, c("Group", "Temperature"))
+```
+F2 NB has lower P:R ratios than WT F2 
+
+```{r}
+model<-pr_data_calc%>%
+  filter(Metric=="ler")%>%
+  aov(Value~Group*Temperature, data=.)
+
+summary(model)
+
+#TukeyHSD(model, c("Group", "Temperature"))
+```
+
+```{r}
+model<-pr_data_calc%>%
+  filter(Metric=="rd")%>%
+  aov(Value~Group*Temperature, data=.)
+
+summary(model)
+
+#TukeyHSD(model, c("Group", "Temperature"))
+```
+
+```{r}
+model<-pr_data_calc%>%
+  filter(Metric=="p_gross_high")%>%
+  aov(Value~Group*Temperature, data=.)
+
+summary(model)
+
+#TukeyHSD(model, c("Group", "Temperature"))
+```
+
+```{r}
+model<-pr_data_calc%>%
+  filter(Metric=="p_gross_medium")%>%
+  aov(Value~Group*Temperature, data=.)
+
+summary(model)
+
+#TukeyHSD(model, c("Group", "Temperature"))
+```
+
+```{r}
+model<-pr_data_calc%>%
+  filter(Metric=="p_gross_low")%>%
+  aov(Value~Group*Temperature, data=.)
+
+summary(model)
+
+#TukeyHSD(model, c("Group", "Temperature"))
+```
+
+```{r}
+model<-pr_data_calc%>%
+  filter(Metric=="p_net_high")%>%
+  aov(Value~Group*Temperature, data=.)
+
+summary(model)
+
+#TukeyHSD(model, c("Group", "Temperature"))
+```
+
+```{r}
+model<-pr_data_calc%>%
+  filter(Metric=="p_net_medium")%>%
+  aov(Value~Group*Temperature, data=.)
+
+summary(model)
+
+#TukeyHSD(model, c("Group", "Temperature"))
+```
+
+```{r}
+model<-pr_data_calc%>%
+  filter(Metric=="p_net_low")%>%
+  aov(Value~Group*Temperature, data=.)
+
+summary(model)
+
+#TukeyHSD(model, c("Group", "Temperature"))
+```
