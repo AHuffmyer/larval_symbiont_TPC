@@ -123,6 +123,7 @@ plate
 Light_Values
 starttime
 endtime
+date
 ```
 
 Run loop to extract slopes from photosynthesis data from each light level in each file name/plate. 

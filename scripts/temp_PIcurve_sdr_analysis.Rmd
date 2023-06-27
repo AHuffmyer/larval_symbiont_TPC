@@ -1,0 +1,520 @@
+---
+title: "Larval PI Curve Plotting and Analysis - Hawaii 2023 - Temp x PI curve analysis" 
+author: "AS Huffmyer"
+date: '2023'
+output:
+  html_document:
+    code_folding: hide
+    toc: yes
+    toc_depth: 6
+    toc_float: yes
+  pdf_document:
+    keep_tex: yes
+editor_options: 
+  chunk_output_type: console
+---
+
+# Setup  
+
+Set up workspace, set options, and load required packages.    
+```{r}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r, warning=FALSE, message=FALSE}
+## install packages if you dont already have them in your library
+if ("tidyverse" %in% rownames(installed.packages()) == 'FALSE') install.packages('tidyverse') 
+if ("car" %in% rownames(installed.packages()) == 'FALSE') install.packages('car') 
+if ("lme4" %in% rownames(installed.packages()) == 'FALSE') install.packages('lme4') 
+if ("lmerTest" %in% rownames(installed.packages()) == 'FALSE') install.packages('lmerTest') 
+if ("scales" %in% rownames(installed.packages()) == 'FALSE') install.packages('scales') 
+if ("cowplot" %in% rownames(installed.packages()) == 'FALSE') install.packages('cowplot') 
+if ("ggplot2" %in% rownames(installed.packages()) == 'FALSE') install.packages('ggplot2') 
+if ("effects" %in% rownames(installed.packages()) == 'FALSE') install.packages('effects') 
+if ("emmeans" %in% rownames(installed.packages()) == 'FALSE') install.packages('emmeans') 
+if ("multcomp" %in% rownames(installed.packages()) == 'FALSE') install.packages('multcomp') 
+if ("rTPC" %in% rownames(installed.packages()) == 'FALSE') remotes::install_github("padpadpadpad/rTPC")
+if ("ggstatsplot" %in% rownames(installed.packages()) == 'FALSE') remotes::install_github("IndrajeetPatil/ggstatsplot")
+if ("nls.multstart" %in% rownames(installed.packages()) == 'FALSE') install.packages('nls.multstart')
+if ("broom" %in% rownames(installed.packages()) == 'FALSE') install.packages('broom')
+
+#load packages
+library("ggplot2")
+library("tidyverse")
+library('car')
+library('lme4')
+library('lmerTest')
+library('scales')
+library('cowplot')
+library('rTPC')
+library('ggstatsplot')
+library('nls.multstart')
+library('broom')
+```
+
+
+# Data visualization and manipulation  
+
+Load data from LoLinR.    
+```{r, warning=FALSE, message=FALSE}
+pi_temp_data<-read.csv("output/temp_pi_curves/temp_PIcurves_calculated_normalized_photo_rates.csv") #load data
+```
+
+Format data. 
+```{r, warning=FALSE, message=FALSE}
+#remove all rows of wells that did not have samples or blanks
+pi_temp_data<-pi_temp_data[!is.na(pi_temp_data$Type),]
+
+#format columns
+pi_temp_data$Tank<-as.factor(pi_temp_data$Tank)
+pi_temp_data$Symbiont<-as.factor(pi_temp_data$Symbiont)
+pi_temp_data$SDR<-as.factor(pi_temp_data$SDR)
+pi_temp_data$Plate<-as.factor(pi_temp_data$Plate)
+pi_temp_data$Temperature<-as.factor(pi_temp_data$Temperature)
+```
+
+Remove plate that didnt work 
+
+```{r}
+#pi_temp_data<-pi_temp_data%>%
+#  filter(!Plate==2)%>%
+#  filter(!Plate==1)
+```
+
+Look for outliers in the data.  
+
+```{r}
+boxplot(pi_temp_data$P.nmol.org.min)
+pi_temp_data<-pi_temp_data%>%filter(P.nmol.org.min < 0.10)
+boxplot(pi_temp_data$P.nmol.org.min)
+
+boxplot(pi_temp_data$P.nmol.org.min~pi_temp_data$PAR)
+```
+
+Calculate mean temperature values for each run.    
+
+```{r}
+pr.temps<-read.csv("output/temp_pi_curves/runs_temp.csv")
+pr.temps = subset(pr.temps, select = -c(X) ) #remove empty column
+
+pi_temp_data$Plate<-as.integer(pi_temp_data$Plate)
+```
+
+Add temperature data to master data frame.  
+```{r}
+pi_temp_data<-left_join(pi_temp_data,pr.temps)
+
+#round to 0.1°C 
+pi_temp_data<-pi_temp_data%>%
+  mutate(Temp.C=round(Temp.C,1))
+```
+
+Reorder factor. 
+```{r}
+pi_temp_data$PAR<-factor(pi_temp_data$PAR, levels=c("0.1", "50", "100", "500", "0.2"))
+```
+
+# Plot and analyze 
+
+Plot data with means   
+```{r}
+pi_temp_plot1<-pi_temp_data %>%
+    group_by(PAR, Symbiont, Temperature)%>%
+    dplyr::summarise(mean=mean(P.nmol.org.min, na.rm=TRUE), sd=sd(P.nmol.org.min, na.rm=TRUE), N=length(P.nmol.org.min), se=sd/sqrt(N))%>%
+    
+    ggplot(., aes(x = as.factor(PAR), y = mean, group=interaction(PAR, Symbiont))) +
+    facet_wrap(~Temperature)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_point(aes(group=interaction(PAR, Symbiont), colour=Symbiont), size=6, position = position_dodge(0.4)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(PAR, Symbiont)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
+    xlab("Light (PAR)") + 
+    scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
+    ylab(expression(bold(paste("P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    #ylim(0, 0.05)+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); pi_temp_plot1
+
+ggsave("figures/temp_pi_curves/pi_means.png", pi_temp_plot1, dpi=300, w=7, h=5, units="in")
+```
+
+Display with plate. 
+```{r}
+pi_temp_plot1a<-pi_temp_data %>%
+    group_by(PAR, Symbiont, Plate)%>%
+    dplyr::summarise(mean=mean(P.nmol.org.min, na.rm=TRUE), sd=sd(P.nmol.org.min, na.rm=TRUE), N=length(P.nmol.org.min), se=sd/sqrt(N))%>%
+    
+    ggplot(., aes(x = as.factor(PAR), y = mean, group=interaction(PAR, Symbiont))) +
+    facet_wrap(~Plate)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_point(aes(group=interaction(PAR, Symbiont), colour=Symbiont), size=6, position = position_dodge(0.4)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(PAR, Symbiont)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
+    xlab("Light (PAR)") + 
+    scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
+    ylab(expression(bold(paste("P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    #ylim(0, 0.05)+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); pi_temp_plot1a
+```
+
+View by plate. 
+```{r}
+pi_temp_plot2b<-pi_temp_data %>%
+    ggplot(., aes(x = as.factor(PAR), y = P.nmol.org.min, group=Symbiont)) +
+    facet_wrap(~Plate)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_smooth(aes(color=Symbiont, group=Symbiont), method="loess", alpha=0.4, se=FALSE)+
+    xlab("Light (PAR)") + 
+    scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
+    ylab(expression(bold(paste("P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    #ylim(0, 0.05)+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); pi_temp_plot2b
+```
+
+Plot data with dots   
+```{r}
+pi_temp_plot3<-pi_temp_data %>%
+  
+    ggplot(., aes(x = as.factor(PAR), y = P.nmol.org.min, group=interaction(PAR, Symbiont))) +
+    facet_wrap(~Temperature)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_point(aes(group=interaction(PAR, Symbiont), color=Symbiont), size=3, fill="white", position = position_jitterdodge(0.4), shape=21) + 
+    geom_smooth(aes(color=Symbiont, group=Symbiont), method="loess", size=2, alpha=0.4, se=FALSE)+
+    xlab("Light (PAR)") + 
+    scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
+    ylab(expression(bold(paste("P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    #ylim(0, 0.05)+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); pi_temp_plot3
+
+ggsave("figures/temp_pi_curves/pi_temp_dots.png", pi_temp_plot3, dpi=300, w=7, h=5, units="in")
+```
+
+## Conduct anova 
+
+Run anova on values at each temperature
+```{r}
+model<-pi_temp_data%>%
+  aov(P.nmol.org.min~PAR*Symbiont*Temperature, data=.)
+
+summary(model)
+```
+
+Run model for 27 
+```{r}
+model<-pi_temp_data%>%
+  filter(Temperature==27)%>%
+  aov(P.nmol.org.min~PAR*Symbiont, data=.)
+
+summary(model)
+```
+
+Run model for 30
+```{r}
+model<-pi_temp_data%>%
+  filter(Temperature==30)%>%
+  aov(P.nmol.org.min~PAR*Symbiont, data=.)
+
+summary(model)
+```
+
+Run model for 33
+```{r}
+model<-pi_temp_data%>%
+  filter(Temperature==36)%>%
+  aov(P.nmol.org.min~PAR*Symbiont, data=.)
+
+summary(model)
+```
+
+# Calculate R, P, and P:R 
+
+Calculate gross photosynthesis and P:R ratio. 
+```{r}
+pi_temp_data_calc<-pi_temp_data%>%
+  select(Date, Chamber.ID, Plate, Run, Temperature, Symbiont, PAR, P.nmol.org.min)%>%
+  pivot_wider(names_from=PAR, values_from=P.nmol.org.min)%>%
+  mutate(ler=`0.1`)%>%
+  mutate(rd=`0.2`)%>%
+  mutate(ler_inverse=ler*-1)%>%
+  mutate(rd_inverse=rd*-1)%>%
+  mutate(p_net_low=`50`)%>%
+  mutate(p_net_medium=`100`)%>%
+  mutate(p_net_high=`500`)%>%
+  mutate(p_gross_low=p_net_low-ler)%>%
+  mutate(p_gross_medium=p_net_medium-ler)%>%
+  mutate(p_gross_high=p_net_high-ler)%>%
+  mutate(ratio_low=p_gross_low/(ler_inverse))%>%
+  mutate(ratio_medium=p_gross_medium/(ler_inverse))%>%
+  mutate(ratio_high=p_gross_high/(ler_inverse))%>%
+  pivot_longer(names_to="Metric", values_to="Value", cols=c(ler:ratio_high))%>%
+  select(!c(`0.1`, `50`, `100`, `500`, `0.2`))
+
+boxplot(pi_temp_data_calc$Value)
+
+pi_temp_data_calc<-pi_temp_data_calc%>%
+ filter(Value>-5)%>% 
+ filter(Value<10)
+
+boxplot(pi_temp_data_calc$Value)
+```
+
+Set level of factors. 
+```{r}
+levels(as.factor(pi_temp_data_calc$Metric))
+
+pi_temp_data_calc$Metric<-factor(pi_temp_data_calc$Metric, levels=c("p_gross_low", "p_gross_medium", "p_gross_high", "p_net_low", "p_net_medium", "p_net_high", "ratio_low", "ratio_medium", "ratio_high", "rd", "rd_inverse", "ler", "ler_inverse"))
+```
+
+View metrics. 
+```{r}
+metric_plot1<-pi_temp_data_calc%>%
+    filter(!Metric=="ratio_high")%>%
+    filter(!Metric=="ratio_medium")%>%
+    filter(!Metric=="ratio_low")%>%
+    filter(!Metric=="ler")%>%
+    filter(!Metric=="rd")%>%
+    filter(!Metric=="ler_inverse")%>%
+    filter(!Metric=="rd_inverse")%>%
+    filter(!Value< -0.07)%>%
+    filter(!Value> 0.07)%>%
+    #filter(!c(Value>0.05 & Metric=="p_net_low"))%>%
+  
+    ggplot(., aes(x = Temperature, y = Value)) +
+    facet_wrap(~Metric)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_point(aes(group=interaction(Temperature, Symbiont), color=Symbiont), size=3, fill="white", position = position_jitterdodge(0.4), shape=21) + 
+    geom_smooth(aes(color=Symbiont, group=Symbiont), method="loess", size=2, alpha=0.4, se=FALSE)+
+    xlab("Temperature") + 
+    scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
+    ylab(expression(bold(paste("Value")))) +
+    #ylim(0, 0.05)+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); metric_plot1
+
+ggsave("figures/temp_pi_curves/pr_metrics.png", metric_plot1, dpi=300, w=7, h=5, units="in")
+```
+
+View metrics. 
+```{r}
+metric_plot1a<-pi_temp_data_calc%>%
+    filter(Metric %in% c("ler_inverse", "rd_inverse"))%>%
+    #filter(!c(Value<0 & Metric=="ler_inverse"))%>%
+    #filter(!c(Value>0.05 & Metric=="p_net_low"))%>%
+    filter(!Value< -0.02)%>%
+  
+    ggplot(., aes(x = Temperature, y = Value)) +
+    facet_wrap(~Metric)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_point(aes(group=interaction(Temperature, Symbiont), color=Symbiont), size=3, fill="white", position = position_jitterdodge(0.4), shape=21) + 
+    geom_smooth(aes(color=Symbiont, group=Symbiont), method="loess", size=2, alpha=0.4, se=FALSE)+
+    xlab("Temperature") + 
+    scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
+    ylab(expression(bold(paste("Value")))) +
+    #ylim(0, 0.05)+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); metric_plot1a
+
+ggsave("figures/temp_pi_curves/pr_rd_ler.png", metric_plot1a, dpi=300, w=7, h=5, units="in")
+```
+
+View metrics. 
+```{r}
+metric_plot2<-pi_temp_data_calc%>%
+    filter(Metric %in% c("ratio_high", "ratio_medium", "ratio_low"))%>%
+  
+    #filter(!c(Metric=="ratio_high" & Value>4 & Symbiont=="C" & Temperature==33))%>% #remove outliers 
+    #filter(!c(Metric=="ratio_high" & Value<0 & Symbiont=="WT" & Temperature==30))%>% #remove outliers 
+    #filter(!c(Metric=="ratio_low" & Value< -1 & Symbiont=="WT" & Temperature==27))%>% #remove outliers 
+    #filter(!Value<0)%>% #remove outliers 
+  
+    ggplot(., aes(x = Temperature, y = Value)) +
+    facet_wrap(~Metric)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_point(aes(group=interaction(Temperature, Symbiont), color=Symbiont), size=3, fill="white", position = position_jitterdodge(0.4), shape=21) + 
+    geom_smooth(aes(color=Symbiont, group=Symbiont), method="loess", size=2, alpha=0.4, se=FALSE)+
+    xlab("Temperature") + 
+    scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
+    ylab(expression(bold(paste("Value")))) +
+    #ylim(0, 0.05)+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); metric_plot2
+
+ggsave("figures/temp_pi_curves/pr_ratio.png", metric_plot2, dpi=300, w=7, h=5, units="in")
+```
+
+Run anova on differences. 
+
+```{r}
+model<-pi_temp_data_calc%>%
+  filter(Metric=="ratio_high")%>%
+  #filter(!c(Value>4 & Symbiont=="C" & Temperature==33))%>% #remove outliers 
+  #filter(!c(Value<0 & Symbiont=="WT" & Temperature==30))%>% #remove outliers 
+  #filter(!Value<0)%>% #remove outliers 
+  aov(Value~Temperature*Symbiont, data=.)
+
+summary(model)
+
+TukeyHSD(model, c("Temperature", "Symbiont"))
+```
+
+```{r}
+model<-pi_temp_data_calc%>%
+  filter(Metric=="ratio_medium")%>%
+  #filter(!c(Value>4 & Symbiont=="C" & Temperature==33))%>% #remove outliers 
+  #filter(!c(Value<0 & Symbiont=="WT" & Temperature==30))%>% #remove outliers 
+  #filter(!Value<0)%>% #remove outliers 
+  aov(Value~Temperature*Symbiont, data=.)
+
+summary(model)
+
+TukeyHSD(model, c("Temperature", "Symbiont"))
+```
+
+```{r}
+model<-pi_temp_data_calc%>%
+  filter(Metric=="ratio_low")%>%
+  #filter(Value>0)%>%
+  aov(Value~Temperature*Symbiont, data=.)
+
+summary(model)
+
+TukeyHSD(model, c("Temperature", "Symbiont"))
+```
+
+```{r}
+model<-pi_temp_data_calc%>%
+  filter(Metric=="ler_inverse")%>%
+  filter(!Value< -0.02)%>%
+  aov(Value~Temperature*Symbiont, data=.)
+
+summary(model)
+
+TukeyHSD(model, c("Temperature", "Symbiont"))
+```
+
+```{r}
+model<-pi_temp_data_calc%>%
+  filter(Metric=="rd_inverse")%>%
+  aov(Value~Temperature*Symbiont, data=.)
+
+summary(model)
+
+TukeyHSD(model, c("Temperature", "Symbiont"))
+```
+
+```{r}
+model<-pi_temp_data_calc%>%
+  filter(Metric=="p_gross_high")%>%
+     filter(!Value< -0.07)%>%
+    filter(!Value> 0.07)%>%
+  aov(Value~Temperature*Symbiont, data=.)
+
+summary(model)
+
+TukeyHSD(model, c("Temperature", "Symbiont"))
+```
+
+```{r}
+model<-pi_temp_data_calc%>%
+  filter(Metric=="p_gross_medium")%>%
+      filter(!Value< -0.07)%>%
+    filter(!Value> 0.07)%>%
+  aov(Value~Temperature*Symbiont, data=.)
+
+summary(model)
+
+TukeyHSD(model, c("Temperature", "Symbiont"))
+```
+
+```{r}
+model<-pi_temp_data_calc%>%
+  filter(Metric=="p_gross_low")%>%
+      filter(!Value< -0.07)%>%
+    filter(!Value> 0.07)%>%
+  aov(Value~Temperature*Symbiont, data=.)
+
+summary(model)
+
+TukeyHSD(model, c("Temperature", "Symbiont"))
+```
+
+```{r}
+model<-pi_temp_data_calc%>%
+  filter(Metric=="p_net_low")%>%
+  #filter(!c(Value>0.05 & Metric=="p_net_low"))%>%
+      filter(!Value< -0.07)%>%
+    filter(!Value> 0.07)%>%
+  aov(Value~Temperature*Symbiont, data=.)
+
+summary(model)
+
+TukeyHSD(model, c("Temperature", "Symbiont"))
+```
+
+```{r}
+model<-pi_temp_data_calc%>%
+  filter(Metric=="p_net_medium")%>%
+      filter(!Value< -0.07)%>%
+    filter(!Value> 0.07)%>%
+  aov(Value~Temperature*Symbiont, data=.)
+
+summary(model)
+
+TukeyHSD(model, c("Temperature", "Symbiont"))
+```
+
+```{r}
+model<-pi_temp_data_calc%>%
+  filter(Metric=="p_net_high")%>%
+      filter(!Value< -0.07)%>%
+    filter(!Value> 0.07)%>%
+  aov(Value~Symbiont*Temperature, data=.)
+
+summary(model)
+
+TukeyHSD(model, c("Temperature", "Symbiont"))
+```
+
