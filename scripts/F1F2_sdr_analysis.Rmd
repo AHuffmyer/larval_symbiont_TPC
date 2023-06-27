@@ -91,7 +91,6 @@ boxplot(pr_data$P.nmol.org.min)
 
 boxplot(pr_data$P.nmol.org.min~pr_data$PAR)
 ```
-Removed one outlier. 
 
 Calculate mean temperature values for each run.    
 

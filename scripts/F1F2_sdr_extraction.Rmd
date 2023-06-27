@@ -102,8 +102,9 @@ Sample.Info <- read_csv(file = "data/F1F2_sdr/F1F2_SDR_Sample_Info.csv")%>%
 rename <- Sample.Info$Chamber.ID
 samp <- Sample.Info$Sample.ID
 
-plate <- as.numeric(str_sub(file.names, 22, 23))
-date <- str_sub(file.names, 1, str_length(file.names)-30) #grab date from file name
+plate <- as.numeric(str_sub(file.names, 25, 26))
+
+date <- str_sub(file.names, 4, str_length(file.names)-30) #grab date from file name
 
 # Load PI curve run metadata (i.e., light levels and interval times for each run)
 Run.Info <- read_csv(file = "data/F1F2_sdr/F1F2_SDR_Run_Info.csv")
@@ -117,6 +118,9 @@ metadata <- full_join(Sample.Info, Run.Info) %>%
 starttime<-Run.Info$IntervalStart
 endtime<-Run.Info$IntervalStop
 ```
+
+THE SCRIPT IS ONLY USING THE FIRST SET OF CUT OFF VALUES!!! NOT RUNNING DOWN THE LIST OF CUT OFF VALUES 
+
 
 ```{r}
 plate
@@ -313,7 +317,8 @@ plot(as.factor(blank_data$Plate), blank_data$P.umol.L.min, xlab="Plate", ylab="r
 
 #remove outlier blank 
 blank_data<-blank_data%>%
-  filter(P.umol.L.min>-3) 
+  filter(P.umol.L.min>-1.5) %>%
+  filter(P.umol.L.min<1.0)
 
 plot(as.factor(blank_data$Plate), blank_data$P.umol.L.min, xlab="Plate", ylab="rate") #photo rates after outlier removal
 
@@ -347,6 +352,14 @@ oxygen.bio$P.nmol.org.min <- oxygen.bio$P.umol.org.min*1000 #calculate nanomoles
 
 Plot values.  
 ```{r}
+plot(oxygen.bio$P.nmol.org.min)
+```
+
+Remove outlier. 
+```{r}
+oxygen.bio<-oxygen.bio%>%
+  filter(P.nmol.org.min<0.1)
+
 plot(oxygen.bio$P.nmol.org.min)
 ```
 
