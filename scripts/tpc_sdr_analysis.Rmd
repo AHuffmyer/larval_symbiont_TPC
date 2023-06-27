@@ -85,8 +85,8 @@ Look for outliers in the data.
 
 ```{r}
 boxplot(tpc_data$R.nmol.org.min)
-#tpc_data<-tpc_data%>%filter(R.nmol.org.min > -0.10)
-#boxplot(tpc_data$R.nmol.org.min)
+tpc_data<-tpc_data%>%filter(R.nmol.org.min > -0.08)
+boxplot(tpc_data$R.nmol.org.min)
 ```
 
 Calculate mean temperature values and reassign measurement treatment values if necessary.  
@@ -206,7 +206,8 @@ aov<-tpc_data%>%
 
 summary(aov)
 ```
-No effect of symbiont, but significant effect of temperature. 
+No effect of symbiont, but significant effect of temperature.
+Symbiont is just barely not significant though. 
 
 # Outlier removal 
 
@@ -793,15 +794,6 @@ calc_params(fit.C) %>%
 
 
 
-
-
-
-
-
-
-
-
-
 ## Show all plots together 
 
 ```{r}
@@ -984,6 +976,6 @@ estimate.plots_all <- ggplot(All_symbiont_params, aes(y=estimate, x=Symbiont)) +
   scale_x_discrete('')+
   theme_classic();estimate.plots_all
 
-ggsave("figures/tpc_sdr/TPC_estimates_all_symbionts.png", estimate.plots, dpi=300, w=8, h=8, units="in")
+ggsave("figures/tpc_sdr/TPC_estimates_all_symbionts.png", estimate.plots_all, dpi=300, w=8, h=8, units="in")
 ```
 

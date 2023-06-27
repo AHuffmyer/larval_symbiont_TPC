@@ -94,8 +94,8 @@ Load in the sample information file. It is important to have chambers in the ord
 Sample.Info<-read.csv("data/tpc_sdr/TPC_SDR_Sample_Info.csv") #information on life stage, number of individuals, runs, etc.
 rename <- Sample.Info$Chamber.ID
 samp <- Sample.Info$Sample.ID
-plate <- str_sub(file.names, 17, 23) #grab run from file name
-date <- str_sub(file.names, 1, str_length(file.names)-29) #grab date from file name
+plate <- str_sub(file.names, 20, 26) #grab run from file name
+date <- str_sub(file.names, 4, str_length(file.names)-29) #grab date from file name
 ```
 
 Run loop to extract slopes from respiration data. 
@@ -233,6 +233,9 @@ Remove samples that have inaccurate slope extraction for respiration rates (dete
 Account for volume to obtain umol per minute.   
 
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
+
+oxygen$Volume<-0.00008
+
 #Account for chamber volume to convert from umol L-1 m-1 to umol m-1. This removes per Liter
 oxygen$R.umol.min <- oxygen$R.umol.L.min * oxygen$Volume #calculate
 
