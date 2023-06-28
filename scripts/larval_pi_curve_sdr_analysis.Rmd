@@ -105,7 +105,7 @@ pi_data<-pi_data%>%
 Filter out high light runs (inconsistent temprature and O2 readings)
 ```{r}
 pi_data<-pi_data%>%
-  filter(PAR<1100)%>%
+  #filter(PAR<1100)%>%
   filter(P.nmol.org.min>-0.03)
 ```
 

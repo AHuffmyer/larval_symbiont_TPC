@@ -245,6 +245,15 @@ summary(model)
 Run model for 33
 ```{r}
 model<-pi_temp_data%>%
+  filter(Temperature==33)%>%
+  aov(P.nmol.org.min~PAR*Symbiont, data=.)
+
+summary(model)
+```
+
+Run model for 36
+```{r}
+model<-pi_temp_data%>%
   filter(Temperature==36)%>%
   aov(P.nmol.org.min~PAR*Symbiont, data=.)
 
@@ -322,7 +331,7 @@ metric_plot1<-pi_temp_data_calc%>%
       legend.text=element_text(size=12)
       ); metric_plot1
 
-ggsave("figures/temp_pi_curves/pr_metrics.png", metric_plot1, dpi=300, w=7, h=5, units="in")
+ggsave("figures/temp_pi_curves/pi_metrics.png", metric_plot1, dpi=300, w=7, h=5, units="in")
 ```
 
 View metrics. 
@@ -351,7 +360,7 @@ metric_plot1a<-pi_temp_data_calc%>%
       legend.text=element_text(size=12)
       ); metric_plot1a
 
-ggsave("figures/temp_pi_curves/pr_rd_ler.png", metric_plot1a, dpi=300, w=7, h=5, units="in")
+ggsave("figures/temp_pi_curves/pi_rd_ler.png", metric_plot1a, dpi=300, w=7, h=5, units="in")
 ```
 
 View metrics. 
@@ -382,7 +391,7 @@ metric_plot2<-pi_temp_data_calc%>%
       legend.text=element_text(size=12)
       ); metric_plot2
 
-ggsave("figures/temp_pi_curves/pr_ratio.png", metric_plot2, dpi=300, w=7, h=5, units="in")
+ggsave("figures/temp_pi_curves/pi_ratio.png", metric_plot2, dpi=300, w=7, h=5, units="in")
 ```
 
 Run anova on differences. 
@@ -518,3 +527,55 @@ summary(model)
 TukeyHSD(model, c("Temperature", "Symbiont"))
 ```
 
+## Test effect of light 
+
+Test effect of light on P:R ratio. 
+```{r}
+model<-pi_temp_data_calc%>%
+  filter(Metric %in% c("ratio_low", "ratio_medium", "ratio_high"))%>%
+  aov(Value~Metric*Temperature*Symbiont, data=.)
+
+summary(model)
+
+TukeyHSD(model, "Metric")
+
+emm<-emmeans(model, ~ Metric | Temperature)
+pairs(emm)
+```
+There are effects of light on P:R ratios but only at 27C. 
+
+Test effect of light on P gross.  
+```{r}
+model<-pi_temp_data_calc%>%
+  filter(Metric %in% c("p_gross_low", "p_gross_medium", "p_gross_high"))%>%
+  filter(!Value< -0.07)%>%
+    filter(!Value> 0.07)%>%
+  aov(Value~Metric*Temperature*Symbiont, data=.)
+
+summary(model)
+
+TukeyHSD(model, "Metric")
+TukeyHSD(model, "Temperature")
+
+emm<-emmeans(model, ~ Metric | Temperature)
+pairs(emm)
+```
+P gross is affected by light at 27 and 30 C. 
+
+Test effect of light on P net.   
+```{r}
+model<-pi_temp_data_calc%>%
+  filter(Metric %in% c("p_net_low", "p_net_medium", "p_net_high"))%>%
+  filter(!Value< -0.07)%>%
+    filter(!Value> 0.07)%>%
+  aov(Value~Metric*Temperature*Symbiont, data=.)
+
+summary(model)
+
+TukeyHSD(model, "Metric")
+TukeyHSD(model, "Temperature")
+
+emm<-emmeans(model, ~ Metric | Temperature)
+pairs(emm)
+```
+P net is affected by light. 

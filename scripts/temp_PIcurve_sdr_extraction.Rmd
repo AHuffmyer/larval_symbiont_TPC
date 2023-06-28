@@ -14,6 +14,7 @@ editor_options:
   chunk_output_type: console
 ---
 
+NEED TO FIGURE OUT EXPORT ISSUE 
 Need to QC individual export plots 
 
 ## Setup  
@@ -91,7 +92,7 @@ colnames(Photo.Rb) <- c("Date", "Plate","Sample.ID","Chamber.ID","Light", "Inter
 
 ```
 
-Load in the sample information file. It is important to have chambers in the order "A1, B1, C1, D1", rather than "A1, A2, A3, A4".  
+Load in the sample information file. It is important to have chambers in the order "A1, B1, C1, D1", rather than "A1, A2, A3, A4". It is also important to name your files with the Plate number at the start of the file name so they load in order. 
 
 Read in sample and run information and merge into a master metadata file. 
 ```{r}
@@ -102,8 +103,9 @@ Sample.Info <- read_csv(file = "data/temp_pi_curves/Temp_PIcurves_SDR_Sample_Inf
 rename <- Sample.Info$Chamber.ID
 samp <- Sample.Info$Sample.ID
 
-plate <- as.numeric(str_sub(file.names, 22, 23))
-date <- str_sub(file.names, 1, str_length(file.names)-28) #grab date from file name
+plate <- as.numeric(str_sub(file.names, 25, 26))
+
+date <- str_sub(file.names, 4, str_length(file.names)-28) #grab date from file name
 
 # Load PI curve run metadata (i.e., light levels and interval times for each run)
 Run.Info <- read_csv(file = "data/temp_pi_curves/Temp_PIcurves_SDR_Run_Info.csv")
@@ -125,8 +127,16 @@ starttime
 endtime
 date
 ```
+Check that all of these values are in the correct order in reference to each other manually! 
 
 Run loop to extract slopes from photosynthesis data from each light level in each file name/plate. 
+
+
+TEMPORARY: Check individual runs 
+09 - 
+10 - 
+
+HAVING ISSUES WITH IT NOT MAKING PROPER CUT OFFS FOR RUNS 13-16 (maybe others?)
 
 ```{r, results=FALSE, warning=FALSE, message=FALSE}
 
@@ -137,6 +147,12 @@ for(file in 1:length(file.names)) { # for every file in list start at the first 
   Photo.Data <-read.table(file.path(path.p,file.names[file]), skip = 56, header=T, sep=",", na.string="NA", fill = TRUE, as.is=TRUE, fileEncoding="latin1") #reads in the data files
   Photo.Data$Temp <- Photo.Data[,31] #assigns temp column
   Photo.Data$Time.Min <- seq.int(from=0, to=((nrow(Photo.Data)*0.25)-0.25), by = 0.25) #set time in min
+  
+  # maybe add step here to filter by plate that is being read in and pull out start and end times for each? from run info data?
+  
+  
+  
+  
   
   #filter by light interval - need to bind in dataframe to tell it which start and end time to use 
   Photo.Data <- Photo.Data %>% #filters data by interval for light 
