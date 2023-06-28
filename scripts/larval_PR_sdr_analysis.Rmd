@@ -89,8 +89,8 @@ Look for outliers in the data.
 
 ```{r}
 boxplot(pr_data$P.nmol.org.min)
-pr_data<-pr_data%>%filter(P.nmol.org.min < 0.08)
-boxplot(pr_data$P.nmol.org.min)
+#pr_data<-pr_data%>%filter(P.nmol.org.min < 0.08)
+#boxplot(pr_data$P.nmol.org.min)
 
 boxplot(pr_data$P.nmol.org.min~pr_data$PAR)
 
@@ -115,6 +115,11 @@ pr_data<-left_join(pr_data,pr.temps)
 #round to 0.1°C 
 pr_data<-pr_data%>%
   mutate(Temp.C=round(Temp.C,1))
+```
+
+Set levels for light. 
+```{r}
+pr_data$PAR<-factor(pr_data$PAR, levels=c("100", "500", "0"))
 ```
 
 # Plot and analyze: 20230624 
@@ -144,7 +149,7 @@ pr_plot1<-pr_data %>%
       legend.text=element_text(size=12)
       ); pr_plot1
 
-ggsave("figures/pr_sdr/pr_means_0624.png", pr_plot1, dpi=300, w=7, h=5, units="in")
+ggsave("figures/pr_sdr/pr_means.png", pr_plot1, dpi=300, w=7, h=5, units="in")
 ```
 
 Display with plate. 
@@ -218,7 +223,7 @@ pr_plot3<-pr_data %>%
       legend.text=element_text(size=12)
       ); pr_plot3
 
-ggsave("figures/pr_sdr/pr_dots_0624.png", pr_plot3, dpi=300, w=7, h=5, units="in")
+ggsave("figures/pr_sdr/pr_dots.png", pr_plot3, dpi=300, w=7, h=5, units="in")
 ```
 
 ## Conduct anova 
@@ -230,7 +235,13 @@ model<-pr_data%>%
   aov(P.nmol.org.min~PAR*Symbiont*Temperature, data=.)
 
 summary(model)
+
+TukeyHSD(model, "PAR")
+
+emm<-emmeans(model, ~ PAR | Temperature)
+pairs(emm)
 ```
+Oxygen values are different by light levels and temperature interactions. 
 
 Run model for 27 
 ```{r}
@@ -241,6 +252,7 @@ model<-pr_data%>%
 
 summary(model)
 ```
+At 27, oxygen is different by PAR. 
 
 Run model for 30
 ```{r}
@@ -251,6 +263,7 @@ model<-pr_data%>%
 
 summary(model)
 ```
+At 27, oxygen is different by PAR. 
 
 Run model for 33
 ```{r}
@@ -261,6 +274,7 @@ model<-pr_data%>%
 
 summary(model)
 ```
+At 27, oxygen is different by PAR. 
 
 # Calculate R, P, and P:R: 20230624 
 
@@ -284,8 +298,8 @@ pr_data_calc<-pr_data%>%
 boxplot(pr_data_calc$Value)
 
 pr_data_calc<-pr_data_calc%>%
-  filter(Value>-5)%>% #%>%
-  filter(Value<9)
+  filter(Value>-2)%>% #%>%
+  filter(Value<6)
 
 boxplot(pr_data_calc$Value)
 ```
@@ -298,7 +312,7 @@ metric_plot1<-pr_data_calc%>%
     filter(!Metric=="ratio_low")%>%
     filter(!Metric=="ler")%>%
      filter(!Metric=="ler_inverse")%>%
-    filter(!c(Value>0.05 & Metric=="p_net_low"))%>%
+    #filter(!c(Value>0.05 & Metric=="p_net_low"))%>%
   
     ggplot(., aes(x = Temperature, y = Value)) +
     facet_wrap(~Metric)+
@@ -318,7 +332,7 @@ metric_plot1<-pr_data_calc%>%
       legend.text=element_text(size=12)
       ); metric_plot1
 
-ggsave("figures/pr_sdr/pr_photometrics_0624.png", metric_plot1, dpi=300, w=7, h=5, units="in")
+ggsave("figures/pr_sdr/pr_photometrics.png", metric_plot1, dpi=300, w=7, h=5, units="in")
 ```
 
 View R metrics. 
@@ -326,7 +340,7 @@ View R metrics.
 metric_plot1a<-pr_data_calc%>%
     filter(Date=="20230624")%>%
     filter(Metric %in% c("ler_inverse"))%>%
-    filter(!c(Value<0 & Metric=="ler_inverse"))%>%
+    #filter(!c(Value<0 & Metric=="ler_inverse"))%>%
   
     ggplot(., aes(x = Temperature, y = Value)) +
     facet_wrap(~Metric)+
@@ -346,7 +360,7 @@ metric_plot1a<-pr_data_calc%>%
       legend.text=element_text(size=12)
       ); metric_plot1a
 
-ggsave("figures/pr_sdr/pr_resp_0624.png", metric_plot1a, dpi=300, w=5, h=5, units="in")
+ggsave("figures/pr_sdr/pr_resp.png", metric_plot1a, dpi=300, w=5, h=5, units="in")
 ```
 
 View metrics for P:R ratio. 
@@ -355,10 +369,10 @@ metric_plot2<-pr_data_calc%>%
    filter(Date=="20230624")%>%
     filter(Metric %in% c("ratio_high", "ratio_low"))%>%
   
-    filter(!c(Metric=="ratio_high" & Value>4 & Symbiont=="C" & Temperature==33))%>% #remove outliers 
-    filter(!c(Metric=="ratio_high" & Value<0 & Symbiont=="WT" & Temperature==30))%>% #remove outliers 
-    filter(!c(Metric=="ratio_low" & Value< -1 & Symbiont=="WT" & Temperature==27))%>% #remove outliers 
-    filter(!Value<0)%>% #remove outliers 
+    #filter(!c(Metric=="ratio_high" & Value>4 & Symbiont=="C" & Temperature==33))%>% #remove outliers 
+    #filter(!c(Metric=="ratio_high" & Value<0 & Symbiont=="WT" & Temperature==30))%>% #remove outliers 
+    #filter(!c(Metric=="ratio_low" & Value< -1 & Symbiont=="WT" & Temperature==27))%>% #remove outliers 
+    #filter(!Value<0)%>% #remove outliers 
   
     ggplot(., aes(x = Temperature, y = Value)) +
     facet_wrap(~Metric)+
@@ -378,7 +392,7 @@ metric_plot2<-pr_data_calc%>%
       legend.text=element_text(size=12)
       ); metric_plot2
 
-ggsave("figures/pr_sdr/pr_ratio_0624.png", metric_plot2, dpi=300, w=7, h=5, units="in")
+ggsave("figures/pr_sdr/pr_ratio.png", metric_plot2, dpi=300, w=7, h=5, units="in")
 ```
 
 ## Run anova on differences. 
@@ -388,43 +402,43 @@ Test P:R ratio at high light.
 model<-pr_data_calc%>%
   filter(Date=="20230624")%>%
   filter(Metric=="ratio_high")%>%
-  filter(!c(Value>4 & Symbiont=="C" & Temperature==33))%>% #remove outliers 
-  filter(!c(Value<0 & Symbiont=="WT" & Temperature==30))%>% #remove outliers 
-  filter(!Value<0)%>% #remove outliers 
+  #filter(!c(Value>4 & Symbiont=="C" & Temperature==33))%>% #remove outliers 
+  #filter(!c(Value<0 & Symbiont=="WT" & Temperature==30))%>% #remove outliers 
+  #filter(!Value<0)%>% #remove outliers 
   aov(Value~Temperature*Symbiont, data=.)
 
 summary(model)
 ```
-Almost significant effect of temp x symbiont. Strong effect of temperature with lower P:R ratio at high light and high temperature. 
+No effects. 
 
 Look at 30C under high light specifically. 
 ```{r}
 model<-pr_data_calc%>%
   filter(Date=="20230624")%>%
   filter(Metric=="ratio_high")%>%
-  filter(Temperature==30)%>%
-  filter(Value>-1)%>%
+  #filter(Temperature==30)%>%
+  #filter(Value>-1)%>%
   aov(Value~Symbiont, data=.)
 
 summary(model)
 
 TukeyHSD(model, "Symbiont")
 ```
-At high light under 30C, there is an effect of symbiont. C is lower than WT, but NB is not lower than WT. This suggests that C has lower P:R ratio at high temperature where as MIX is not as strongly affected. This matches our PI curve observation that MIX can handle higher light. 
+No effects. 
 
 Test P:R ratios under low light. 
 ```{r}
 model<-pr_data_calc%>%
   filter(Date=="20230624")%>%
   filter(Metric=="ratio_low")%>%
-  filter(Value>0)%>%
+  #filter(Value>0)%>%
   aov(Value~Temperature*Symbiont, data=.)
 
 summary(model)
 
 TukeyHSD(model, "Symbiont")
 ```
-There is no effect of temperature on P:R ratios at low light. But there is an effect of symbiont. P:R ratios at low light are higher in WT than the MIX and are also lower in MIX than C across temperatures. This makes sense with what we saw in the PI curves with higher P in C at low light! 
+No effects. 
 
 Test light enhanced respiration. 
 ```{r}
@@ -448,7 +462,7 @@ model<-pr_data_calc%>%
 
 summary(model)
 ```
-There is no effect of temp or symbiont. 
+P gross at high light differs by temperature. 
 
 Test P gross at low light. 
 ```{r}
@@ -468,7 +482,7 @@ Test P net under low light.
 model<-pr_data_calc%>%
   filter(Date=="20230624")%>%
   filter(Metric=="p_net_low")%>%
-  filter(!c(Value>0.05 & Metric=="p_net_low"))%>%
+  #filter(!c(Value>0.05 & Metric=="p_net_low"))%>%
   aov(Value~Temperature*Symbiont, data=.)
 
 summary(model)
@@ -488,5 +502,9 @@ summary(model)
 emm<-emmeans(model, ~ Symbiont | Temperature)
 pairs(emm)
 ```
-There is an effect of Symbiont x Temperature  on P net at high light. At 30C, P net in C is lower than WT. There is a trend for this in P gross as well above. This helps explain why P:R ratios are lower in C than WT. 
+There is an effect of temperature on P net at high light. 
+
+
+ADD IN LIGHT AND TEMP MODELS HERE 
+
 

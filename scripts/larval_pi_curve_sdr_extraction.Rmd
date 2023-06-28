@@ -104,8 +104,8 @@ Sample.Info <- read_csv(file = "data/larval_pi_curves/larval_PIcurve_SDR_Sample_
 rename <- Sample.Info$Chamber.ID
 samp <- Sample.Info$Sample.ID
 
-plate <- as.numeric(str_sub(file.names, 28, 29))
-date <- str_sub(file.names, 1, str_length(file.names)-28) #grab date from file name
+plate <- as.numeric(str_sub(file.names, 31, 32))
+date <- str_sub(file.names, 4, str_length(file.names)-28) #grab date from file name
 
 # Load PI curve run metadata (i.e., light levels and interval times for each run)
 Run.Info <- read_csv(file = "data/larval_pi_curves/larval_PIcurve_SDR_Run_Info.csv")%>%
@@ -117,15 +117,16 @@ Light_Values <- Run.Info$Light_Level
 metadata <- full_join(Sample.Info, Run.Info) %>%
   mutate(Date = as_date(as.character(Date), format = "%Y%m%d"))
 
-starttime<-Run.Info$IntervalStart
-endtime<-Run.Info$IntervalStop
+#starttime<-Run.Info$IntervalStart
+#endtime<-Run.Info$IntervalStop
 ```
 
 ```{r}
 plate
 Light_Values
-starttime
-endtime
+#starttime
+#endtime
+date
 ```
 
 Run loop to extract slopes from photosynthesis data from each light level in each file name/plate. 
@@ -140,10 +141,30 @@ for(file in 1:length(file.names)) { # for every file in list start at the first 
   Photo.Data$Temp <- Photo.Data[,31] #assigns temp column
   Photo.Data$Time.Min <- seq.int(from=0, to=((nrow(Photo.Data)*0.25)-0.25), by = 0.25) #set time in min
   
+  # extract start and end times for the respective plate 
+  
+  starttime<-Run.Info%>%
+    select(Plate, Light_Level, IntervalStart)%>%
+    filter(Plate==plate[file])%>%
+    filter(Light_Level==i)%>%
+    select(IntervalStart)%>%
+    as.data.frame()
+
+   starttime<-starttime[1,1]
+   
+   endtime<-Run.Info%>%
+    select(Plate, Light_Level, IntervalStop)%>%
+    filter(Plate==plate[file])%>%
+    filter(Light_Level==i)%>%
+    select(IntervalStop)%>%
+    as.data.frame()
+
+   endtime<-endtime[1,1]
+   
   #filter by light interval - need to bind in dataframe to tell it which start and end time to use 
   Photo.Data <- Photo.Data %>% #filters data by interval for light 
-     filter(Time.Min > starttime[i])%>%
-     filter(Time.Min < endtime[i]) 
+     filter(Time.Min > starttime)%>%
+     filter(Time.Min < endtime) 
   
   Photo.Data.N <- Photo.Data[,3:26] #subset desired columns
   
@@ -195,10 +216,28 @@ for(file in 1:length(file.names)) {
   Temp.Data$Temp <- Temp.Data[,31] #assigns temp column
   Temp.Data$Time.Min <- seq.int(from=0, to=((nrow(Temp.Data)*0.25)-0.25), by = 0.25) #set time in min
   
+  starttime<-Run.Info%>%
+    select(Plate, Light_Level, IntervalStart)%>%
+    filter(Plate==plate[file])%>%
+    filter(Light_Level==i)%>%
+    select(IntervalStart)%>%
+    as.data.frame()
+
+   starttime<-starttime[1,1]
+   
+   endtime<-Run.Info%>%
+    select(Plate, Light_Level, IntervalStop)%>%
+    filter(Plate==plate[file])%>%
+    filter(Light_Level==i)%>%
+    select(IntervalStop)%>%
+    as.data.frame()
+
+   endtime<-endtime[1,1]
+   
   #filter by light interval - need to bind in dataframe to tell it which start and end time to use 
   Temp.Data <- Temp.Data %>% #filters data by interval for light 
-     filter(Time.Min > starttime[i])%>%
-     filter(Time.Min < endtime[i]) 
+     filter(Time.Min > starttime)%>%
+     filter(Time.Min < endtime) 
   
     Temp.Pb[j,1] <- as.character(date[file]) #stores the date
     Temp.Pb[j,2] <- as.character(plate[file]) #stores the run number
@@ -305,6 +344,13 @@ plot(as.factor(oxygen$Plate), oxygen$P.umol.L.min, xlab="Plate", ylab="rate") #p
 Subtract blank values. Average blank calculated for each run. Display mean blank value.  
 ```{r}
 blank_data <- subset(oxygen, Type == "Blank") #subset to blank data only
+plot(as.factor(blank_data$Plate), blank_data$P.umol.min, xlab="Plate", ylab="umol O2 min-1") #blanks during dark phase
+
+#filter blank values 
+blank_data<-blank_data%>%
+  filter(P.umol.min> -0.0004)%>%
+  filter(P.umol.min < 0.0003)
+
 plot(as.factor(blank_data$Plate), blank_data$P.umol.min, xlab="Plate", ylab="umol O2 min-1") #blanks during dark phase
 
 #display mean blank values

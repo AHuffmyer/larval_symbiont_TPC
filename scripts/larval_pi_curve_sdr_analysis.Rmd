@@ -14,7 +14,6 @@ editor_options:
   chunk_output_type: console
 ---
 
-Note: Will need to add filter by date once we have multiple days represented in the dataset 
 QC all plots, check all blanks for every run 
 
 # Setup  
@@ -78,8 +77,8 @@ Look for outliers in the data.
 
 ```{r}
 boxplot(pi_data$P.nmol.org.min)
-#pi_data<-pi_data%>%filter(P.nmol.org.min > -0.10)
-#boxplot(pi_data$P.nmol.org.min)
+pi_data<-pi_data%>%filter(P.nmol.org.min > -0.06)%>%filter(P.nmol.org.min < 0.06)
+boxplot(pi_data$P.nmol.org.min)
 
 boxplot(pi_data$P.nmol.org.min~pi_data$PAR)
 ```
@@ -104,9 +103,9 @@ pi_data<-pi_data%>%
 
 Filter out high light runs (inconsistent temprature and O2 readings)
 ```{r}
-pi_data<-pi_data%>%
+#pi_data<-pi_data%>%
   #filter(PAR<1100)%>%
-  filter(P.nmol.org.min>-0.03)
+  #filter(P.nmol.org.min>-0.03)
 ```
 
 # Plot photosynthesis over PAR treatments  
@@ -241,6 +240,7 @@ Run anova on values
 ```{r}
 summary(aov(P.nmol.org.min~PAR*Symbiont, data=pi_data))
 ```
+Symbiont p=0.05
 
 # Apply PI curve calculations and models 
 

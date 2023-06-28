@@ -14,9 +14,6 @@ editor_options:
   chunk_output_type: console
 ---
 
-NEED TO FIGURE OUT EXPORT ISSUE 
-Need to QC individual export plots 
-
 ## Setup  
 
 Set up workspace, set options, and load required packages.    
@@ -130,6 +127,18 @@ date
 Check that all of these values are in the correct order in reference to each other manually! 
 
 Run loop to extract slopes from photosynthesis data from each light level in each file name/plate. 
+
+
+
+
+
+ADD A STEP TO FILTER PLATE 13 LIGHT 3 TO REMOVE HIGH VALUES FROM SENSOR FAILURE 
+<300 and >100 
+
+
+
+
+
 
 ```{r, results=FALSE, warning=FALSE, message=FALSE}
 
