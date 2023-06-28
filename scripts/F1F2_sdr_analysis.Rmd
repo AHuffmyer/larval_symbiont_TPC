@@ -14,9 +14,6 @@ editor_options:
   chunk_output_type: console
 ---
 
-Need to QC individual export plots 
-Need to run each metric (ratio, Pnet, Pgross, Rd, LER) against PAR - currently separated by PAR. 
-
 # Setup  
 
 Set up workspace, set options, and load required packages.    
@@ -86,8 +83,8 @@ Look for outliers in the data.
 
 ```{r}
 boxplot(pr_data$P.nmol.org.min)
-pr_data<-pr_data%>%filter(P.nmol.org.min < 0.10)
-boxplot(pr_data$P.nmol.org.min)
+#pr_data<-pr_data%>%filter(P.nmol.org.min < 0.10)
+#boxplot(pr_data$P.nmol.org.min)
 
 boxplot(pr_data$P.nmol.org.min~pr_data$PAR)
 ```
@@ -115,7 +112,7 @@ pr_data<-pr_data%>%
 Plot data with means   
 ```{r}
 pr_plot1<-pr_data %>%
-  filter(P.nmol.org.min<0.1)%>%
+  #filter(P.nmol.org.min<0.1)%>%
     group_by(PAR, Group, Temperature)%>%
     dplyr::summarise(mean=mean(P.nmol.org.min, na.rm=TRUE), sd=sd(P.nmol.org.min, na.rm=TRUE), N=length(P.nmol.org.min), se=sd/sqrt(N))%>%
     
@@ -143,7 +140,7 @@ ggsave("figures/F1F2_sdr/pr_means.png", pr_plot1, dpi=300, w=7, h=5, units="in")
 Display by individual plate (duplicate plates at each temperature).  
 ```{r}
 pr_plot1a<-pr_data %>%
-  filter(P.nmol.org.min<0.1)%>%
+  #filter(P.nmol.org.min<0.1)%>%
     group_by(PAR, Group, Plate)%>%
     dplyr::summarise(mean=mean(P.nmol.org.min, na.rm=TRUE), sd=sd(P.nmol.org.min, na.rm=TRUE), N=length(P.nmol.org.min), se=sd/sqrt(N))%>%
     
@@ -169,7 +166,7 @@ pr_plot1a<-pr_data %>%
 View by plate with a loess line. 
 ```{r}
 pr_plot2b<-pr_data %>%
-  filter(P.nmol.org.min<0.1)%>%
+  #filter(P.nmol.org.min<0.1)%>%
     ggplot(., aes(x = as.factor(PAR), y = P.nmol.org.min, group=Group)) +
     facet_wrap(~Plate)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
@@ -192,7 +189,7 @@ Plates look similar and consistent.
 Plot data with individual data points.    
 ```{r}
 pr_plot3<-pr_data %>%
-  filter(P.nmol.org.min<0.1)%>%
+  #filter(P.nmol.org.min<0.1)%>%
     
     ggplot(., aes(x = as.factor(PAR), y = P.nmol.org.min, group=interaction(PAR, Group))) +
     facet_wrap(~Temperature)+
@@ -243,6 +240,16 @@ summary(model)
 ```
 Strong effect of light at 33C. 
 
+Run model for 36
+```{r}
+model<-pr_data%>%
+  filter(Temperature==36)%>%
+  aov(P.nmol.org.min~PAR*Group, data=.)
+
+summary(model)
+```
+Strong effect of light at 36C. 
+
 # Calculate R, P, and P:R 
 
 Calculate gross and net photosynthesis, light enhanced respiration (LER), dark respiration (Rd), and P:R ratio at low (50 PAR), medium (100 PAR), and high (500 PAR) light. 
@@ -269,10 +276,8 @@ pr_data_calc<-pr_data%>%
 boxplot(pr_data_calc$Value)
 
 pr_data_calc<-pr_data_calc%>%
-  filter(Value>-5)%>% #%>%
-  filter(Value<10)%>%
-  filter(!c(Metric=="p_gross_low" & Value >0.1))%>%
-filter(!c(Metric=="p_net_low" & Value >0.1))
+  filter(Value>-20)%>% #%>%
+  filter(Value<12) 
 
 boxplot(pr_data_calc$Value)
 ```
@@ -299,7 +304,7 @@ metric_plot1<-pr_data_calc%>%
     facet_wrap(~Metric)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_point(aes(group=interaction(Temperature, Group), color=Group), size=3, fill="white", position = position_jitterdodge(0.4), shape=21) + 
-    geom_smooth(aes(color=Group, group=Group), method="lm", size=2, alpha=0.4, se=FALSE)+
+    geom_smooth(aes(color=Group, group=Group), method="loess", size=2, alpha=0.4, se=FALSE)+
     xlab("Temperature") + 
     scale_color_manual(name="Group", values=c("brown4", "darkblue", "orange", "lightblue"))+
     ylab(expression(bold(paste("Value")))) +
@@ -320,12 +325,13 @@ View metrics across temperatures.
 ```{r}
 metric_plot2<-pr_data_calc%>%
     filter(Metric %in% c("ratio_high", "ratio_low", "ratio_medium"))%>%
+    #filter(!c(Metric=="ratio_low" & Value>8))%>%
   
     ggplot(., aes(x = Temperature, y = Value)) +
     facet_wrap(~Metric)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_point(aes(group=interaction(Temperature, Group), color=Group), size=3, fill="white", position = position_jitterdodge(0.4), shape=21) + 
-    geom_smooth(aes(color=Group, group=Group), method="lm", size=2, alpha=0.4, se=FALSE)+
+    geom_smooth(aes(color=Group, group=Group), method="loess", size=2, alpha=0.4, se=FALSE)+
     xlab("Temperature") + 
     scale_color_manual(name="Group", values=c("brown4", "darkblue", "orange", "lightblue"))+
     ylab(expression(bold(paste("Value")))) +
@@ -346,12 +352,13 @@ View metrics.
 ```{r}
 metric_plot3<-pr_data_calc%>%
     filter(Metric %in% c("ler_inverse", "rd_inverse"))%>%
+    #filter(!c(Metric=="rd_inverse" & Value<0))%>%
   
     ggplot(., aes(x = Temperature, y = Value)) +
     facet_wrap(~Metric)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_point(aes(group=interaction(Temperature, Group), color=Group), size=3, fill="white", position = position_jitterdodge(0.4), shape=21) + 
-    geom_smooth(aes(color=Group, group=Group), method="lm", size=2, alpha=0.4, se=FALSE)+
+    geom_smooth(aes(color=Group, group=Group), method="loess", size=2, alpha=0.4, se=FALSE)+
     xlab("Temperature") + 
     scale_color_manual(name="Group", values=c("brown4", "darkblue", "orange", "lightblue"))+
     ylab(expression(bold(paste("Value")))) +
@@ -377,7 +384,7 @@ model<-pr_data_calc%>%
 
 summary(model)
 ```
-No difference in P:R ratio at high (500 PAR) light. 
+No effect of temp or group on P:R ratio at high light. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -386,18 +393,17 @@ model<-pr_data_calc%>%
 
 summary(model)
 ```
-No difference in P:R ratio in medium (100 PAR) light. 
+No effect on P:R ratio at medium light. 
 
 ```{r}
 model<-pr_data_calc%>%
   filter(Metric=="ratio_low")%>%
+   #filter(!c(Metric=="ratio_low" & Value>8))%>%
   aov(Value~Group*Temperature, data=.)
 
 summary(model)
-
-TukeyHSD(model, "Group")
 ```
-Significant effect of group (p=0.045) on P:R at low (50 PAR) light - F2 NB has lower P:R ratios than WT F2.  
+No effects. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -407,8 +413,11 @@ model<-pr_data_calc%>%
 summary(model)
 
 TukeyHSD(model, "Temperature")
+
+emm<-emmeans(model, ~ Group | Temperature)
+pairs(emm)
 ```
-Light enhanced respiration is lower at 33 compared to 27. 
+Light enhanced respiration is reduced with high temperature very strongly. LER is lowest at 36C. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -421,7 +430,7 @@ TukeyHSD(model, "Temperature")
 
 TukeyHSD(model, "Group")
 ```
-Dark respiration is different by group and by temperature. Rd is higher at 33 degrees. Rd is also lower in the F2 NB than the F1 NB. The F2 NB also has lower Rd than the F2 WT. 
+Dark respiration is not affected by temperature, but it is affected by group. F2 NB has lower respiration than F1 NB. F2 NB also has lower Rd than F2 WT.   
 
 ```{r}
 model<-pr_data_calc%>%
@@ -429,8 +438,10 @@ model<-pr_data_calc%>%
   aov(Value~Group*Temperature, data=.)
 
 summary(model)
+
+TukeyHSD(model, "Temperature")
 ```
-No effect on gross photosynthesis at high light. 
+P gross at high light decreases with temperature and is lowest at 36 degrees. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -440,8 +451,11 @@ model<-pr_data_calc%>%
 summary(model)
 
 TukeyHSD(model, "Temperature")
+
+emm<-emmeans(model, ~ Group | Temperature)
+pairs(emm)
 ```
-Gross photosynthesis at medium light (100) PAR is significantly affected by temperature. 
+At medium light, P gross decreases with temperature and is lowest at 36 degrees. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -452,7 +466,7 @@ summary(model)
 
 TukeyHSD(model, "Temperature")
 ```
-Gross photosynthesis at low light is affected by temperature. 
+Gross photosynthesis at low light is affected by temperature and is lowest at 36 degrees.
 
 ```{r}
 model<-pr_data_calc%>%
@@ -463,7 +477,7 @@ summary(model)
 
 TukeyHSD(model, "Temperature")
 ```
-Net photosynthesis at high light is affected by temperature. P net increases at higher temperatures at high light. 
+Net photosynthesis at high light is affected by temperature, decreases at 36C. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -471,8 +485,10 @@ model<-pr_data_calc%>%
   aov(Value~Group*Temperature, data=.)
 
 summary(model)
+
+TukeyHSD(model, "Temperature")
 ```
-No effect on P net at medium light. 
+At medium light P net decreases at 36C. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -480,8 +496,10 @@ model<-pr_data_calc%>%
   aov(Value~Group*Temperature, data=.)
 
 summary(model)
+
+TukeyHSD(model, "Group")
 ```
-No effect on P net at low light. 
+P net is lower in F1 NB at low light, but this is barely significant (p=0.05). 
 
 Test effect of light on P:R ratio. 
 ```{r}
@@ -493,7 +511,7 @@ summary(model)
 
 TukeyHSD(model, "Metric")
 ```
-P:R ratios are significantly different by light. Ratios at high light are different than low and medium light. 
+P:R ratios are significantly different by light. There are higher P:R ratios at high light. 
 
 Test effect of light on P gross.  
 ```{r}
@@ -505,11 +523,12 @@ summary(model)
 
 TukeyHSD(model, "Metric")
 TukeyHSD(model, "Temperature")
+TukeyHSD(model, "Group")
 
 emm<-emmeans(model, ~ Group | Temperature)
 pairs(emm)
 ```
-P gross increases with light and is different between all light levels. P gross is also lower at high temperature. There is also an interaction betwen temperature and group. At 27 degrees, P gross is higher in F1 WT than F2 WT.  
+P gross increases with light and is different between high and low light (increases with light). P gross decreases with temperature strongly. There is also an interaction between temperature and group. There are differences between F1 WT and F2 NB. 
 
 Test effect of light on P net.   
 ```{r}
@@ -520,5 +539,6 @@ model<-pr_data_calc%>%
 summary(model)
 
 TukeyHSD(model, "Metric")
+TukeyHSD(model, "Temperature")
 ```
-P net is affected by light and increases with each light level. 
+P net is affected by light and increases with each light level. P net is also affected by temperature and decreases at  36C. 

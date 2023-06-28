@@ -115,8 +115,8 @@ Light_Values <- unique(Run.Info$Light_Level)
 metadata <- full_join(Sample.Info, Run.Info) %>%
   mutate(Date = as_date(as.character(Date), format = "%Y%m%d"))
 
-starttime<-Run.Info$IntervalStart
-endtime<-Run.Info$IntervalStop
+#starttime<-Run.Info$IntervalStart
+#endtime<-Run.Info$IntervalStop
 ```
 
 THE SCRIPT IS ONLY USING THE FIRST SET OF CUT OFF VALUES!!! NOT RUNNING DOWN THE LIST OF CUT OFF VALUES 
@@ -125,8 +125,8 @@ THE SCRIPT IS ONLY USING THE FIRST SET OF CUT OFF VALUES!!! NOT RUNNING DOWN THE
 ```{r}
 plate
 Light_Values
-starttime
-endtime
+#starttime
+#endtime
 date
 ```
 
@@ -142,10 +142,30 @@ for(file in 1:length(file.names)) { # for every file in list start at the first 
   Photo.Data$Temp <- Photo.Data[,31] #assigns temp column
   Photo.Data$Time.Min <- seq.int(from=0, to=((nrow(Photo.Data)*0.25)-0.25), by = 0.25) #set time in min
   
-  #filter by light interval - need to bind in dataframe to tell it which start and end time to use 
+  # extract start and end times for the respective plate 
+  
+  starttime<-Run.Info%>%
+    select(Plate, Light_Level, IntervalStart)%>%
+    filter(Plate==plate[file])%>%
+    filter(Light_Level==i)%>%
+    select(IntervalStart)%>%
+    as.data.frame()
+
+   starttime<-starttime[1,1]
+   
+   endtime<-Run.Info%>%
+    select(Plate, Light_Level, IntervalStop)%>%
+    filter(Plate==plate[file])%>%
+    filter(Light_Level==i)%>%
+    select(IntervalStop)%>%
+    as.data.frame()
+
+   endtime<-endtime[1,1]
+   
+  #filter by light interval 
   Photo.Data <- Photo.Data %>% #filters data by interval for light 
-     filter(Time.Min > starttime[i])%>%
-     filter(Time.Min < endtime[i]) 
+     filter(Time.Min > starttime)%>%
+     filter(Time.Min < endtime) 
   
   Photo.Data.N <- Photo.Data[,3:26] #subset desired columns
   

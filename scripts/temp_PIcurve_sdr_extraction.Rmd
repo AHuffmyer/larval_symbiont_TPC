@@ -116,27 +116,20 @@ Light_Values <- unique(Run.Info$Light_Level)
 metadata <- full_join(Sample.Info, Run.Info) %>%
   mutate(Date = as_date(as.character(Date), format = "%Y%m%d"))
 
-starttime<-Run.Info$IntervalStart
-endtime<-Run.Info$IntervalStop
+#starttime<-Run.Info$IntervalStart
+#endtime<-Run.Info$IntervalStop
 ```
 
 ```{r}
 plate
 Light_Values
-starttime
-endtime
+#starttime
+#endtime
 date
 ```
 Check that all of these values are in the correct order in reference to each other manually! 
 
 Run loop to extract slopes from photosynthesis data from each light level in each file name/plate. 
-
-
-TEMPORARY: Check individual runs 
-09 - 
-10 - 
-
-HAVING ISSUES WITH IT NOT MAKING PROPER CUT OFFS FOR RUNS 13-16 (maybe others?)
 
 ```{r, results=FALSE, warning=FALSE, message=FALSE}
 
@@ -148,16 +141,31 @@ for(file in 1:length(file.names)) { # for every file in list start at the first 
   Photo.Data$Temp <- Photo.Data[,31] #assigns temp column
   Photo.Data$Time.Min <- seq.int(from=0, to=((nrow(Photo.Data)*0.25)-0.25), by = 0.25) #set time in min
   
-  # maybe add step here to filter by plate that is being read in and pull out start and end times for each? from run info data?
+  # extract start and end times for the respective plate 
   
+  starttime<-Run.Info%>%
+    select(Plate, Light_Level, IntervalStart)%>%
+    filter(Plate==plate[file])%>%
+    filter(Light_Level==i)%>%
+    select(IntervalStart)%>%
+    as.data.frame()
+
+   starttime<-starttime[1,1]
+   
+   endtime<-Run.Info%>%
+    select(Plate, Light_Level, IntervalStop)%>%
+    filter(Plate==plate[file])%>%
+    filter(Light_Level==i)%>%
+    select(IntervalStop)%>%
+    as.data.frame()
+
+   endtime<-endtime[1,1]
   
-  
-  
-  
+   
   #filter by light interval - need to bind in dataframe to tell it which start and end time to use 
   Photo.Data <- Photo.Data %>% #filters data by interval for light 
-     filter(Time.Min > starttime[i])%>%
-     filter(Time.Min < endtime[i]) 
+     filter(Time.Min > starttime)%>%
+     filter(Time.Min < endtime) 
   
   Photo.Data.N <- Photo.Data[,3:26] #subset desired columns
   
@@ -209,10 +217,29 @@ for(file in 1:length(file.names)) {
   Temp.Data$Temp <- Temp.Data[,31] #assigns temp column
   Temp.Data$Time.Min <- seq.int(from=0, to=((nrow(Temp.Data)*0.25)-0.25), by = 0.25) #set time in min
   
+  starttime<-Run.Info%>%
+    select(Plate, Light_Level, IntervalStart)%>%
+    filter(Plate==plate[file])%>%
+    filter(Light_Level==i)%>%
+    select(IntervalStart)%>%
+    as.data.frame()
+
+   starttime<-starttime[1,1]
+   
+   endtime<-Run.Info%>%
+    select(Plate, Light_Level, IntervalStop)%>%
+    filter(Plate==plate[file])%>%
+    filter(Light_Level==i)%>%
+    select(IntervalStop)%>%
+    as.data.frame()
+
+   endtime<-endtime[1,1]
+  
+  
   #filter by light interval - need to bind in dataframe to tell it which start and end time to use 
   Temp.Data <- Temp.Data %>% #filters data by interval for light 
-     filter(Time.Min > starttime[i])%>%
-     filter(Time.Min < endtime[i]) 
+     filter(Time.Min > starttime)%>%
+     filter(Time.Min < endtime) 
   
     Temp.Pb[j,1] <- as.character(date[file]) #stores the date
     Temp.Pb[j,2] <- as.character(plate[file]) #stores the run number
@@ -320,8 +347,8 @@ plot(as.factor(blank_data$Plate), blank_data$P.umol.L.min, xlab="Plate", ylab="r
 
 #remove outlier blank 
 blank_data<-blank_data%>%
-  filter(P.umol.L.min>-3)%>%
-  filter(P.umol.L.min<2)
+  filter(P.umol.L.min>-2.5)%>%
+  filter(P.umol.L.min<1.2)
 
 plot(as.factor(blank_data$Plate), blank_data$P.umol.L.min, xlab="Plate", ylab="rate") #photo rates after outlier removal
 
@@ -355,6 +382,14 @@ oxygen.bio$P.nmol.org.min <- oxygen.bio$P.umol.org.min*1000 #calculate nanomoles
 
 Plot values.  
 ```{r}
+plot(oxygen.bio$P.nmol.org.min)
+```
+
+Filter outliers. 
+```{r}
+oxygen.bio<-oxygen.bio%>%
+  filter(P.nmol.org.min> -0.2)
+
 plot(oxygen.bio$P.nmol.org.min)
 ```
 
