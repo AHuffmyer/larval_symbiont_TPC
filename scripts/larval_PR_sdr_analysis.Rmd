@@ -504,7 +504,50 @@ pairs(emm)
 ```
 There is an effect of temperature on P net at high light. 
 
+## Test effect of light 
 
-ADD IN LIGHT AND TEMP MODELS HERE 
+Test effect of light on P:R ratio. 
+```{r}
+model<-pr_data_calc%>%
+  filter(Metric %in% c("ratio_low", "ratio_high"))%>%
+  filter(Date=="20230624")%>%
+  aov(Value~Metric*Temperature*Symbiont, data=.)
+
+summary(model)
+
+TukeyHSD(model, "Metric")
+TukeyHSD(model, "Temperature")
+
+```
+Ratios peak at 30C and are higher at high light. 
+
+Test effect of light on P gross.  
+```{r}
+model<-pr_data_calc%>%
+  filter(Metric %in% c("p_gross_low", "p_gross_high"))%>%
+    filter(Date=="20230624")%>%
+  aov(Value~Metric*Temperature*Symbiont, data=.)
+
+summary(model)
+
+TukeyHSD(model, "Metric")
+TukeyHSD(model, "Temperature")
+```
+P gross increases with temperature and is higher at high light. 
+
+Test effect of light on P net.   
+```{r}
+model<-pr_data_calc%>%
+  filter(Metric %in% c("p_net_low","p_net_high"))%>%
+  filter(Date=="20230624")%>%
+  aov(Value~Metric*Temperature*Symbiont, data=.)
+
+summary(model)
+
+TukeyHSD(model, "Metric")
+TukeyHSD(model, "Temperature")
+```
+P net increases with temperature and is higher in high light. 
+
 
 
