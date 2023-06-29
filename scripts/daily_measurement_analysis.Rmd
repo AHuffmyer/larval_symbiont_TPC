@@ -125,6 +125,23 @@ daily_treatment<-daily_calc.long %>%
 ggsave(filename="figures/environmental/boxplot_daily_measurements.png", plot=daily_treatment, dpi=300, width=6, height=8, units="in")
 ```
 
+Plot means for each symbiont type, filtering to measurements in treatment conicals. 
+```{r}
+daily_treatment_summary<-daily_calc.long %>%
+  filter(group %in% c("Cladocopium", "Mixed", "Wildtype"))%>%
+  
+  ggplot(aes(x=group, y=value, colour=group))+
+  geom_point()+
+  geom_boxplot()+
+  scale_colour_manual(values=c("orange", "brown4", "gray"))+
+  xlab("Date")+
+  ylab("Value")+
+  facet_grid(metric ~ ., scales = "free")+
+  theme_classic(); daily_treatment_summary
+
+ggsave(filename="figures/environmental/summary_daily_measurements.png", plot=daily_treatment_summary, dpi=300, width=4, height=8, units="in")
+```
+
 ## Test for differences between tanks  
 
 Obtain a short format dataset.  
