@@ -7,3 +7,9 @@ date.start,date.end ,logger,tank,group,project,type
 20230616,20230620,20987156,incubator3,high,dev_timeseries,U22
 20230616,20230620,21723477,incubator4,ambient,dev_timeseries,tidbit
 20230616,20230620,20444042,incubator4,ambient,dev_timeseries,U22
+20230620,20230627,21723477,incubator1,sdr1,larvae_cd,tidbit
+20230620,20230627,21723472,incubator2,sd2,larvae_cd,tidbit
+20230620,20230627,21723475,ambient_tank,ambient,larvae_cd,tidbit
+20230620,20230627,21723474,moderate_tank,moderate,larvae_cd,tidbit
+20230620,20230627,21723473,high_tank,high,larvae_cd,tidbit
+20230620,20230627,201623476,incubator3,ambient,larvae_cd,tidbit
