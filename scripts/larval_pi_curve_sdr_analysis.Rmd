@@ -238,9 +238,26 @@ pi_plot3<-pi_data %>%
 
 Run anova on values 
 ```{r}
-summary(aov(P.nmol.org.min~PAR*Symbiont, data=pi_data))
+model<-aov(P.nmol.org.min~as.factor(PAR)*Symbiont, data=pi_data)
+summary(model)
+
+library("emmeans")
+
+emm<-emmeans(model, ~ Symbiont | PAR)
+pairs(emm)
 ```
-Symbiont p=0.05
+PAR and symbiont are significant, there is an interaction between PAR and symbiont. 
+
+0 PAR = no difference 
+16 PAR = no difference 
+60 PAR = C is higher than MIX 
+120 PAR = no difference 
+275 PAR = MIX less than WT 
+425 PAR = C greater than WT 
+700 PAR = C greater than MIX 
+1100 PAR = MIX greater than WT 
+1500 PAR = no difference 
+1660 PAR = no difference
 
 # Apply PI curve calculations and models 
 
@@ -422,6 +439,7 @@ metrics_plot<-plot_grid(metrics_plot1, metrics_plot1a, nrow=1, ncol=2, rel_width
 ggsave("figures/larval_pi_curves/parameters.png", metrics_plot, width=8, height=6, dpi=300)
 ```
 
+Need to bootstrap for parameter estimates next  
 
 
 
