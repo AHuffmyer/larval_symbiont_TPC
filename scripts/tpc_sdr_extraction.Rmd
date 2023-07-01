@@ -14,7 +14,6 @@ editor_options:
   chunk_output_type: console
 ---
 
-NEED TO EDIT RUN START END TIMES 
 ## Setup  
 
 Set up workspace, set options, and load required packages.    

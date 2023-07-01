@@ -286,25 +286,12 @@ oxygen$Org.Number<-Sample.Info$Org.Number[match(oxygen$unique, Sample.Info$uniqu
 Remove samples that have inaccurate slope extraction for respiration rates (determined by PDF output files)  
 
 ```{r}
-#Run 3 B3
-#Run 3 D4
-#Run 7 D6 
-#Run 8 B4 
-#Run 12 A3
-#Run 12 B5
-#Run 13 D6
-#Run 15 A4
-#Run 15 D6
-#Run 6 D4
-#Run 8 C4
-#Run 10 D4
-
-#oxygen<-oxygen%>%
-  #mutate(code=paste(Run, Chamber.ID))%>%
-  #filter(!code=="3 B3")%>%
-  #filter(!code=="3 D4")%>%
-  #filter(!code=="7 D6")%>%
-  #filter(!code=="8 B4")%>%
+oxygen<-oxygen%>%
+  mutate(code=paste(Plate, Chamber.ID))%>%
+  filter(!c(code=="2 A2" & Light==5))%>%
+  filter(!c(code=="2 A5" & Light==2))%>%
+  filter(!c(code=="2 A6" & Light==1))%>%
+  filter(!c(code=="2 C4" & Light==2))%>%
   #filter(!code=="12 A3")%>%
   #filter(!code=="12 B5")%>%
   #filter(!code=="13 D6")%>%
@@ -313,7 +300,7 @@ Remove samples that have inaccurate slope extraction for respiration rates (dete
   #filter(!code=="6 D5")%>%
   #filter(!code=="8 C4")%>%
   #filter(!code=="10 D4")%>%
-  #select(!code)
+  select(!code)
 ```
 
 Account for volume to obtain umol per minute.   

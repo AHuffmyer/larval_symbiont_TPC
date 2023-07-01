@@ -250,13 +250,13 @@ PAR and symbiont are significant, there is an interaction between PAR and symbio
 
 0 PAR = no difference 
 16 PAR = no difference 
-60 PAR = C is higher than MIX 
+60 PAR = C is higher than MIX, C greater than WT 
 120 PAR = no difference 
 275 PAR = MIX less than WT 
-425 PAR = C greater than WT 
-700 PAR = C greater than MIX 
-1100 PAR = MIX greater than WT 
-1500 PAR = no difference 
+425 PAR = C greater than WT, C greater than MIX
+700 PAR = C greater than MIX, MIX less than WT 
+1100 PAR = no difference
+1500 PAR = C less than WT  
 1660 PAR = no difference
 
 # Apply PI curve calculations and models 

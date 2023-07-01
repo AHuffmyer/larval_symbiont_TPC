@@ -384,7 +384,7 @@ model<-pr_data_calc%>%
 
 summary(model)
 ```
-No effect of temp or group on P:R ratio at high light. 
+P:R Ratio at high light is affected by temperature. 
 
 ```{r}
 model<-pr_data_calc%>%

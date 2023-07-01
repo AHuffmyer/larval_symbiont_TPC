@@ -302,17 +302,19 @@ oxygen$Org.Number<-Sample.Info$Org.Number[match(oxygen$unique, Sample.Info$uniqu
 
 Remove samples that have inaccurate slope extraction for respiration rates (determined by PDF output files)  
 
+
+ADD LIGHT LEVELS TO THIS FILTER STEP 
 ```{r}
 oxygen<-oxygen%>%
   mutate(code=paste(Plate, Chamber.ID))%>%
-  filter(!code=="3 A5")%>%
-  filter(!code=="3 B3")%>%
-  filter(!code=="3 C2")%>%
-  filter(!code=="3 C5")%>%
-  filter(!code=="3 D3")%>%
-  filter(!code=="3 D5")%>%
-  filter(!code=="4 A2")%>%
-  filter(!code=="4 D1")%>%
+  filter(!c(code=="3 A5" & Light==6))%>%
+  filter(!c(code=="3 B3" & Light==2))%>%
+  filter(!c(code=="3 C2" & Light==11))%>%
+  filter(!c(code=="3 C5" & Light==5))%>%
+  filter(!c(code=="3 D3" & Light==9))%>%
+  filter(!c(code=="3 D5" & Light==3))%>%
+  filter(!c(code=="4 A2" & Light==3))%>%
+  filter(!c(code=="4 D1" & Light==3))%>%
   select(!code)
 ```
 
