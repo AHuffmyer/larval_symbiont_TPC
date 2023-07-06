@@ -1,0 +1,239 @@
+---
+title: "Fungia Respirometry Extraction w/ LoLinR - Hawaii 2023"
+author: "jillashey"
+date: "2023-07-05"
+output: html_document
+---
+
+This script extracts the respiration data from the initial respiration Fungia larval run. These larvae are aposymbiotic and acquire their symbionts from the environment, which is why photosynthesis was not run. I assessed how many individuals would need to be loaded into each well to get a good signal. I loaded approximately 8, 12, 16 or 20 larvae per well. 
+
+## Set up workspace, set options, and load required packages.    
+```{r}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r, warning=FALSE, message=FALSE}
+## install packages if you dont already have them in your library
+if ("devtools" %in% rownames(installed.packages()) == 'FALSE') install.packages('devtools') 
+library(devtools)
+if ("segmented" %in% rownames(installed.packages()) == 'FALSE') install.packages('segmented') 
+if ("plotrix" %in% rownames(installed.packages()) == 'FALSE') install.packages('plotrix') 
+if ("gridExtra" %in% rownames(installed.packages()) == 'FALSE') install.packages('gridExtra') 
+if ("LoLinR" %in% rownames(installed.packages()) == 'FALSE') install_github('colin-olito/LoLinR') 
+if ("lubridate" %in% rownames(installed.packages()) == 'FALSE') install.packages('lubridate') 
+if ("chron" %in% rownames(installed.packages()) == 'FALSE') install.packages('chron') 
+if ("plyr" %in% rownames(installed.packages()) == 'FALSE') install.packages('plyr') 
+if ("dplyr" %in% rownames(installed.packages()) == 'FALSE') install.packages('dplyr') 
+if ("stringr" %in% rownames(installed.packages()) == 'FALSE') install.packages('stringr') 
+if ("Rmisc" %in% rownames(installed.packages()) == 'FALSE') install.packages('Rmisc') 
+if ("respR" %in% rownames(installed.packages()) == 'FALSE') install.packages('respR') 
+
+
+#load packages
+library("ggplot2")
+library("segmented")
+library("plotrix")
+library("gridExtra")
+library("LoLinR")
+library("lubridate")
+library("chron")
+library('plyr')
+library('dplyr')
+library('stringr')
+library('Rmisc')
+library('respR')
+```
+
+## Read in files 
+
+Set path of all respirometry files within the R project. 
+
+```{r}
+path.p<-"data/fungia/Runs" #location of files
+```
+
+Bring in file names.
+
+```{r}
+file.names<-basename(list.files(path = path.p, pattern = "csv$", recursive = TRUE)) 
+```
+
+## Extract respiration rates 
+
+Generate respiration data frames 
+
+```{r}
+#generate a 6 column dataframe with specific column names
+Resp.R <- data.frame(matrix(NA, ncol=6))
+colnames(Resp.R) <- c("Date", "Plate","Sample.ID","Chamber.ID","Intercept", "umol.L.min")
+```
+
+Load in the sample information file. It is important to have chambers in the order "A1, B1, C1, D1", rather than "A1, A2, A3, A4".  
+
+```{r}
+Sample.Info <- read.csv("data/fungia/PR_Fungia_Sample_Info.csv")
+rename <- Sample.Info$Chamber.ID
+samp <- Sample.Info$Sample.ID
+plate <- str_sub(file.names, 23, 29) #grab run from file name
+date <- str_sub(file.names, 1, str_length(file.names)-35) #grab date from file name
+```
+
+Run loop to extract slopes from respiration data (Oxygen in umol/L concentration).
+
+```{r}
+for(i in 1:length(file.names)) { # for every file in list start at the first and run this following function
+  Resp.Data <-read.table(file.path(path.p,file.names[i]), skip = 56, header=T, sep=",", na.string="NA", fill = TRUE, as.is=TRUE, fileEncoding="latin1") #reads in the data files
+  Resp.Data$Temp <- Resp.Data[,31] #assigns temp column
+  Resp.Data$Time.Min <- seq.int(from=0, to=((nrow(Resp.Data)*0.25)-0.25), by = 0.25) #set time in min
+  Resp.Data.N <- Resp.Data[,3:26] #subset desired columns
+
+  #add column names back in 
+  Resp.Data.N<-as.data.frame(Resp.Data.N)
+  
+  for(j in 1:(ncol(Resp.Data.N))){
+    model <- rankLocReg(
+      xall=Resp.Data$Time.Min, yall=as.numeric(Resp.Data.N[, j]), 
+      alpha=0.4, method="pc", verbose=TRUE) #extract slopes, percentile rank method with minimum window size of 0.4. This means that in order to fit a slope, it has to encompass at least 40% of available datapoints. 
+    
+    pdf(paste0("output/fungia/RespirationPlots/",date[i], "_",plate[i],"_",rename[j],"_regression_trunc.pdf")) #generate output file names
+    plot(model)
+    dev.off()
+    
+    Resp.R[j,1] <- as.character(date[i]) #stores the date
+    Resp.R[j,2] <- as.character(plate[i]) #stores the run number
+    Resp.R[j,3] <- as.character(samp[j+(i-1)*ncol(Resp.Data.N)]) #stores the sample ID
+    Resp.R[j,4] <- as.character(rename[j]) #stores the chamber ID
+    Resp.R[j,5:6] <- model$allRegs[i,c(4,5)] #inserts slope and intercept in the dataframe
+    
+  }
+}
+```
+
+Calculate average temperature of each run and export to table. 
+
+```{r}
+# list files 
+file.names<-basename(list.files(path = path.p, pattern = "csv$", recursive = TRUE)) 
+
+#generate matrix to populate
+Temp.R <- data.frame(matrix(NA, ncol=3))
+colnames(Temp.R) <- c("Date", "Plate","Temp.C")
+
+#read in temps and generate mean values  
+for(i in 1:length(file.names)) { # for every file in list start at the first and run this following function
+  Temp.Data <-read.table(file.path(path.p,file.names[i]), skip = 56, header=T, sep=",", na.string="NA", fill = TRUE, as.is=TRUE, fileEncoding="latin1") #reads in the data files
+  Temp.Data$Temp <- Temp.Data[,31] #assigns temp column
+  
+    Temp.R[j,1] <- as.character(date[i]) #stores the date
+    Temp.R[j,2] <- as.character(plate[i]) #stores the run number
+    Temp.R[j,3] <- mean(Temp.Data$Temp) #stores the sample ID
+    
+    Temp.R <- na.omit(Temp.R)
+  
+}
+
+write.csv(Temp.R, paste0("output/fungia/runs_temp.csv")) #save respiration rate data
+```
+
+Save respiration data frames 
+
+```{r}
+#Resp.R <- Resp.R[-1,] #remove empty column
+
+write.csv(Resp.R, paste0("output/fungia/sdr_respiration_rates_raw.csv")) #save respiration rate data
+
+plot(Resp.R$umol.L.min~as.factor(Resp.R$Plate), side = 2, las = 2, xlab="" )
+```
+
+Read file back in so slopes don't have to be generated every time 
+
+```{r}
+Resp.Rates <- read.csv(file = "output/fungia/sdr_respiration_rates_raw.csv") #read file back in so slopes don't have to be generated every time
+Resp.Rates = subset(Resp.Rates, select = -c(X) ) #remove empty column
+
+#format "run" column
+Resp.Rates<-Resp.Rates %>%
+  mutate(Plate = str_sub(Plate, 6, -1))
+Resp.Rates$Plate<-as.integer(Resp.Rates$Plate) #format as # rather than run #, set as integer
+```
+
+## Standardize and normalize 
+
+Merge resp file with sample info for testing and manipulation 
+
+```{r}
+Sample.Info$Date<-as.factor(Sample.Info$Date)
+Resp.Rates$Date<-as.factor(Resp.Rates$Date)
+oxygen<-dplyr::full_join(Sample.Info, Resp.Rates) #add respiration data
+colnames(oxygen)[colnames(oxygen) == 'Intercept'] <- 'Resp.Intercept' #rename to specify R
+colnames(oxygen)[colnames(oxygen) == 'umol.L.min'] <- 'R.umol.L.min' #rename to specify R
+```
+
+Remove samples that have inaccurate slope extraction for respiration rates (determined by PDF output files)  -- STILL NEED TO DO THIS AS OF 7/5/23
+
+Account for volume to obtain umol per minute 
+
+```{r}
+oxygen$Volume <- 0.00008
+
+#Account for chamber volume to convert from umol L-1 m-1 to umol m-1. This removes per Liter
+oxygen$R.umol.min <- oxygen$R.umol.L.min * oxygen$Volume #calculate
+
+# Plot by plate 
+plot(oxygen$Plate, oxygen$R.umol.L.min, xlab="Run", ylab="rate") #resp rates
+plot(oxygen$Plate, oxygen$R.umol.min, xlab="Run", ylab="rate") #resp rates
+
+#looks like the rates are different by plate...
+```
+
+Substract blank values. Average blank calculated for each run. Display mean blank value.  
+
+```{r}
+blank_data <- subset(oxygen, Type == "Blank") #subset to blank data only
+plot(as.factor(blank_data$Plate), blank_data$R.umol.min, xlab="Run", ylab="umol O2 min-1") #blanks during dark phase
+
+#display mean blankvalues
+mean(blank_data$R.umol.min, na.rm=TRUE) #mean R phase blanks
+
+resp.blnk <- aggregate(R.umol.min ~ Date*Plate, data=blank_data, mean) #calculate average blank during light for each run
+colnames(resp.blnk)[colnames(resp.blnk) == 'R.umol.min'] <- 'R.Blank.umol.min' #rename to specify blank for R
+
+oxygen <- full_join(oxygen, resp.blnk) #add R blanks to master
+```
+
+Subtract blank values to generate a "corrected" value for umol O2 min-1.  
+
+```{r}
+oxygen$R.umol.min.corr<-oxygen$R.umol.min-oxygen$R.Blank.umol.min #subtract R blanks
+
+plot(oxygen$R.umol.min.corr)
+```
+
+Normalize to biologically relevant measure. Here, normalize to number of larvae. This can be substituted or changed for larval size/volume as well.  
+
+```{r}
+oxygen.bio <- oxygen %>% filter(Type == "Sample") #isolate only biological samples and drop unused factor levels 
+oxygen.bio <- droplevels(oxygen.bio) #drop unused factor levels
+
+#respiration
+oxygen.bio$R.umol.org.min <- oxygen.bio$R.umol.min.corr/oxygen.bio$Org.Number #calculate oxygen per organism 
+oxygen.bio$R.nmol.org.min <- oxygen.bio$R.umol.org.min*1000 #calculate nanomoles 
+
+plot(oxygen.bio$R.nmol.org.min)
+```
+
+Save as csv file 
+
+```{r}
+write.csv(oxygen.bio, paste0("output/fungia/calculated_normalized_rates.csv")) #save final file
+```
+
+
+
+
+
+
+
+
+
+
