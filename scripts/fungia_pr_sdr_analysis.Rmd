@@ -14,34 +14,35 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 
 ```{r, warning=FALSE, message=FALSE}
 ## install packages if you dont already have them in your library
-if ("devtools" %in% rownames(installed.packages()) == 'FALSE') install.packages('devtools') 
-library(devtools)
-if ("segmented" %in% rownames(installed.packages()) == 'FALSE') install.packages('segmented') 
-if ("plotrix" %in% rownames(installed.packages()) == 'FALSE') install.packages('plotrix') 
-if ("gridExtra" %in% rownames(installed.packages()) == 'FALSE') install.packages('gridExtra') 
-if ("LoLinR" %in% rownames(installed.packages()) == 'FALSE') install_github('colin-olito/LoLinR') 
-if ("lubridate" %in% rownames(installed.packages()) == 'FALSE') install.packages('lubridate') 
-if ("chron" %in% rownames(installed.packages()) == 'FALSE') install.packages('chron') 
-if ("plyr" %in% rownames(installed.packages()) == 'FALSE') install.packages('plyr') 
-if ("dplyr" %in% rownames(installed.packages()) == 'FALSE') install.packages('dplyr') 
-if ("stringr" %in% rownames(installed.packages()) == 'FALSE') install.packages('stringr') 
-if ("Rmisc" %in% rownames(installed.packages()) == 'FALSE') install.packages('Rmisc') 
-if ("respR" %in% rownames(installed.packages()) == 'FALSE') install.packages('respR') 
-
+if ("tidyverse" %in% rownames(installed.packages()) == 'FALSE') install.packages('tidyverse') 
+if ("car" %in% rownames(installed.packages()) == 'FALSE') install.packages('car') 
+if ("lme4" %in% rownames(installed.packages()) == 'FALSE') install.packages('lme4') 
+if ("lmerTest" %in% rownames(installed.packages()) == 'FALSE') install.packages('lmerTest') 
+if ("scales" %in% rownames(installed.packages()) == 'FALSE') install.packages('scales') 
+if ("cowplot" %in% rownames(installed.packages()) == 'FALSE') install.packages('cowplot') 
+if ("ggplot2" %in% rownames(installed.packages()) == 'FALSE') install.packages('ggplot2') 
+if ("effects" %in% rownames(installed.packages()) == 'FALSE') install.packages('effects') 
+if ("emmeans" %in% rownames(installed.packages()) == 'FALSE') install.packages('emmeans') 
+if ("multcomp" %in% rownames(installed.packages()) == 'FALSE') install.packages('multcomp') 
+if ("rTPC" %in% rownames(installed.packages()) == 'FALSE') remotes::install_github("padpadpadpad/rTPC")
+if ("ggstatsplot" %in% rownames(installed.packages()) == 'FALSE') remotes::install_github("IndrajeetPatil/ggstatsplot")
+if ("nls.multstart" %in% rownames(installed.packages()) == 'FALSE') install.packages('nls.multstart')
+if ("broom" %in% rownames(installed.packages()) == 'FALSE') install.packages('broom')
+if ("nlme" %in% rownames(installed.packages()) == 'FALSE') install.packages('nlme')
 
 #load packages
 library("ggplot2")
-library("segmented")
-library("plotrix")
-library("gridExtra")
-library("LoLinR")
-library("lubridate")
-library("chron")
-library('plyr')
-library('dplyr')
-library('stringr')
-library('Rmisc')
-library('respR')
+library("tidyverse")
+library('car')
+library('lme4')
+library('lmerTest')
+library('scales')
+library('cowplot')
+library('rTPC')
+library('ggstatsplot')
+library('nls.multstart')
+library('broom')
+library('nlme')
 ```
 
 ## Data visualization + manipulation
@@ -102,10 +103,102 @@ r_plot1 <- r_data %>%
       ); r_plot1
 ```
 
+## Look for outliers 
+
+Change respiration to inverse.
+
+```{r}
+r_data <- r_data %>%
+  mutate(R.inverse=R.nmol.org.min*-1)
+```
 
 
+View and remove outliers.
 
+```{r}
+#identify outliers by Temperature and Treatment groups
+outlier.plot <- ggbetweenstats(r_data, Org.Number, R.nmol.org.min, outlier.tagging = TRUE)
+outlier.plot
 
+ggsave("figures/fungia/outliersbygroup_pr.png", outlier.plot, dpi=300, w=16, h=8, units="in")
 
+#set quantile values
+q <- c(0.1, 0.9)
+
+# calculate quantile values by Temperature and Treatment groups
+Quants <- r_data %>%
+  group_by(Org.Number) %>%
+  summarize(quant25 = quantile(R.nmol.org.min, probs = q[1], na.rm=TRUE),
+            quant75 = quantile(R.nmol.org.min, probs = q[2], na.rm=TRUE),
+            IQRbyGroup=IQR(R.nmol.org.min, na.rm=TRUE))
+
+# Add group name 
+## only do this if I do TPCs
+
+#Calculate Quantile upper and lower ranges 
+Quants$upper <-  Quants$quant75+1.5*Quants$IQRbyGroup # Upper Range  
+Quants$lower <- Quants$quant25-1.5*Quants$IQRbyGroup # Lower Range
+
+#join outlier cutoffs with rate data
+r_data <- left_join(r_data, Quants)
+
+#remove outliers from rates
+r_data_outlier <- r_data %>%
+  filter(R.nmol.org.min < upper) %>%
+  filter(R.nmol.org.min > lower) #%>%
+  #filter(rate < 0.125)
+
+# Visualize data following outlier removal
+outlier.plot2 <- ggbetweenstats(r_data_outlier, Org.Number, R.nmol.org.min, outlier.tagging = TRUE)
+outlier.plot2
+
+ggsave("figures/fungia/removed_outliersbygroup_pr.png", outlier.plot2, dpi=300, w=16, h=8, units="in")
+```
+
+I think the outlier removal worked! It removed one outlier from the 8 org.number group. 
+
+## Plot data after outlier removal 
+
+```{r}
+r_plot2 <- r_data_outlier %>%
+  group_by(Org.Number) %>%
+  dplyr::summarise(mean=mean(R.nmol.org.min, na.rm=TRUE), sd=sd(R.nmol.org.min, na.rm=TRUE), N=length(R.nmol.org.min), se=sd/sqrt(N)) %>%
+    mutate(mean=mean*-1) %>%
+  ggplot(., aes(x = Org.Number, y = mean)) +
+    #facet_wrap(~Date)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_point(size=6, position = position_dodge(0.4)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
+    xlab("No. organisms") + 
+    #scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
+    ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    #ylim(0, 0.05)+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); r_plot2
+
+ggsave("figures/fungia/pr_means_orgnumber.png", r_plot2, dpi=300, w=7, h=5, units="in")
+```
+
+## Running anova on respiration rates by organism number
+
+I think that 8 v. 20 organisms will differ significantly by one another, but no other differences.
+
+```{r}
+aov <- r_data_outlier %>%
+  aov(R.nmol.org.min~Org.Number, data=.)
+summary(aov)
+
+# No effect of org number! 
+
+TukeyHSD(aov)
+```
+
+Since there is no effect of organism number on the respiration rate, I think that we should load 8-12 fungia per well. This makes it relatively easier to count out larvae and load the wells for respiration. 
 
 
