@@ -1,0 +1,111 @@
+---
+title: "Fungia Respirometry plotting and analysis - Hawaii 2023"
+author: "jillashey"
+date: "2023-07-06"
+output: html_document
+---
+
+This script plots and analyzes the initial respirataion Fungia larval run. These larvae are aposymbiotic and acquire their symbionts from the environment, which is why photosynthesis was not run. I assessed how many individuals would need to be loaded into each well to get a good signal. I loaded approximately 8, 12, 16 or 20 larvae per well. 
+
+## Set up workspace, set options, and load required packages.    
+```{r}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r, warning=FALSE, message=FALSE}
+## install packages if you dont already have them in your library
+if ("devtools" %in% rownames(installed.packages()) == 'FALSE') install.packages('devtools') 
+library(devtools)
+if ("segmented" %in% rownames(installed.packages()) == 'FALSE') install.packages('segmented') 
+if ("plotrix" %in% rownames(installed.packages()) == 'FALSE') install.packages('plotrix') 
+if ("gridExtra" %in% rownames(installed.packages()) == 'FALSE') install.packages('gridExtra') 
+if ("LoLinR" %in% rownames(installed.packages()) == 'FALSE') install_github('colin-olito/LoLinR') 
+if ("lubridate" %in% rownames(installed.packages()) == 'FALSE') install.packages('lubridate') 
+if ("chron" %in% rownames(installed.packages()) == 'FALSE') install.packages('chron') 
+if ("plyr" %in% rownames(installed.packages()) == 'FALSE') install.packages('plyr') 
+if ("dplyr" %in% rownames(installed.packages()) == 'FALSE') install.packages('dplyr') 
+if ("stringr" %in% rownames(installed.packages()) == 'FALSE') install.packages('stringr') 
+if ("Rmisc" %in% rownames(installed.packages()) == 'FALSE') install.packages('Rmisc') 
+if ("respR" %in% rownames(installed.packages()) == 'FALSE') install.packages('respR') 
+
+
+#load packages
+library("ggplot2")
+library("segmented")
+library("plotrix")
+library("gridExtra")
+library("LoLinR")
+library("lubridate")
+library("chron")
+library('plyr')
+library('dplyr')
+library('stringr')
+library('Rmisc')
+library('respR')
+```
+
+## Data visualization + manipulation
+
+Load data from LoLinR.
+
+```{r}
+r_data <- read.csv("output/fungia/calculated_normalized_rates.csv")
+sample_info <- read.csv("data/fungia/PR_Fungia_Sample_Info.csv")
+```
+
+Format dataset.
+
+```{r}
+#remove all rows of wells that did not have samples or blanks
+r_data<-r_data[!is.na(r_data$Type),]
+
+#format columns
+r_data$Temperature<-as.factor(r_data$Temperature)
+r_data$Tank<-as.factor(r_data$Tank)
+r_data$SDR<-as.factor(r_data$SDR)
+r_data$Plate<-as.factor(r_data$Plate)
+r_data$Org.Number <- as.factor(r_data$Org.Number)
+```
+
+Look for outliers in the data.
+
+```{r}
+boxplot(r_data$R.nmol.org.min)
+r_data<-r_data%>%filter(R.nmol.org.min > -0.08)
+boxplot(r_data$R.nmol.org.min)
+# no major outliers!
+```
+
+## Plot respiration over organism number 
+
+```{r}
+r_plot1 <- r_data %>%
+  group_by(Org.Number) %>%
+  dplyr::summarise(mean=mean(R.nmol.org.min, na.rm=TRUE), sd=sd(R.nmol.org.min, na.rm=TRUE), N=length(R.nmol.org.min), se=sd/sqrt(N)) %>%
+    mutate(mean=mean*-1) %>%
+  ggplot(., aes(x = Org.Number, y = mean)) +
+    #facet_wrap(~Date)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_point(size=6, position = position_dodge(0.4)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
+    xlab("No. organisms") + 
+    #scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
+    ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    #ylim(0, 0.05)+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); r_plot1
+```
+
+
+
+
+
+
+
+
