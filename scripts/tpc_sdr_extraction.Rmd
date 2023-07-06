@@ -200,40 +200,26 @@ colnames(oxygen)[colnames(oxygen) == 'umol.L.min'] <- 'R.umol.L.min' #rename to 
 Remove samples that have inaccurate slope extraction for respiration rates (determined by PDF output files)  
 
 ```{r}
-#Run 3 B3
-#Run 3 D4
-#Run 7 D6 
-#Run 8 B4 
-#Run 12 A3
-#Run 12 B5
-#Run 13 D6
-#Run 15 A4
-#Run 15 D6
-#Run 6 D4
-#Run 8 C4
-#Run 10 D4
-
-#oxygen<-oxygen%>%
-  #mutate(code=paste(Run, Chamber.ID))%>%
-  #filter(!code=="3 B3")%>%
-  #filter(!code=="3 D4")%>%
-  #filter(!code=="7 D6")%>%
-  #filter(!code=="8 B4")%>%
-  #filter(!code=="12 A3")%>%
-  #filter(!code=="12 B5")%>%
-  #filter(!code=="13 D6")%>%
+oxygen<-oxygen%>%
+  mutate(code=paste(Plate, Chamber.ID))%>%
+  filter(!code=="8 C6")%>%
+  filter(!code=="9 C5")%>%
+  filter(!code=="11 C3")%>%
+  filter(!code=="12 B6")%>%
+  filter(!code=="13 B3")%>%
+  filter(!code=="13 D2")%>%
+  filter(!code=="21 D6")%>%
   #filter(!code=="15 A4")%>%
   #filter(!code=="15 D6")%>%
   #filter(!code=="6 D5")%>%
   #filter(!code=="8 C4")%>%
   #filter(!code=="10 D4")%>%
-  #select(!code)
+  select(!code)
 ```
 
 Account for volume to obtain umol per minute.   
 
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
-
 oxygen$Volume<-0.00008
 
 #Account for chamber volume to convert from umol L-1 m-1 to umol m-1. This removes per Liter

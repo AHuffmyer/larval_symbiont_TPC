@@ -14,6 +14,8 @@ editor_options:
   chunk_output_type: console
 ---
 
+NEED TO DO ANOTHER ROUND OF QC ON THESE MEASUREMENTS 
+
 # Setup  
 
 Set up workspace, set options, and load required packages.    
@@ -728,7 +730,7 @@ tpc<-pi_temp_data_calc%>%
   mutate(Temperature=as.numeric(as.character(Temperature)))
 ```
 
-Run TPC using same method as in `tpc_sdr_analysi.Rmd` script. 
+Run TPC using same method as in `tpc_sdr_analysis.Rmd` script. 
 
 ## Run for C symbionts 
 
@@ -1198,11 +1200,6 @@ All_params%>%
 All_params%>%
   filter(param=="thermal_tolerance")
 ```
-
-
-
-NEED TO IMPROVE CLADOCOPIUM PARAMETER ESTIMATE 
-
 
 
 

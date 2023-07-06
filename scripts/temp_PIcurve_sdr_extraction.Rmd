@@ -178,6 +178,7 @@ for(file in 1:length(file.names)) { # for every file in list start at the first 
   Photo.Data.N<-as.data.frame(Photo.Data.N)
   
   for(j in 1:(ncol(Photo.Data.N))){
+    
     model <- rankLocReg(
       xall=Photo.Data$Time.Min, yall=as.numeric(Photo.Data.N[, j]), 
       alpha=0.4, method="pc", verbose=TRUE) #extract slopes, percentile rank method with minimum window size of 0.4. This means that in order to fit a slope, it has to encompass at least 40% of available datapoints. 
@@ -310,25 +311,18 @@ oxygen$Temperature<-Sample.Info$Temperature[match(oxygen$unique, Sample.Info$uni
 Remove samples that have inaccurate slope extraction for respiration rates (determined by PDF output files)  
 
 ```{r}
-
-
 #plate well 
 
-#oxygen<-oxygen%>%
-  #mutate(code=paste(Run, Chamber.ID))%>%
-  #filter(!code=="3 B3")%>%
-  #filter(!code=="3 D4")%>%
-  #filter(!code=="7 D6")%>%
-  #filter(!code=="8 B4")%>%
-  #filter(!code=="12 A3")%>%
-  #filter(!code=="12 B5")%>%
-  #filter(!code=="13 D6")%>%
-  #filter(!code=="15 A4")%>%
-  #filter(!code=="15 D6")%>%
-  #filter(!code=="6 D5")%>%
-  #filter(!code=="8 C4")%>%
-  #filter(!code=="10 D4")%>%
-  #select(!code)
+oxygen<-oxygen%>%
+  mutate(code=paste(Plate, Chamber.ID))%>%
+  filter(!c(code=="10 B4" & Light==5))%>%
+  filter(!c(code=="10 D5" & Light==1))%>%
+  filter(!c(code=="12 A4" & Light==3))%>%
+  filter(!c(code=="12 B3" & Light==3))%>%
+  filter(!c(code=="13 A1" & Light==3))%>%
+  filter(!c(code=="16 D4" & Light==3))%>%
+  filter(!c(code=="16 D6" & Light==2))%>%
+  select(!code)
 ```
 
 Account for volume to obtain umol per minute.   

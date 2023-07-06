@@ -85,7 +85,7 @@ Look for outliers in the data.
 
 ```{r}
 boxplot(tpc_data$R.nmol.org.min)
-tpc_data<-tpc_data%>%filter(R.nmol.org.min > -0.08)
+tpc_data<-tpc_data%>%filter(R.nmol.org.min > -0.05)%>%filter(R.nmol.org.min < 0.025)
 boxplot(tpc_data$R.nmol.org.min)
 ```
 
@@ -214,7 +214,7 @@ aov<-tpc_data%>%
 
 summary(aov)
 ```
-Effect of temp and symbiont 
+Effect of temp 
 
 # Outlier removal 
 
@@ -347,7 +347,7 @@ ggsave("figures/tpc_sdr/tpc_dots.png", r_plot5, dpi=300, w=7, h=5, units="in")
 ```{r}
 summary(aov(R.nmol.org.min~Temp.C*Symbiont, data=tpc_data_filt))
 ```
-Effect of symbiont and temperature. 
+Effect of temperature. 
 
 # Fitting TPCs 
 
