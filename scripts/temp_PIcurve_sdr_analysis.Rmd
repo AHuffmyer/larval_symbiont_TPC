@@ -96,6 +96,17 @@ boxplot(pi_temp_data$P.nmol.org.min)
 boxplot(pi_temp_data$P.nmol.org.min~pi_temp_data$PAR)
 ```
 
+Set values at 0 for light runs if <0 indicating no photosynthesis occurred. Set values at 0 for dark runs if >0 indicating no respiration occurred. 
+```{r}
+pi_temp_data<-pi_temp_data%>%
+  mutate(P.nmol.org.min=if_else(P.nmol.org.min<0 & PAR==50, 0, 
+                      if_else(P.nmol.org.min<0 & PAR==100, 0, 
+                              if_else(P.nmol.org.min<0 & PAR==500, 0, 
+                                      if_else(P.nmol.org.min>0 & PAR==0.1, 0, 
+                                              if_else(P.nmol.org.min>0 & PAR==0.2, 0, P.nmol.org.min))))))
+```
+
+
 Calculate mean temperature values for each run.    
 
 ```{r}
@@ -292,7 +303,6 @@ pi_temp_data_calc<-pi_temp_data%>%
 boxplot(pi_temp_data_calc$Value)
 
 pi_temp_data_calc<-pi_temp_data_calc%>%
- filter(Value>-10) %>% 
  filter(Value<20)
 
 boxplot(pi_temp_data_calc$Value)
@@ -315,11 +325,6 @@ metric_plot1<-pi_temp_data_calc%>%
     filter(!Metric=="rd")%>%
     filter(!Metric=="ler_inverse")%>%
     filter(!Metric=="rd_inverse")%>%
-    filter(Value<0.09)%>%
-    filter(Value>-0.08)%>%
-    #filter(!Value< -0.07)%>%
-    #filter(!Value> 0.07)%>%
-    #filter(!c(Value>0.05 & Metric=="p_net_low"))%>%
   
     ggplot(., aes(x = Temperature, y = Value)) +
     facet_wrap(~Metric)+
@@ -352,8 +357,6 @@ metric_plot1_means<-pi_temp_data_calc%>%
     filter(!Metric=="rd")%>%
     filter(!Metric=="ler_inverse")%>%
     filter(!Metric=="rd_inverse")%>%
-    filter(Value<0.09)%>%
-    filter(Value>-0.08)%>%
 
     group_by(Metric, Symbiont, Temperature)%>%
     dplyr::summarise(mean=mean(Value, na.rm=TRUE), sd=sd(Value, na.rm=TRUE), N=length(Value), se=sd/sqrt(N))%>%
@@ -384,10 +387,6 @@ View Rd and LER metrics.
 ```{r}
 metric_plot1a<-pi_temp_data_calc%>%
     filter(Metric %in% c("ler_inverse", "rd_inverse"))%>%
-    #filter(!c(Value<0 & Metric=="ler_inverse"))%>%
-    #filter(!c(Value>0.05 & Metric=="p_net_low"))%>%
-    filter(!Value< -0.02)%>%
-    filter(Value>0)%>%
   
     ggplot(., aes(x = Temperature, y = Value)) +
     facet_wrap(~Metric)+
@@ -414,10 +413,6 @@ View Rd and LER metrics by means.
 ```{r}
 metric_plot1a_means<-pi_temp_data_calc%>%
     filter(Metric %in% c("ler_inverse", "rd_inverse"))%>%
-    #filter(!c(Value<0 & Metric=="ler_inverse"))%>%
-    #filter(!c(Value>0.05 & Metric=="p_net_low"))%>%
-    filter(!Value< -0.02)%>%
-    filter(Value>0)%>%
   
     group_by(Metric, Symbiont, Temperature)%>%
     dplyr::summarise(mean=mean(Value, na.rm=TRUE), sd=sd(Value, na.rm=TRUE), N=length(Value), se=sd/sqrt(N))%>%
@@ -447,13 +442,7 @@ View P:R metrics.
 ```{r}
 metric_plot2<-pi_temp_data_calc%>%
     filter(Metric %in% c("ratio_high", "ratio_medium", "ratio_low"))%>%
-    filter(Value<15)%>%
-    filter(Value>-7)%>%
-  
-    #filter(!c(Metric=="ratio_high" & Value>4 & Symbiont=="C" & Temperature==33))%>% #remove outliers 
-    #filter(!c(Metric=="ratio_high" & Value<0 & Symbiont=="WT" & Temperature==30))%>% #remove outliers 
-    #filter(!c(Metric=="ratio_low" & Value< -1 & Symbiont=="WT" & Temperature==27))%>% #remove outliers 
-    #filter(!Value<0)%>% #remove outliers 
+    filter(Value>0)%>%
   
     ggplot(., aes(x = Temperature, y = Value)) +
     facet_wrap(~Metric)+
@@ -480,17 +469,11 @@ View P:R ratios by means.
 ```{r}
 metric_plot2_means<-pi_temp_data_calc%>%
     filter(Metric %in% c("ratio_high", "ratio_medium", "ratio_low"))%>%
-    filter(Value<15)%>%
-    filter(Value>-7)%>%
+    filter(Value>0)%>%
   
     group_by(Metric, Symbiont, Temperature)%>%
     dplyr::summarise(mean=mean(Value, na.rm=TRUE), sd=sd(Value, na.rm=TRUE), N=length(Value), se=sd/sqrt(N))%>%
-  
-    #filter(!c(Metric=="ratio_high" & Value>4 & Symbiont=="C" & Temperature==33))%>% #remove outliers 
-    #filter(!c(Metric=="ratio_high" & Value<0 & Symbiont=="WT" & Temperature==30))%>% #remove outliers 
-    #filter(!c(Metric=="ratio_low" & Value< -1 & Symbiont=="WT" & Temperature==27))%>% #remove outliers 
-    #filter(!Value<0)%>% #remove outliers 
-  
+
     ggplot(., aes(x = Temperature, y = mean)) +
     facet_wrap(~Metric)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
@@ -517,26 +500,19 @@ ggsave("figures/temp_pi_curves/pi_ratio_means.png", metric_plot2_means, dpi=300,
 ```{r}
 model<-pi_temp_data_calc%>%
   filter(Metric=="ratio_high")%>%
-  filter(Value<15)%>%
-  filter(Value>-7)%>%
-  #filter(!c(Value<0 & Symbiont=="WT" & Temperature==30))%>% #remove outliers 
-  #filter(!Value<0)%>% #remove outliers 
+  filter(Value>0)%>%
   aov(Value~Temperature*Symbiont, data=.)
 
 summary(model)
 
 TukeyHSD(model, c("Temperature"))
 ```
-Ratios decrease with temperature and are lower at 33 than at 27, but level off after that. 
+Ratios are lower at 36 C under low light. 
 
 ```{r}
 model<-pi_temp_data_calc%>%
   filter(Metric=="ratio_medium")%>%
-  filter(Value<15)%>%
-  filter(Value>-7)%>%
-  #filter(!c(Value>4 & Symbiont=="C" & Temperature==33))%>% #remove outliers 
-  #filter(!c(Value<0 & Symbiont=="WT" & Temperature==30))%>% #remove outliers 
-  #filter(!Value<0)%>% #remove outliers 
+  filter(Value>0)%>% 
   aov(Value~Temperature*Symbiont, data=.)
 
 summary(model)
@@ -546,31 +522,29 @@ No effect of temp at medium light.
 ```{r}
 model<-pi_temp_data_calc%>%
   filter(Metric=="ratio_low")%>%
-  #filter(Value>0)%>%
+  filter(Value>0)%>% 
   aov(Value~Temperature*Symbiont, data=.)
 
 summary(model)
 
 TukeyHSD(model, c("Temperature"))
 ```
-Ratios decrease at higher light. 
+No effect of temp at high light 
 
 ```{r}
 model<-pi_temp_data_calc%>%
   filter(Metric=="ler_inverse")%>%
-  filter(!Value< -0.02)%>%
   aov(Value~Temperature*Symbiont, data=.)
 
 summary(model)
 
 TukeyHSD(model, c("Temperature"))
 ```
-LER is affected by temperature and is lower at 33 than 27. After 33 degrees, LER increases again.  
+LER is affected by temperature.
 
 ```{r}
 model<-pi_temp_data_calc%>%
   filter(Metric=="rd_inverse")%>%
-  filter(Value>0)%>%
   aov(Value~Temperature*Symbiont, data=.)
 
 summary(model)
@@ -578,13 +552,11 @@ summary(model)
 TukeyHSD(model, c("Symbiont"))
 TukeyHSD(model, c("Temperature"))
 ```
-WT and MIX are different, WT is higher than MIX. No difference between MIX and C or WT and C. There is higher dark respiration in WT. Dark respiration is higher at 30 and 33 than 27. Respiration at 36 is lower than at 30 and 33. 
+WT and MIX are different, WT is higher than MIX. No difference between MIX and C or WT and C (almost sign). There is higher dark respiration in WT. Dark respiration increases with temp then crashes at 36C. 
 
 ```{r}
 model<-pi_temp_data_calc%>%
   filter(Metric=="p_gross_high")%>%
-    filter(Value<0.09)%>%
-    filter(Value>-0.08)%>%
   aov(Value~Temperature*Symbiont, data=.)
 
 summary(model)
@@ -596,8 +568,6 @@ P gross decreases with temperature when at high light.
 ```{r}
 model<-pi_temp_data_calc%>%
   filter(Metric=="p_gross_medium")%>%
-    filter(Value<0.09)%>%
-    filter(Value>-0.08)%>%
   aov(Value~Temperature*Symbiont, data=.)
 
 summary(model)
@@ -609,8 +579,6 @@ P gross at medium light peaks at 30 then decreases with higher temperatures.
 ```{r}
 model<-pi_temp_data_calc%>%
   filter(Metric=="p_gross_low")%>%
-    filter(Value<0.09)%>%
-    filter(Value>-0.08)%>%
   aov(Value~Temperature*Symbiont, data=.)
 
 summary(model)
@@ -622,8 +590,6 @@ P gross at low light decreases with temperature.
 ```{r}
 model<-pi_temp_data_calc%>%
   filter(Metric=="p_net_low")%>%
-    filter(Value<0.09)%>%
-    filter(Value>-0.08)%>%
   aov(Value~Temperature*Symbiont, data=.)
 
 summary(model)
@@ -635,8 +601,6 @@ P net at low light decreases with temperature.
 ```{r}
 model<-pi_temp_data_calc%>%
   filter(Metric=="p_net_medium")%>%
-    filter(Value<0.09)%>%
-    filter(Value>-0.08)%>%
   aov(Value~Temperature*Symbiont, data=.)
 
 summary(model)
@@ -648,15 +612,12 @@ P net at medium light decreases with temperature.
 ```{r}
 model<-pi_temp_data_calc%>%
   filter(Metric=="p_net_high")%>%
-    filter(Value<0.09)%>%
-    filter(Value>-0.08)%>%
   aov(Value~Symbiont*Temperature, data=.)
 
 summary(model)
 
 TukeyHSD(model, c("Temperature"))
 ```
-
 P net at high light decreases with temperature. 
 
 ## Test effect of light 
@@ -665,8 +626,7 @@ Test effect of light on P:R ratio.
 ```{r}
 model<-pi_temp_data_calc%>%
   filter(Metric %in% c("ratio_low", "ratio_medium", "ratio_high"))%>%
-  filter(Value<15)%>%
-  filter(Value>-7)%>%
+  filter(Value>0)%>%
   aov(Value~Metric*Temperature*Symbiont, data=.)
 
 summary(model)
@@ -677,14 +637,12 @@ TukeyHSD(model, "Temperature")
 emm<-emmeans(model, ~ Metric | Temperature)
 pairs(emm)
 ```
-Ratios increase with light and decrease with temperature. PAR only affects P:R ratio when at high temperature (36). 
+There are light and temperature effects. There is almost a symbiont x temperature effect (p=0.06). 
 
 Test effect of light on P gross.  
 ```{r}
 model<-pi_temp_data_calc%>%
   filter(Metric %in% c("p_gross_low", "p_gross_medium", "p_gross_high"))%>%
-    filter(Value<0.09)%>%
-    filter(Value>-0.08)%>%
   aov(Value~Metric*Temperature*Symbiont, data=.)
 
 summary(model)
@@ -695,14 +653,12 @@ TukeyHSD(model, "Temperature")
 emm<-emmeans(model, ~ Metric | Temperature)
 pairs(emm)
 ```
-Interaction between light and temperature for P gross. 
+Interaction between light and temperature for P gross. There is almost a temp x symbiont effect (p=0.06). 
 
 Test effect of light on P net.   
 ```{r}
 model<-pi_temp_data_calc%>%
   filter(Metric %in% c("p_net_low", "p_net_medium", "p_net_high"))%>%
-    filter(Value<0.09)%>%
-    filter(Value>-0.08)%>%
   aov(Value~Metric*Temperature*Symbiont, data=.)
 
 summary(model)
@@ -717,16 +673,12 @@ Interaction between temperature and light on P net.
 
 # TPC on dark respiration 
 
-DOUBLE CHECK THIS, DOESN'T LOOK LIKE DATA IN PLOTS 
-
 Run a TPC on the dark respiration data across 27-36C. 
 
 ```{r}
 tpc<-pi_temp_data_calc%>%
   filter(Metric=="rd_inverse")%>%
   pivot_wider(names_from = Metric, values_from = Value)%>%
-  filter(!rd_inverse< -0.02)%>%
-  filter(rd_inverse>0)%>%
   mutate(Temperature=as.numeric(as.character(Temperature)))
 ```
 
