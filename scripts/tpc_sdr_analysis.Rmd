@@ -85,8 +85,33 @@ Look for outliers in the data.
 
 ```{r}
 boxplot(tpc_data$R.nmol.org.min)
-tpc_data<-tpc_data%>%filter(R.nmol.org.min > -0.05)%>%filter(R.nmol.org.min < 0.025)
+tpc_data<-tpc_data%>%filter(R.nmol.org.min > -0.03)
 boxplot(tpc_data$R.nmol.org.min)
+```
+
+If a respiration value is above 0 (indicating oxygen production), turn it into 0. 
+```{r}
+tpc_data<-tpc_data%>%
+  mutate(R.nmol.org.min=if_else(R.nmol.org.min>0, 0, R.nmol.org.min))
+```
+
+Next log transform the data.  
+```{r}
+tpc_data<-tpc_data%>%
+  mutate(log.R=log(1+R.nmol.org.min))
+
+boxplot(tpc_data$log.R)
+```
+
+Calculate the inverse for oxygen consumption expressed as a positive value. 
+```{r}
+tpc_data<-tpc_data%>%
+  mutate(log.R.inverse=log.R*-1)
+```
+
+View data now. 
+```{r}
+boxplot(tpc_data$log.R.inverse)
 ```
 
 Calculate mean temperature values and reassign measurement treatment values if necessary.  
@@ -125,20 +150,19 @@ Plot data with means
 r_plot1<-tpc_data %>%
     filter(!Temperature==28)%>%
     filter(!Temperature==39)%>%
-  filter(!Temperature==40)%>%
+    filter(!Temperature==40)%>%
     group_by(Temp.C, Symbiont, Date)%>%
-    #filter(R.nmol.org.min<0.01)%>%
-    dplyr::summarise(mean=mean(R.nmol.org.min, na.rm=TRUE), sd=sd(R.nmol.org.min, na.rm=TRUE), N=length(R.nmol.org.min), se=sd/sqrt(N))%>%
-    mutate(mean=mean*-1)%>%
+    dplyr::summarise(mean=mean(log.R.inverse, na.rm=TRUE), sd=sd(log.R.inverse, na.rm=TRUE), N=length(log.R.inverse), se=sd/sqrt(N))%>%
+    #mutate(mean=mean*-1)%>%
     
     ggplot(., aes(x = Temp.C, y = mean, group=interaction(Temp.C, Symbiont))) +
     facet_wrap(~Date)+
-    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", linewidth=0.75)+
     geom_point(aes(group=interaction(Temp.C, Symbiont), colour=Symbiont), size=6, position = position_dodge(0.4)) + 
     geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Temp.C, Symbiont)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
     xlab("Temperature") + 
     scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
-    ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    ylab(expression(bold(paste("log R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
     #ylim(0, 0.05)+
     theme_classic() + 
     theme(
@@ -153,18 +177,17 @@ r_plot1<-tpc_data %>%
 Plot data with a loess line   
 ```{r}
 r_plot2<-tpc_data %>%
-  #filter(R.nmol.org.min<0.01)%>%
   filter(!Temperature==28)%>%
   filter(!Temperature==39)%>%
   filter(!Temperature==40)%>%
     
-    ggplot(., aes(x = Temp.C, y = (R.nmol.org.min*-1), group=Symbiont)) +
+    ggplot(., aes(x = Temp.C, y = (log.R.inverse), group=Symbiont)) +
     facet_wrap(~Date)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_smooth(aes(color=Symbiont, group=Symbiont), method="loess", alpha=0.4, se=FALSE)+
     xlab("Temperature") + 
     scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
-    ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    ylab(expression(bold(paste("log R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
     #ylim(0, 0.05)+
     theme_classic() + 
     theme(
@@ -179,19 +202,18 @@ r_plot2<-tpc_data %>%
 Plot data with means   
 ```{r}
 r_plot3<-tpc_data %>%
-  #filter(R.nmol.org.min<0.01)%>%
   filter(!Temperature==28)%>%
   filter(!Temperature==39)%>%
   filter(!Temperature==40)%>%
     
-    ggplot(., aes(x = Temp.C, y = (R.nmol.org.min*-1), group=interaction(Temp.C, Symbiont))) +
+    ggplot(., aes(x = Temp.C, y = (log.R.inverse), group=interaction(Temp.C, Symbiont))) +
     facet_wrap(~Date)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_point(aes(group=interaction(Temp.C, Symbiont), colour=Symbiont), size=4, position = position_jitterdodge(0.4)) + 
     #geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Temperature, Symbiont)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
     xlab("Temperature") + 
     scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
-    ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    ylab(expression(bold(paste("log R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
     #ylim(0, 0.05)+
     theme_classic() + 
     theme(
@@ -207,14 +229,14 @@ r_plot3<-tpc_data %>%
 
 ```{r}
 aov<-tpc_data%>%
-    filter(!Temperature==28)%>%
-    filter(!Temperature==39)%>%
-   filter(!Temperature==40)%>%
-    aov(R.nmol.org.min~Temp.C*Symbiont, data=.)
+    #filter(!Temperature==28)%>%
+    #filter(!Temperature==39)%>%
+    #filter(!Temperature==40)%>%
+    aov(log.R.inverse~Temp.C*Symbiont, data=.)
 
 summary(aov)
 ```
-Effect of temp 
+Effect of temp on respiration. 
 
 # Outlier removal 
 
@@ -226,7 +248,7 @@ tpc_data<-tpc_data%>%
   mutate(R.inverse=R.nmol.org.min*-1)
 ```
 
-Filter temps that didn't work. 
+Filter temps that didn't work. Keeping all right now.  
 ```{r}
 tpc_data_filt<-tpc_data %>%
   filter(!Temperature==28)%>%
@@ -237,7 +259,7 @@ tpc_data_filt<-tpc_data %>%
 View and remove outliers.   
 ```{r, warning=FALSE, message=FALSE}
 #identify outliers by Temperature and Treatment groups
-outlier.plot <- ggbetweenstats(tpc_data_filt, Temp.C, R.inverse, outlier.tagging = TRUE)
+outlier.plot <- ggbetweenstats(tpc_data_filt, Temp.C, log.R.inverse, outlier.tagging = TRUE)
 
 outlier.plot
 
@@ -249,9 +271,9 @@ q <- c(0.1, 0.9)
 # calculate quantile values by Temperature and Treatment groups
 Quants <- tpc_data_filt %>%
   group_by(Temp.C, Symbiont) %>%
-  summarize(quant25 = quantile(R.inverse, probs = q[1], na.rm=TRUE),
-            quant75 = quantile(R.inverse, probs = q[2], na.rm=TRUE),
-            IQRbyGroup=IQR(R.inverse, na.rm=TRUE))
+  summarize(quant25 = quantile(log.R.inverse, probs = q[1], na.rm=TRUE),
+            quant75 = quantile(log.R.inverse, probs = q[2], na.rm=TRUE),
+            IQRbyGroup=IQR(log.R.inverse, na.rm=TRUE))
 
 # add a group name by pasting Temperature and Treatment
 Quants$group <-paste0(Quants$Temp.C,"_", Quants$Symbiont)
@@ -265,25 +287,25 @@ tpc_data_filt <- left_join(tpc_data_filt, Quants)
 
 #remove outliers from rates
 tpc_data_outlier <- tpc_data_filt %>%
-  filter(R.nmol.org.min < upper) %>%
-  filter(R.nmol.org.min > lower) #%>%
+  filter(log.R.inverse < upper) %>%
+  filter(log.R.inverse > lower) #%>%
   #filter(rate < 0.125)
 
 # Visualize data following outlier removal
-outlier.plot2 <- ggbetweenstats(tpc_data_outlier, Temp.C, R.inverse, outlier.tagging = TRUE)
+outlier.plot2 <- ggbetweenstats(tpc_data_outlier, Temp.C, log.R.inverse, outlier.tagging = TRUE)
 outlier.plot2
 
 ggsave("figures/tpc_sdr/removed_outliersbygroup.png", outlier.plot2, dpi=300, w=16, h=8, units="in")
 ```
-The outlier removal is not working well, conduct manual outlier removal. 
 
+Use this if you do not want outlier removal from above. 
 ```{r}
-tpc_data_filt<-tpc_data_filt%>%
+tpc_data_filt<-tpc_data_outlier %>%
   filter(!Temperature==28)%>%
   filter(!Temperature==39)%>%
   filter(!Temperature==40)
 
-outlier.plot2 <- ggbetweenstats(tpc_data_filt, Temp.C, R.inverse, outlier.tagging = TRUE)
+outlier.plot2 <- ggbetweenstats(tpc_data_filt, Temp.C, log.R.inverse, outlier.tagging = TRUE)
 outlier.plot2
 
 ggsave("figures/tpc_sdr/removed_outliersbygroup.png", outlier.plot2, dpi=300, w=16, h=8, units="in")
@@ -295,8 +317,7 @@ Plot data with means
 ```{r}
 r_plot4<-tpc_data_filt %>%
     group_by(Temp.C, Symbiont, Date)%>%
-    dplyr::summarise(mean=mean(R.nmol.org.min, na.rm=TRUE), sd=sd(R.nmol.org.min, na.rm=TRUE), N=length(R.nmol.org.min), se=sd/sqrt(N))%>%
-    mutate(mean=mean*-1)%>%
+    dplyr::summarise(mean=mean(log.R.inverse, na.rm=TRUE), sd=sd(log.R.inverse, na.rm=TRUE), N=length(log.R.inverse), se=sd/sqrt(N))%>%
     
     ggplot(., aes(x = Temp.C, y = mean, group=interaction(Temp.C, Symbiont))) +
     facet_wrap(~Date)+
@@ -305,7 +326,7 @@ r_plot4<-tpc_data_filt %>%
     geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Temp.C, Symbiont)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
     xlab("Temperature") + 
     scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
-    ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    ylab(expression(bold(paste("log R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
     #ylim(0, 0.05)+
     theme_classic() + 
     theme(
@@ -323,14 +344,14 @@ Plot data with a loess line
 ```{r}
 r_plot5<-tpc_data_filt %>%
     
-    ggplot(., aes(x = as.numeric(Temp.C), y = (R.nmol.org.min*-1), group=Symbiont)) +
+    ggplot(., aes(x = as.numeric(Temp.C), y = (log.R.inverse), group=Symbiont)) +
     facet_wrap(~Date)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_point(aes(color=Symbiont, group=Symbiont), size=3, shape=21)+
     geom_smooth(aes(color=Symbiont, group=Symbiont), method="loess", alpha=0.4, se=FALSE, size=2)+
     xlab("Temperature") + 
     scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
-    ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    ylab(expression(bold(paste("log R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
     #ylim(0, 0.05)+
     theme_classic() + 
     theme(
@@ -345,7 +366,7 @@ ggsave("figures/tpc_sdr/tpc_dots.png", r_plot5, dpi=300, w=7, h=5, units="in")
 ```
 
 ```{r}
-summary(aov(R.nmol.org.min~Temp.C*Symbiont, data=tpc_data_filt))
+summary(aov(log.R.inverse~Temp.C*Symbiont, data=tpc_data_filt))
 ```
 Effect of temperature. 
 
@@ -374,13 +395,13 @@ tpc_data_filt.All<-tpc_data_filt #%>%
 mod = 'sharpschoolhigh_1981'
 
 # get start vals
-start_vals <- get_start_vals(tpc_data_filt.All$Temp.C, tpc_data_filt.All$R.inverse, model_name = 'sharpeschoolhigh_1981')
+start_vals <- get_start_vals(tpc_data_filt.All$Temp.C, tpc_data_filt.All$log.R.inverse, model_name = 'sharpeschoolhigh_1981')
 
 # get limits
-low_lims <- get_lower_lims(tpc_data_filt.All$Temp.C, tpc_data_filt.All$R.inverse, model_name = 'sharpeschoolhigh_1981')
-upper_lims <- get_upper_lims(tpc_data_filt.All$Temp.C, tpc_data_filt.All$R.inverse, model_name = 'sharpeschoolhigh_1981')
+low_lims <- get_lower_lims(tpc_data_filt.All$Temp.C, tpc_data_filt.All$log.R.inverse, model_name = 'sharpeschoolhigh_1981')
+upper_lims <- get_upper_lims(tpc_data_filt.All$Temp.C, tpc_data_filt.All$log.R.inverse, model_name = 'sharpeschoolhigh_1981')
 
-fit <- nls_multstart(R.inverse~sharpeschoolhigh_1981(temp = Temp.C, r_tref,e,eh,th, tref = 26),
+fit <- nls_multstart(log.R.inverse~sharpeschoolhigh_1981(temp = Temp.C, r_tref,e,eh,th, tref = 26),
                                                      data = tpc_data_filt.All,
                                                      iter = 500,
                                                      start_lower = start_vals - 10,
@@ -397,7 +418,7 @@ new_data <- data.frame(temp = seq(min(tpc_data_filt.All$Temp.C), max(tpc_data_fi
 preds <- augment(fit, newdata = new_data)
 
 # plot data and model fit
-ggplot(tpc_data_filt.All, aes(x=Temp.C, y=R.inverse)) +
+ggplot(tpc_data_filt.All, aes(x=Temp.C, y=log.R.inverse)) +
   geom_point() +
   geom_line(aes(temp, .fitted), preds, col = 'black') +
   theme_bw(base_size = 12) +
@@ -409,7 +430,7 @@ ggplot(tpc_data_filt.All, aes(x=Temp.C, y=R.inverse)) +
 Bootstrap for confidence intervals. 
 ```{r}
 #refit 
-fit_nlsLM <- minpack.lm::nlsLM(R.inverse~sharpeschoolhigh_1981(temp = Temp.C, r_tref, e, eh, th, tref = 26),
+fit_nlsLM <- minpack.lm::nlsLM(log.R.inverse~sharpeschoolhigh_1981(temp = Temp.C, r_tref, e, eh, th, tref = 26),
                         data = tpc_data_filt.All,
                         start = coef(fit),
                         lower = low_lims,
@@ -443,11 +464,11 @@ boot_conf_preds <- group_by(boot_preds, temp) %>%
 CI.plot <- ggplot() +
   geom_line(aes(temp, .fitted), preds, col = 'black') +
   geom_ribbon(aes(temp, ymin = conf_lower, ymax = conf_upper), boot_conf_preds, fill = 'black', alpha = 0.3) +
-  geom_point(aes(Temp.C, R.inverse), tpc_data_filt.All, size = 2, alpha = 0.5,col = 'black') +
+  geom_point(aes(Temp.C, log.R.inverse), tpc_data_filt.All, size = 2, alpha = 0.5,col = 'black') +
   theme_bw(base_size = 12) +
   theme_classic()+
   labs(x = 'Temperature (ºC)',
-       y = 'Respiration Rate (nmol O2/larva/min)', 
+       y = 'log Respiration Rate (nmol O2/larva/min)', 
        title = "TPC: All");CI.plot 
 
 ```
@@ -465,26 +486,19 @@ calc_params(fit) %>%
 
 ```{r}
 tpc_data_filt.C<-tpc_data_filt%>%
-  #filter(R.inverse<0.03)%>%
-  #filter(!c(R.inverse>0.02 & Temp_corrected==37))%>%
-  #filter(!c(R.inverse>0.02 & Temp_corrected==13))%>%
-  #filter(!c(R.inverse< -0.01 & Temp_corrected==23))%>%
-  #filter(!c(R.inverse< 0 & Temp_corrected==32))%>%
-  #filter(!c(R.inverse< -0.005 & Temp_corrected==37))%>%
-  #filter(!c(R.inverse< -0.005 & Temp_corrected==34))%>%
   filter(Symbiont=="C")
 
 # choose model
 mod = 'sharpschoolhigh_1981'
 
 # get start vals
-start_vals <- get_start_vals(tpc_data_filt.C$Temp.C, tpc_data_filt.C$R.inverse, model_name = 'sharpeschoolhigh_1981')
+start_vals <- get_start_vals(tpc_data_filt.C$Temp.C, tpc_data_filt.C$log.R.inverse, model_name = 'sharpeschoolhigh_1981')
 
 # get limits
-low_lims <- get_lower_lims(tpc_data_filt.C$Temp.C, tpc_data_filt.C$R.inverse, model_name = 'sharpeschoolhigh_1981')
-upper_lims <- get_upper_lims(tpc_data_filt.C$Temp.C, tpc_data_filt.C$R.inverse, model_name = 'sharpeschoolhigh_1981')
+low_lims <- get_lower_lims(tpc_data_filt.C$Temp.C, tpc_data_filt.C$log.R.inverse, model_name = 'sharpeschoolhigh_1981')
+upper_lims <- get_upper_lims(tpc_data_filt.C$Temp.C, tpc_data_filt.C$log.R.inverse, model_name = 'sharpeschoolhigh_1981')
 
-fit.C <- nls_multstart(R.inverse~sharpeschoolhigh_1981(temp = Temp.C, r_tref,e,eh,th, tref = 26),
+fit.C <- nls_multstart(log.R.inverse~sharpeschoolhigh_1981(temp = Temp.C, r_tref,e,eh,th, tref = 26),
                                                      data = tpc_data_filt.C,
                                                      iter = 500,
                                                      start_lower = start_vals - 10,
@@ -501,7 +515,7 @@ new_data.C <- data.frame(temp = seq(min(tpc_data_filt.C$Temp.C), max(tpc_data_fi
 preds.C <- augment(fit.C, newdata = new_data.C)
 
 # plot data and model fit
-ggplot(tpc_data_filt.C, aes(x=Temp.C, y=R.inverse)) +
+ggplot(tpc_data_filt.C, aes(x=Temp.C, y=log.R.inverse)) +
   geom_point() +
   geom_line(aes(temp, .fitted), preds.C, col = 'orange') +
   theme_bw(base_size = 12) +
@@ -513,7 +527,7 @@ ggplot(tpc_data_filt.C, aes(x=Temp.C, y=R.inverse)) +
 Bootstrap for confidence intervals. 
 ```{r}
 #refit 
-fit_nlsLM.C <- minpack.lm::nlsLM(R.inverse~sharpeschoolhigh_1981(temp = Temp.C, r_tref, e, eh, th, tref = 26),
+fit_nlsLM.C <- minpack.lm::nlsLM(log.R.inverse~sharpeschoolhigh_1981(temp = Temp.C, r_tref, e, eh, th, tref = 26),
                         data = tpc_data_filt.C,
                         start = coef(fit.C),
                         lower = low_lims,
@@ -546,11 +560,11 @@ boot_conf_preds.C <- group_by(boot_preds.C, temp) %>%
 CI.plot.C <- ggplot() +
   geom_line(aes(temp, .fitted), preds.C, col = 'orange') +
   geom_ribbon(aes(temp, ymin = conf_lower, ymax = conf_upper), boot_conf_preds.C, fill = 'orange', alpha = 0.3) +
-  geom_point(aes(Temp.C, R.inverse), tpc_data_filt.C, size = 2, alpha = 0.5,col = 'orange') +
+  geom_point(aes(Temp.C, log.R.inverse), tpc_data_filt.C, size = 2, alpha = 0.5,col = 'orange') +
   theme_bw(base_size = 12) +
     theme_classic()+
   labs(x = 'Temperature (ºC)',
-       y = 'Respiration Rate (nmol O2/larva/min)', 
+       y = 'log Respiration Rate (nmol O2/larva/min)', 
        title = "TPC: C");CI.plot.C
 
 ```
@@ -567,26 +581,19 @@ calc_params(fit.C) %>%
 
 ```{r}
 tpc_data_filt.MIX<-tpc_data_filt%>%
-  #filter(R.inverse<0.03)%>%
-  #filter(!c(R.inverse>0.02 & Temp_corrected==37))%>%
-  #filter(!c(R.inverse>0.02 & Temp_corrected==13))%>%
-  #filter(!c(R.inverse< -0.01 & Temp_corrected==23))%>%
-  #filter(!c(R.inverse< 0 & Temp_corrected==32))%>%
-  #filter(!c(R.inverse< -0.005 & Temp_corrected==37))%>%
-  #filter(!c(R.inverse< -0.005 & Temp_corrected==34))%>%
   filter(Symbiont=="MIX")
 
 # choose model
 mod = 'sharpschoolhigh_1981'
 
 # get start vals
-start_vals <- get_start_vals(tpc_data_filt.MIX$Temp.C, tpc_data_filt.MIX$R.inverse, model_name = 'sharpeschoolhigh_1981')
+start_vals <- get_start_vals(tpc_data_filt.MIX$Temp.C, tpc_data_filt.MIX$log.R.inverse, model_name = 'sharpeschoolhigh_1981')
 
 # get limits
-low_lims <- get_lower_lims(tpc_data_filt.MIX$Temp.C, tpc_data_filt.MIX$R.inverse, model_name = 'sharpeschoolhigh_1981')
-upper_lims <- get_upper_lims(tpc_data_filt.MIX$Temp.C, tpc_data_filt.MIX$R.inverse, model_name = 'sharpeschoolhigh_1981')
+low_lims <- get_lower_lims(tpc_data_filt.MIX$Temp.C, tpc_data_filt.MIX$log.R.inverse, model_name = 'sharpeschoolhigh_1981')
+upper_lims <- get_upper_lims(tpc_data_filt.MIX$Temp.C, tpc_data_filt.MIX$log.R.inverse, model_name = 'sharpeschoolhigh_1981')
 
-fit.MIX <- nls_multstart(R.inverse~sharpeschoolhigh_1981(temp = Temp.C, r_tref,e,eh,th, tref = 26),
+fit.MIX <- nls_multstart(log.R.inverse~sharpeschoolhigh_1981(temp = Temp.C, r_tref,e,eh,th, tref = 26),
                                                      data = tpc_data_filt.MIX,
                                                      iter = 500,
                                                      start_lower = start_vals - 10,
@@ -603,13 +610,13 @@ new_data.MIX <- data.frame(temp = seq(min(tpc_data_filt.MIX$Temp.C), max(tpc_dat
 preds.MIX <- augment(fit.MIX, newdata = new_data.MIX)
 
 # plot data and model fit
-ggplot(tpc_data_filt.MIX, aes(x=Temp.C, y=R.inverse)) +
+ggplot(tpc_data_filt.MIX, aes(x=Temp.C, y=log.R.inverse)) +
   geom_point() +
   geom_line(aes(temp, .fitted), preds.MIX, col = 'brown4') +
   theme_bw(base_size = 12) +
   labs(x = 'Temperature (ºC)',
        y = 'Metabolic rate',
-       title = 'Respiration across temperatures: MIX')
+       title = 'log Respiration across temperatures: MIX')
 ```
 
 Print parameters 
@@ -623,7 +630,7 @@ calc_params(fit.MIX) %>%
 Bootstrap for confidence intervals. 
 ```{r}
 #refit 
-fit_nlsLM.MIX <- minpack.lm::nlsLM(R.inverse~sharpeschoolhigh_1981(temp = Temp.C, r_tref, e, eh, th, tref = 26),
+fit_nlsLM.MIX <- minpack.lm::nlsLM(log.R.inverse~sharpeschoolhigh_1981(temp = Temp.C, r_tref, e, eh, th, tref = 26),
                         data = tpc_data_filt.MIX,
                         start = coef(fit.MIX),
                         lower = low_lims,
@@ -656,11 +663,11 @@ boot_conf_preds.MIX <- group_by(boot_preds.MIX, temp) %>%
 CI.plot.MIX <- ggplot() +
   geom_line(aes(temp, .fitted), preds.MIX, col = 'brown4') +
   geom_ribbon(aes(temp, ymin = conf_lower, ymax = conf_upper), boot_conf_preds.MIX, fill = 'brown4', alpha = 0.3) +
-  geom_point(aes(Temp.C, R.inverse), tpc_data_filt.MIX, size = 2, alpha = 0.5,col = 'brown4') +
+  geom_point(aes(Temp.C, log.R.inverse), tpc_data_filt.MIX, size = 2, alpha = 0.5,col = 'brown4') +
   theme_bw(base_size = 12) +
     theme_classic()+
   labs(x = 'Temperature (ºC)',
-       y = 'Respiration Rate (nmol O2/larva/min)', 
+       y = 'log Respiration Rate (nmol O2/larva/min)', 
        title = "TPC: MIX");CI.plot.MIX
 
 ```
@@ -669,26 +676,22 @@ CI.plot.MIX <- ggplot() +
 
 ```{r}
 tpc_data_filt.WT<-tpc_data_filt%>%
-  #filter(R.inverse<0.03)%>%
-  #filter(!c(R.inverse>0.02 & Temp_corrected==37))%>%
-  #filter(!c(R.inverse>0.02 & Temp_corrected==13))%>%
-  #filter(!c(R.inverse< -0.01 & Temp_corrected==23))%>%
-  #filter(!c(R.inverse< 0 & Temp_corrected==32))%>%
-  #filter(!c(R.inverse< -0.005 & Temp_corrected==37))%>%
-  #filter(!c(R.inverse< -0.005 & Temp_corrected==34))%>%
   filter(Symbiont=="WT")
 
 # choose model
 mod = 'sharpschoolhigh_1981'
 
 # get start vals
-start_vals <- get_start_vals(tpc_data_filt.WT$Temp.C, tpc_data_filt.WT$R.inverse, model_name = 'sharpeschoolhigh_1981')
+start_vals <- get_start_vals(tpc_data_filt.WT$Temp.C, tpc_data_filt.WT$log.R.inverse, model_name = 'sharpeschoolhigh_1981')
 
 # get limits
-low_lims <- get_lower_lims(tpc_data_filt.WT$Temp.C, tpc_data_filt.WT$R.inverse, model_name = 'sharpeschoolhigh_1981')
-upper_lims <- get_upper_lims(tpc_data_filt.WT$Temp.C, tpc_data_filt.WT$R.inverse, model_name = 'sharpeschoolhigh_1981')
+low_lims <- get_lower_lims(tpc_data_filt.WT$Temp.C, tpc_data_filt.WT$log.R.inverse, model_name = 'sharpeschoolhigh_1981')
+upper_lims <- get_upper_lims(tpc_data_filt.WT$Temp.C, tpc_data_filt.WT$log.R.inverse, model_name = 'sharpeschoolhigh_1981')
 
-fit.WT <- nls_multstart(R.inverse~sharpeschoolhigh_1981(temp = Temp.C, r_tref,e,eh,th, tref = 26),
+#manually specify start values since eh is NA - try eh=5 
+#start_vals["eh"] <- 5
+
+fit.WT <- nls_multstart(log.R.inverse~sharpeschoolhigh_1981(temp = Temp.C, r_tref,e,eh,th, tref = 26),
                                                      data = tpc_data_filt.WT,
                                                      iter = 500,
                                                      start_lower = start_vals - 10,
@@ -705,13 +708,13 @@ new_data.WT <- data.frame(temp = seq(min(tpc_data_filt.WT$Temp.C), max(tpc_data_
 preds.WT <- augment(fit.WT, newdata = new_data.WT)
 
 # plot data and model fit
-ggplot(tpc_data_filt.WT, aes(x=Temp.C, y=R.inverse)) +
+ggplot(tpc_data_filt.WT, aes(x=Temp.C, y=log.R.inverse)) +
   geom_point() +
   geom_line(aes(temp, .fitted), preds.WT, col = 'gray') +
   theme_bw(base_size = 12) +
   labs(x = 'Temperature (ºC)',
        y = 'Metabolic rate',
-       title = 'Respiration across temperatures: WT')
+       title = 'log Respiration across temperatures: WT')
 ```
 
 Print parameters 
@@ -725,7 +728,7 @@ calc_params(fit.WT) %>%
 Bootstrap for confidence intervals. 
 ```{r}
 #refit 
-fit_nlsLM.WT <- minpack.lm::nlsLM(R.inverse~sharpeschoolhigh_1981(temp = Temp.C, r_tref, e, eh, th, tref = 26),
+fit_nlsLM.WT <- minpack.lm::nlsLM(log.R.inverse~sharpeschoolhigh_1981(temp = Temp.C, r_tref, e, eh, th, tref = 26),
                         data = tpc_data_filt.WT,
                         start = coef(fit.WT),
                         lower = low_lims,
@@ -758,11 +761,11 @@ boot_conf_preds.WT <- group_by(boot_preds.WT, temp) %>%
 CI.plot.WT <- ggplot() +
   geom_line(aes(temp, .fitted), preds.MIX, col = 'gray') +
   geom_ribbon(aes(temp, ymin = conf_lower, ymax = conf_upper), boot_conf_preds.MIX, fill = 'gray', alpha = 0.3) +
-  geom_point(aes(Temp.C, R.inverse), tpc_data_filt.MIX, size = 2, alpha = 0.5,col = 'gray') +
+  geom_point(aes(Temp.C, log.R.inverse), tpc_data_filt.MIX, size = 2, alpha = 0.5,col = 'gray') +
   theme_bw(base_size = 12) +
     theme_classic()+
   labs(x = 'Temperature (ºC)',
-       y = 'Respiration Rate (nmol O2/larva/min)', 
+       y = 'log Respiration Rate (nmol O2/larva/min)', 
        title = "TPC: WT");CI.plot.WT
 
 ```
@@ -802,7 +805,6 @@ calc_params(fit.C) %>%
 ```
 
 
-
 ## Show all plots together 
 
 ```{r}
@@ -813,8 +815,8 @@ CI.plot.WT
 ```
 
 ```{r}
-#TPCs<-plot_grid(CI.plot, CI.plot.C, CI.plot.MIX, CI.plot.WT, nrow=1, ncol=4, align="vh")
-TPCs<-plot_grid(CI.plot, CI.plot.C, CI.plot.MIX, nrow=1, ncol=4, align="vh")
+TPCs<-plot_grid(CI.plot, CI.plot.C, CI.plot.MIX, CI.plot.WT, nrow=1, ncol=4, align="vh")
+#TPCs<-plot_grid(CI.plot, CI.plot.C, CI.plot.MIX, nrow=1, ncol=4, align="vh")
 
 ggsave("figures/tpc_sdr/TPCs.png", TPCs, width=14, height=5, dpi=300)
 ```
@@ -828,16 +830,16 @@ cols <- c("C"="orange", "MIX"="brown4", "WT"="gray")
 # plot data and model fit
 TPC.plot <- ggplot(data=tpc_data_filt.All, aes(x=Temp.C)) +
    
-   geom_point(aes(x=Temp.C, y=R.inverse, color="C"), data=tpc_data_filt.C, size = 2, alpha = 0.5) +
-   geom_point(aes(x=Temp.C, y=R.inverse, color="MIX"), data=tpc_data_filt.MIX, size = 2, alpha = 0.5) +
-   #geom_point(aes(x=Temp_corrected, y=R.inverse, color="WT"), data=tpc_data_filt.WT, size = 2, alpha = 0.5) +
+   geom_point(aes(x=Temp.C, y=log.R.inverse, color="C"), data=tpc_data_filt.C, size = 2, alpha = 0.5) +
+   geom_point(aes(x=Temp.C, y=log.R.inverse, color="MIX"), data=tpc_data_filt.MIX, size = 2, alpha = 0.5) +
+   geom_point(aes(x=Temp_corrected, y=log.R.inverse, color="WT"), data=tpc_data_filt.WT, size = 2, alpha = 0.5) +
    
    geom_line(aes(temp, .fitted), preds.C, col = 'orange', size=2) +
    geom_line(aes(temp, .fitted), preds.MIX, col = "brown4", size=2) +
-   #geom_line(aes(temp, .fitted), preds.WT, col = "gray", size=2) +
+   geom_line(aes(temp, .fitted), preds.WT, col = "gray", size=2) +
    geom_ribbon(aes(temp, ymin = conf_lower, ymax = conf_upper), boot_conf_preds.C, fill = "orange", alpha = 0.3) +
    geom_ribbon(aes(temp, ymin = conf_lower, ymax = conf_upper), boot_conf_preds.MIX, fill = 'brown4', alpha = 0.3) +
-   #geom_ribbon(aes(temp, ymin = conf_lower, ymax = conf_upper), boot_conf_preds.WT, fill = "gray", alpha = 0.3) +
+   geom_ribbon(aes(temp, ymin = conf_lower, ymax = conf_upper), boot_conf_preds.WT, fill = "gray", alpha = 0.3) +
    #xlim(21,33)+
    scale_x_continuous(breaks=c(13,23,26,28,32,35,37,40))+
    theme_bw(base_size = 12) +
@@ -847,7 +849,7 @@ TPC.plot <- ggplot(data=tpc_data_filt.All, aes(x=Temp.C)) +
          panel.border = element_blank(), panel.grid.major = element_blank(),
          panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))+
    labs(x = 'Temperature (ºC)',
-        y = expression("Respiration Rate"~nmol~O[2] ~larva^{-1}~min^{-1}));TPC.plot 
+        y = expression("log Respiration Rate"~nmol~O[2] ~larva^{-1}~min^{-1}));TPC.plot 
 
 ggsave("figures/tpc_sdr/TPC_AllTypes.png", TPC.plot, dpi=300, w=8, h=8, units="in")
 
@@ -945,7 +947,7 @@ WT.ci_extra_params$Symbiont <- "Wildtype"
 ```{r}
 #Join 
 All_params <- rbind(C.ci_extra_params, MIX.ci_extra_params)
-#All_params <- rbind(All_params, WT.ci_extra_params)
+All_params <- rbind(All_params, WT.ci_extra_params)
 
 All_params <- All_params %>% 
  mutate_if(is.numeric, round, 3)
@@ -973,14 +975,10 @@ All_params%>%
 
 All_params%>%
   filter(param=="ctmax")
+
+All_params%>%
+  filter(param=="eh")
 ```
-T opt is higher in C larvae than D larvae in the dark/absence of photosynthesis (slightly overlapping intervals though). 
-Thermal safety margin is higher in MIX than C. 
-CTmax is higher in MIX than in C. 
-
-Lower thermal safety margin means that C larvae are closer to their thermal maximum in conditions they are normally in. MIX has greater distance between maximum and normal conditions. MIX larvae have a higher upper thermal limit that C larvae. 
-
-This is interesting! C larvae have a higher optimal temperature, but lower CTmax and thermal safety margin. 
 
 View parameters estimated from all larvae together. 
 ```{r}
