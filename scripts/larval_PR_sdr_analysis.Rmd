@@ -99,6 +99,14 @@ pr_data$code<-paste(pr_data$Temperature, "_",pr_data$PAR)
 boxplot(pr_data$P.nmol.org.min~pr_data$code)
 ```
 
+Set values at 0 for light runs if <0 indicating no photosynthesis occurred. Set values at 0 for dark runs if >0 indicating no respiration occurred. 
+```{r}
+pr_data<-pr_data%>%
+  mutate(P.nmol.org.min=if_else(P.nmol.org.min<0 & PAR==100, 0, 
+                                if_else(P.nmol.org.min<0 & PAR==500, 0, 
+                                        if_else(P.nmol.org.min>0 & PAR==0, 0, P.nmol.org.min))))
+```
+
 Calculate mean temperature values for each run.    
 
 ```{r}
@@ -298,8 +306,7 @@ pr_data_calc<-pr_data%>%
 boxplot(pr_data_calc$Value)
 
 pr_data_calc<-pr_data_calc%>%
-  filter(Value>-2)%>% #%>%
-  filter(Value<6)
+  filter(Value>0)
 
 boxplot(pr_data_calc$Value)
 ```
@@ -312,7 +319,6 @@ metric_plot1<-pr_data_calc%>%
     filter(!Metric=="ratio_low")%>%
     filter(!Metric=="ler")%>%
      filter(!Metric=="ler_inverse")%>%
-    #filter(!c(Value>0.05 & Metric=="p_net_low"))%>%
   
     ggplot(., aes(x = Temperature, y = Value)) +
     facet_wrap(~Metric)+
@@ -340,7 +346,6 @@ View R metrics.
 metric_plot1a<-pr_data_calc%>%
     filter(Date=="20230624")%>%
     filter(Metric %in% c("ler_inverse"))%>%
-    #filter(!c(Value<0 & Metric=="ler_inverse"))%>%
   
     ggplot(., aes(x = Temperature, y = Value)) +
     facet_wrap(~Metric)+
@@ -368,11 +373,7 @@ View metrics for P:R ratio.
 metric_plot2<-pr_data_calc%>%
    filter(Date=="20230624")%>%
     filter(Metric %in% c("ratio_high", "ratio_low"))%>%
-  
-    #filter(!c(Metric=="ratio_high" & Value>4 & Symbiont=="C" & Temperature==33))%>% #remove outliers 
-    #filter(!c(Metric=="ratio_high" & Value<0 & Symbiont=="WT" & Temperature==30))%>% #remove outliers 
-    #filter(!c(Metric=="ratio_low" & Value< -1 & Symbiont=="WT" & Temperature==27))%>% #remove outliers 
-    #filter(!Value<0)%>% #remove outliers 
+  filter(Value>0)%>%
   
     ggplot(., aes(x = Temperature, y = Value)) +
     facet_wrap(~Metric)+
@@ -402,6 +403,7 @@ Test P:R ratio at high light.
 model<-pr_data_calc%>%
   filter(Date=="20230624")%>%
   filter(Metric=="ratio_high")%>%
+  filter(Value>0)%>%
   #filter(!c(Value>4 & Symbiont=="C" & Temperature==33))%>% #remove outliers 
   #filter(!c(Value<0 & Symbiont=="WT" & Temperature==30))%>% #remove outliers 
   #filter(!Value<0)%>% #remove outliers 
@@ -416,8 +418,7 @@ Look at 30C under high light specifically.
 model<-pr_data_calc%>%
   filter(Date=="20230624")%>%
   filter(Metric=="ratio_high")%>%
-  #filter(Temperature==30)%>%
-  #filter(Value>-1)%>%
+  filter(Value>0)%>%
   aov(Value~Symbiont, data=.)
 
 summary(model)
@@ -431,7 +432,7 @@ Test P:R ratios under low light.
 model<-pr_data_calc%>%
   filter(Date=="20230624")%>%
   filter(Metric=="ratio_low")%>%
-  #filter(Value>0)%>%
+  filter(Value>0)%>%
   aov(Value~Temperature*Symbiont, data=.)
 
 summary(model)
@@ -444,7 +445,7 @@ Test light enhanced respiration.
 ```{r}
 model<-pr_data_calc%>%
   filter(Date=="20230624")%>%
-  filter(Metric=="ler")%>%
+  filter(Metric=="ler_inverse")%>%
   aov(Value~Temperature*Symbiont, data=.)
 
 summary(model)
@@ -482,7 +483,6 @@ Test P net under low light.
 model<-pr_data_calc%>%
   filter(Date=="20230624")%>%
   filter(Metric=="p_net_low")%>%
-  #filter(!c(Value>0.05 & Metric=="p_net_low"))%>%
   aov(Value~Temperature*Symbiont, data=.)
 
 summary(model)
@@ -502,7 +502,7 @@ summary(model)
 emm<-emmeans(model, ~ Symbiont | Temperature)
 pairs(emm)
 ```
-There is an effect of temperature on P net at high light. 
+There is an effect of temperature on P net at high light. Almost a symbiont effect. 
 
 ## Test effect of light 
 
@@ -511,6 +511,7 @@ Test effect of light on P:R ratio.
 model<-pr_data_calc%>%
   filter(Metric %in% c("ratio_low", "ratio_high"))%>%
   filter(Date=="20230624")%>%
+  filter(Value>0)%>%
   aov(Value~Metric*Temperature*Symbiont, data=.)
 
 summary(model)
@@ -533,7 +534,7 @@ summary(model)
 TukeyHSD(model, "Metric")
 TukeyHSD(model, "Temperature")
 ```
-P gross increases with temperature and is higher at high light. 
+P gross increases with temperature.
 
 Test effect of light on P net.   
 ```{r}
@@ -546,8 +547,9 @@ summary(model)
 
 TukeyHSD(model, "Metric")
 TukeyHSD(model, "Temperature")
+TukeyHSD(model, "Symbiont")
 ```
-P net increases with temperature and is higher in high light. 
+P net increases with temperature and is higher in high light. P net is higher in WT than mix. 
 
 
 
