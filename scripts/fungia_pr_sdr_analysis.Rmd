@@ -86,18 +86,10 @@ r_data<-r_data%>%
 boxplot(r_data$R.nmol.org.min)
 ```
 
-Next log transform the data.  
-```{r}
-r_data<-r_data%>%
-  mutate(R.nmol.org.min=log10(1+R.nmol.org.min))
-
-boxplot(r_data$R.nmol.org.min)
-```
-
 Look for outliers in the data.
 
 ```{r}
-r_data<-r_data%>%filter(R.nmol.org.min < 0.003)
+r_data<-r_data%>%filter(R.nmol.org.min < 0.006)
 boxplot(r_data$R.nmol.org.min)
 ```
 Removed one outlier 
@@ -116,7 +108,7 @@ r_plot1 <- r_data %>%
     geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
     xlab("No. organisms") + 
     #scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
-    ylab(expression(bold(paste("log R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
     #ylim(0, 0.05)+
     theme_classic() + 
     theme(
@@ -220,6 +212,6 @@ TukeyHSD(aov)
 
 Since there is no effect of organism number on the respiration rate, I think that we should load 8-12 fungia per well. This makes it relatively easier to count out larvae and load the wells for respiration. 
 
-AH recommends using 10 larvae per well. This will make counting easier and will prevent oxygen depletion that likely drives reduced respiration rates at >12 larvae. 
+AH recommends using 10 larvae per well. This will make counting easier and will prevent oxygen depletion that likely drives reduced respiration rates at >12 larvae. It may not be significant here, but there is definitely a visible trend we should be mindful of. 
 
 
