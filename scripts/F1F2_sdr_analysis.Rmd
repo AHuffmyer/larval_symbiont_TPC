@@ -83,8 +83,18 @@ Look for outliers in the data.
 
 ```{r}
 boxplot(pr_data$P.nmol.org.min)
-#pr_data<-pr_data%>%filter(P.nmol.org.min < 0.10)
-#boxplot(pr_data$P.nmol.org.min)
+
+boxplot(pr_data$P.nmol.org.min~pr_data$PAR)
+```
+
+Set values at 0 for light runs if <0 indicating no photosynthesis occurred. Set values at 0 for dark runs if >0 indicating no respiration occurred. 
+```{r}
+pr_data<-pr_data%>%
+  mutate(P.nmol.org.min=if_else(P.nmol.org.min<0 & PAR==50, 0, 
+                      if_else(P.nmol.org.min<0 & PAR==100, 0, 
+                              if_else(P.nmol.org.min<0 & PAR==500, 0, 
+                                      if_else(P.nmol.org.min>0 & PAR==0.1, 0, 
+                                              if_else(P.nmol.org.min>0 & PAR==0.2, 0, P.nmol.org.min))))))
 
 boxplot(pr_data$P.nmol.org.min~pr_data$PAR)
 ```
@@ -112,7 +122,6 @@ pr_data<-pr_data%>%
 Plot data with means   
 ```{r}
 pr_plot1<-pr_data %>%
-  #filter(P.nmol.org.min<0.1)%>%
     group_by(PAR, Group, Temperature)%>%
     dplyr::summarise(mean=mean(P.nmol.org.min, na.rm=TRUE), sd=sd(P.nmol.org.min, na.rm=TRUE), N=length(P.nmol.org.min), se=sd/sqrt(N))%>%
     
@@ -123,7 +132,7 @@ pr_plot1<-pr_data %>%
     geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(PAR, Group)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
     xlab("Light (PAR)") + 
     scale_color_manual(name="Group", values=c("brown4", "darkblue", "orange", "lightblue"))+
-    ylab(expression(bold(paste("P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    ylab(expression(bold(paste("log P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
     #ylim(0, 0.05)+
     theme_classic() + 
     theme(
@@ -140,7 +149,6 @@ ggsave("figures/F1F2_sdr/pr_means.png", pr_plot1, dpi=300, w=7, h=5, units="in")
 Display by individual plate (duplicate plates at each temperature).  
 ```{r}
 pr_plot1a<-pr_data %>%
-  #filter(P.nmol.org.min<0.1)%>%
     group_by(PAR, Group, Plate)%>%
     dplyr::summarise(mean=mean(P.nmol.org.min, na.rm=TRUE), sd=sd(P.nmol.org.min, na.rm=TRUE), N=length(P.nmol.org.min), se=sd/sqrt(N))%>%
     
@@ -151,7 +159,7 @@ pr_plot1a<-pr_data %>%
     geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(PAR, Group)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
     xlab("Light (PAR)") + 
     scale_color_manual(name="Group", values=c("brown4", "darkblue", "orange", "lightblue"))+
-    ylab(expression(bold(paste("P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    ylab(expression(bold(paste("log P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
     #ylim(0, 0.05)+
     theme_classic() + 
     theme(
@@ -166,14 +174,13 @@ pr_plot1a<-pr_data %>%
 View by plate with a loess line. 
 ```{r}
 pr_plot2b<-pr_data %>%
-  #filter(P.nmol.org.min<0.1)%>%
     ggplot(., aes(x = as.factor(PAR), y = P.nmol.org.min, group=Group)) +
     facet_wrap(~Plate)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_smooth(aes(color=Group, group=Group), method="loess", alpha=0.4, se=FALSE)+
     xlab("Light (PAR)") + 
     scale_color_manual(name="Group", values=c("brown4", "darkblue", "orange", "lightblue"))+
-    ylab(expression(bold(paste("P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    ylab(expression(bold(paste("log P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
     #ylim(0, 0.05)+
     theme_classic() + 
     theme(
@@ -189,7 +196,6 @@ Plates look similar and consistent.
 Plot data with individual data points.    
 ```{r}
 pr_plot3<-pr_data %>%
-  #filter(P.nmol.org.min<0.1)%>%
     
     ggplot(., aes(x = as.factor(PAR), y = P.nmol.org.min, group=interaction(PAR, Group))) +
     facet_wrap(~Temperature)+
@@ -198,7 +204,7 @@ pr_plot3<-pr_data %>%
     geom_smooth(aes(color=Group, group=Group), method="loess", size=2, alpha=0.4, se=FALSE)+
     xlab("Light (PAR)") + 
     scale_color_manual(name="Group", values=c("brown4", "darkblue", "orange", "lightblue"))+
-    ylab(expression(bold(paste("P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    ylab(expression(bold(paste("log P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
     #ylim(0, 0.05)+
     theme_classic() + 
     theme(
@@ -218,7 +224,7 @@ Run anova on effect of PAR, group, and temperature.
 ```{r}
 summary(aov(P.nmol.org.min~PAR*Group*Temperature, data=pr_data))
 ```
-There are strong effects of temperature and light. 
+There are strong effects of temperature and light and an interaction between light and group. 
 
 Run model for 27 degrees. 
 ```{r}
@@ -238,7 +244,7 @@ model<-pr_data%>%
 
 summary(model)
 ```
-Strong effect of light at 33C. 
+Strong effect of light, group, and light x group at 33C. 
 
 Run model for 36
 ```{r}
@@ -253,6 +259,8 @@ Strong effect of light at 36C.
 # Calculate R, P, and P:R 
 
 Calculate gross and net photosynthesis, light enhanced respiration (LER), dark respiration (Rd), and P:R ratio at low (50 PAR), medium (100 PAR), and high (500 PAR) light. 
+
+Here I am calculating P:R ratios by dividing gross photosynthesis by dark respiration. I tried dividing by LER, but due to a high number of 0's in the data, we loose most of the calculations.
 ```{r}
 pr_data_calc<-pr_data%>%
   select(Date, Chamber.ID, Plate, Run, Temperature, Group, PAR, P.nmol.org.min)%>%
@@ -267,17 +275,21 @@ pr_data_calc<-pr_data%>%
   mutate(p_gross_low=p_net_low-ler)%>%
   mutate(p_gross_medium=p_net_medium-ler)%>%
   mutate(p_gross_high=p_net_high-ler)%>%
-  mutate(ratio_low=p_gross_low/(ler_inverse))%>%
-  mutate(ratio_medium=p_gross_medium/(ler_inverse))%>%
-  mutate(ratio_high=p_gross_high/(ler_inverse))%>%
+  mutate(ratio_low=p_gross_low/(rd_inverse))%>%
+  mutate(ratio_medium=p_gross_medium/(rd_inverse))%>%
+  mutate(ratio_high=p_gross_high/(rd_inverse))%>%
   pivot_longer(names_to="Metric", values_to="Value", cols=c(ler:ratio_high))%>%
   select(!c(`0.1`, `100`, `500`, `0.2`))
+```
 
+Filter P:R ratio values. 
+```{r}
 boxplot(pr_data_calc$Value)
 
 pr_data_calc<-pr_data_calc%>%
-  filter(Value>-20)%>% #%>%
-  filter(Value<12) 
+  filter(!c(Value<0 & Metric=="ratio_low"))%>% 
+  filter(!c(Value<0 & Metric=="ratio_medium"))%>%
+  filter(!c(Value<0 & Metric=="ratio_high"))
 
 boxplot(pr_data_calc$Value)
 ```
@@ -325,7 +337,6 @@ View metrics across temperatures.
 ```{r}
 metric_plot2<-pr_data_calc%>%
     filter(Metric %in% c("ratio_high", "ratio_low", "ratio_medium"))%>%
-    #filter(!c(Metric=="ratio_low" & Value>8))%>%
   
     ggplot(., aes(x = Temperature, y = Value)) +
     facet_wrap(~Metric)+
@@ -383,45 +394,48 @@ model<-pr_data_calc%>%
   aov(Value~Group*Temperature, data=.)
 
 summary(model)
+
+TukeyHSD(model, "Temperature")
+
 ```
-P:R Ratio at high light is affected by temperature. 
+P:R Ratio at high light is affected by temperature and decreases with temperature. 
 
 ```{r}
 model<-pr_data_calc%>%
   filter(Metric=="ratio_medium")%>%
   aov(Value~Group*Temperature, data=.)
 
+TukeyHSD(model, "Temperature")
+
 summary(model)
 ```
-No effect on P:R ratio at medium light. 
+P:R ratios decrease with temperature at medium light. 
 
 ```{r}
 model<-pr_data_calc%>%
   filter(Metric=="ratio_low")%>%
-   #filter(!c(Metric=="ratio_low" & Value>8))%>%
   aov(Value~Group*Temperature, data=.)
+
+TukeyHSD(model, "Temperature")
 
 summary(model)
 ```
-No effects. 
+P:R ratios decrease with temperature at high light. 
 
 ```{r}
 model<-pr_data_calc%>%
-  filter(Metric=="ler")%>%
+  filter(Metric=="ler_inverse")%>%
   aov(Value~Group*Temperature, data=.)
 
 summary(model)
 
 TukeyHSD(model, "Temperature")
-
-emm<-emmeans(model, ~ Group | Temperature)
-pairs(emm)
 ```
-Light enhanced respiration is reduced with high temperature very strongly. LER is lowest at 36C. 
+Light enhanced respiration is reduced with high temperature.
 
 ```{r}
 model<-pr_data_calc%>%
-  filter(Metric=="rd")%>%
+  filter(Metric=="rd_inverse")%>%
   aov(Value~Group*Temperature, data=.)
 
 summary(model)
@@ -451,9 +465,6 @@ model<-pr_data_calc%>%
 summary(model)
 
 TukeyHSD(model, "Temperature")
-
-emm<-emmeans(model, ~ Group | Temperature)
-pairs(emm)
 ```
 At medium light, P gross decreases with temperature and is lowest at 36 degrees. 
 
@@ -467,6 +478,8 @@ summary(model)
 TukeyHSD(model, "Temperature")
 ```
 Gross photosynthesis at low light is affected by temperature and is lowest at 36 degrees.
+
+These measurements all make sense that P:R ratio is reduced with temperature. Respiration stays the same, but photosynthesis is decreasing. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -499,7 +512,7 @@ summary(model)
 
 TukeyHSD(model, "Group")
 ```
-P net is lower in F1 NB at low light, but this is barely significant (p=0.05). 
+P net is lower in F1 NB at low light, but only slightly. 
 
 Test effect of light on P:R ratio. 
 ```{r}
@@ -511,7 +524,7 @@ summary(model)
 
 TukeyHSD(model, "Metric")
 ```
-P:R ratios are significantly different by light. There are higher P:R ratios at high light. 
+P:R ratios are significantly different by light and temperature. There are higher P:R ratios at high light but only when at 27C. 
 
 Test effect of light on P gross.  
 ```{r}
