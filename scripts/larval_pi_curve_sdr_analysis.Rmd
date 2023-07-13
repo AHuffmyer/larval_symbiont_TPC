@@ -16,6 +16,8 @@ editor_options:
 
 QC all plots, check all blanks for every run 
 
+Need to bootstrap for model fit and for parameter estimates 
+
 # Setup  
 
 Set up workspace, set options, and load required packages.    
@@ -94,6 +96,14 @@ boxplot(pi_data$P.nmol.org.min~pi_data$PAR)
 pi_data<-pi_data%>%filter(P.nmol.org.min<0.06)
 
 boxplot(pi_data$P.nmol.org.min)
+```
+
+Log transform the data.
+```{r}
+pi_data<-pi_data%>%
+  mutate(P.nmol.org.min=log10(P.nmol.org.min+1))
+
+boxplot(pi_data$P.nmol.org.min~pi_data$PAR)
 ```
 
 Calculate mean temperature values for each run.    
