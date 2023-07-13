@@ -3,6 +3,8 @@ title: "Fungia Respirometry plotting and analysis - Hawaii 2023"
 author: "jillashey"
 date: "2023-07-06"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 This script plots and analyzes the initial respirataion Fungia larval run. These larvae are aposymbiotic and acquire their symbionts from the environment, which is why photosynthesis was not run. I assessed how many individuals would need to be loaded into each well to get a good signal. I loaded approximately 8, 12, 16 or 20 larvae per well. 
@@ -68,14 +70,37 @@ r_data$Plate<-as.factor(r_data$Plate)
 r_data$Org.Number <- as.factor(r_data$Org.Number)
 ```
 
+If a respiration value is above 0 (indicating oxygen production), turn it into 0. 
+```{r}
+r_data<-r_data%>%
+  mutate(R.nmol.org.min=if_else(R.nmol.org.min>0, 0, R.nmol.org.min))
+
+boxplot(r_data$R.nmol.org.min)
+```
+
+Calculate the inverse. 
+```{r}
+r_data<-r_data%>%
+  mutate(R.nmol.org.min=R.nmol.org.min*-1)
+
+boxplot(r_data$R.nmol.org.min)
+```
+
+Next log transform the data.  
+```{r}
+r_data<-r_data%>%
+  mutate(R.nmol.org.min=log10(1+R.nmol.org.min))
+
+boxplot(r_data$R.nmol.org.min)
+```
+
 Look for outliers in the data.
 
 ```{r}
+r_data<-r_data%>%filter(R.nmol.org.min < 0.003)
 boxplot(r_data$R.nmol.org.min)
-r_data<-r_data%>%filter(R.nmol.org.min > -0.08)
-boxplot(r_data$R.nmol.org.min)
-# no major outliers!
 ```
+Removed one outlier 
 
 ## Plot respiration over organism number 
 
@@ -83,7 +108,7 @@ boxplot(r_data$R.nmol.org.min)
 r_plot1 <- r_data %>%
   group_by(Org.Number) %>%
   dplyr::summarise(mean=mean(R.nmol.org.min, na.rm=TRUE), sd=sd(R.nmol.org.min, na.rm=TRUE), N=length(R.nmol.org.min), se=sd/sqrt(N)) %>%
-    mutate(mean=mean*-1) %>%
+  
   ggplot(., aes(x = Org.Number, y = mean)) +
     #facet_wrap(~Date)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
@@ -91,7 +116,7 @@ r_plot1 <- r_data %>%
     geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
     xlab("No. organisms") + 
     #scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
-    ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    ylab(expression(bold(paste("log R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
     #ylim(0, 0.05)+
     theme_classic() + 
     theme(
@@ -103,15 +128,9 @@ r_plot1 <- r_data %>%
       ); r_plot1
 ```
 
+Respiration peaks with 12 larave and then decreases with more than 12. This could be due to oxygen depletion in the well with >12 larave. 
+
 ## Look for outliers 
-
-Change respiration to inverse.
-
-```{r}
-r_data <- r_data %>%
-  mutate(R.inverse=R.nmol.org.min*-1)
-```
-
 
 View and remove outliers.
 
@@ -163,7 +182,7 @@ I think the outlier removal worked! It removed one outlier from the 8 org.number
 r_plot2 <- r_data_outlier %>%
   group_by(Org.Number) %>%
   dplyr::summarise(mean=mean(R.nmol.org.min, na.rm=TRUE), sd=sd(R.nmol.org.min, na.rm=TRUE), N=length(R.nmol.org.min), se=sd/sqrt(N)) %>%
-    mutate(mean=mean*-1) %>%
+
   ggplot(., aes(x = Org.Number, y = mean)) +
     #facet_wrap(~Date)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
@@ -200,5 +219,7 @@ TukeyHSD(aov)
 ```
 
 Since there is no effect of organism number on the respiration rate, I think that we should load 8-12 fungia per well. This makes it relatively easier to count out larvae and load the wells for respiration. 
+
+AH recommends using 10 larvae per well. This will make counting easier and will prevent oxygen depletion that likely drives reduced respiration rates at >12 larvae. 
 
 
