@@ -98,7 +98,7 @@ tpc_data<-tpc_data%>%
 Next log transform the data.  
 ```{r}
 tpc_data<-tpc_data%>%
-  mutate(log.R=log(1+R.nmol.org.min))
+  mutate(log.R=log10(1+R.nmol.org.min))
 
 boxplot(tpc_data$log.R)
 ```
