@@ -265,8 +265,8 @@ Here I am calculating P:R ratios by dividing gross photosynthesis by dark respir
 pr_data_calc<-pr_data%>%
   select(Date, Chamber.ID, Plate, Run, Temperature, Group, PAR, P.nmol.org.min)%>%
   pivot_wider(names_from=PAR, values_from=P.nmol.org.min)%>%
-  mutate(ler=`0.1`)%>%
-  mutate(rd=`0.2`)%>%
+  mutate(ler=`0.2`)%>%
+  mutate(rd=`0.1`)%>%
   mutate(ler_inverse=ler*-1)%>%
   mutate(rd_inverse=rd*-1)%>%
   mutate(p_net_low=`50`)%>%
@@ -275,9 +275,9 @@ pr_data_calc<-pr_data%>%
   mutate(p_gross_low=p_net_low-ler)%>%
   mutate(p_gross_medium=p_net_medium-ler)%>%
   mutate(p_gross_high=p_net_high-ler)%>%
-  mutate(ratio_low=p_gross_low/(rd_inverse))%>%
-  mutate(ratio_medium=p_gross_medium/(rd_inverse))%>%
-  mutate(ratio_high=p_gross_high/(rd_inverse))%>%
+  mutate(ratio_low=p_gross_low/(ler_inverse))%>%
+  mutate(ratio_medium=p_gross_medium/(ler_inverse))%>%
+  mutate(ratio_high=p_gross_high/(ler_inverse))%>%
   pivot_longer(names_to="Metric", values_to="Value", cols=c(ler:ratio_high))%>%
   select(!c(`0.1`, `100`, `500`, `0.2`))
 ```
@@ -340,7 +340,7 @@ metric_plot2<-pr_data_calc%>%
   
     ggplot(., aes(x = Temperature, y = Value)) +
     facet_wrap(~Metric)+
-    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_hline(yintercept=1, linetype="dashed", color="black", size=0.75)+
     geom_point(aes(group=interaction(Temperature, Group), color=Group), size=3, fill="white", position = position_jitterdodge(0.4), shape=21) + 
     geom_smooth(aes(color=Group, group=Group), method="loess", size=2, alpha=0.4, se=FALSE)+
     xlab("Temperature") + 
@@ -420,7 +420,7 @@ TukeyHSD(model, "Temperature")
 
 summary(model)
 ```
-P:R ratios decrease with temperature at high light. 
+No effect at high light. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -429,9 +429,9 @@ model<-pr_data_calc%>%
 
 summary(model)
 
-TukeyHSD(model, "Temperature")
+TukeyHSD(model, "Group")
 ```
-Light enhanced respiration is reduced with high temperature.
+LER is dfiferent by group. F2 NB has lower respiration than F1 NB. F2 NB also has lower Rd than F2 WT.  
 
 ```{r}
 model<-pr_data_calc%>%
@@ -444,7 +444,7 @@ TukeyHSD(model, "Temperature")
 
 TukeyHSD(model, "Group")
 ```
-Dark respiration is not affected by temperature, but it is affected by group. F2 NB has lower respiration than F1 NB. F2 NB also has lower Rd than F2 WT.   
+Dark respiration decreases with temperature. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -465,8 +465,9 @@ model<-pr_data_calc%>%
 summary(model)
 
 TukeyHSD(model, "Temperature")
+TukeyHSD(model, "Group")
 ```
-At medium light, P gross decreases with temperature and is lowest at 36 degrees. 
+At medium light, P gross decreases with temperature and is different by group. F2 WT has higher P than F2 NB. There is lower P in F2 NB than F1 NB. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -476,10 +477,10 @@ model<-pr_data_calc%>%
 summary(model)
 
 TukeyHSD(model, "Temperature")
+TukeyHSD(model, "Group")
 ```
-Gross photosynthesis at low light is affected by temperature and is lowest at 36 degrees.
+Gross photosynthesis at low light is affected by group. 
 
-These measurements all make sense that P:R ratio is reduced with temperature. Respiration stays the same, but photosynthesis is decreasing. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -512,7 +513,7 @@ summary(model)
 
 TukeyHSD(model, "Group")
 ```
-P net is lower in F1 NB at low light, but only slightly. 
+P net is is affected by group at low light. 
 
 Test effect of light on P:R ratio. 
 ```{r}
@@ -541,7 +542,7 @@ TukeyHSD(model, "Group")
 emm<-emmeans(model, ~ Group | Temperature)
 pairs(emm)
 ```
-P gross increases with light and is different between high and low light (increases with light). P gross decreases with temperature strongly. There is also an interaction between temperature and group. There are differences between F1 WT and F2 NB. 
+There are interactive effects between light and temp and between temp and group. 
 
 Test effect of light on P net.   
 ```{r}
@@ -554,4 +555,4 @@ summary(model)
 TukeyHSD(model, "Metric")
 TukeyHSD(model, "Temperature")
 ```
-P net is affected by light and increases with each light level. P net is also affected by temperature and decreases at  36C. 
+There are interactive effects between light and temp on P net. 
