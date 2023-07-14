@@ -107,14 +107,6 @@ pr_data<-pr_data%>%
                                         if_else(P.nmol.org.min>0 & PAR==0, 0, P.nmol.org.min))))
 ```
 
-Log transform the data.
-```{r}
-pr_data<-pr_data%>%
-  mutate(P.nmol.org.min=log10(P.nmol.org.min+1))
-
-boxplot(pr_data$P.nmol.org.min~pr_data$PAR)
-```
-
 Calculate mean temperature values for each run.    
 
 ```{r}
@@ -528,7 +520,7 @@ TukeyHSD(model, "Metric")
 TukeyHSD(model, "Temperature")
 
 ```
-Ratios peak at 30C and are higher at high light. 
+Ratios peak at 30C and are higher at high light. Almost an effect of symbiont. 
 
 Test effect of light on P gross.  
 ```{r}
@@ -557,7 +549,7 @@ TukeyHSD(model, "Metric")
 TukeyHSD(model, "Temperature")
 TukeyHSD(model, "Symbiont")
 
-emm<-emmeans(model, ~ Symbiont | Metric)
+emm<-emmeans(model, ~ Symbiont | Metric | Temperature)
 pairs(emm)
 ```
 P net increases with temperature and is higher in high light. P net is higher in WT than mix. 

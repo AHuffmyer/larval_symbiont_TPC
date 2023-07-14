@@ -288,8 +288,8 @@ Calculate gross photosynthesis and P:R ratio.
 pi_temp_data_calc<-pi_temp_data%>%
   select(Date, Chamber.ID, Plate, Run, Temperature, Symbiont, PAR, P.nmol.org.min)%>%
   pivot_wider(names_from=PAR, values_from=P.nmol.org.min)%>%
-  mutate(ler=`0.1`)%>%
-  mutate(rd=`0.2`)%>%
+  mutate(ler=`0.2`)%>%
+  mutate(rd=`0.1`)%>%
   mutate(ler_inverse=ler*-1)%>%
   mutate(rd_inverse=rd*-1)%>%
   mutate(p_net_low=`50`)%>%
@@ -298,16 +298,16 @@ pi_temp_data_calc<-pi_temp_data%>%
   mutate(p_gross_low=p_net_low-ler)%>%
   mutate(p_gross_medium=p_net_medium-ler)%>%
   mutate(p_gross_high=p_net_high-ler)%>%
-  mutate(ratio_low=p_gross_low/(rd_inverse))%>%
-  mutate(ratio_medium=p_gross_medium/(rd_inverse))%>%
-  mutate(ratio_high=p_gross_high/(rd_inverse))%>%
+  mutate(ratio_low=p_gross_low/ler_inverse)%>%
+  mutate(ratio_medium=p_gross_medium/ler_inverse)%>%
+  mutate(ratio_high=p_gross_high/ler_inverse)%>%
   pivot_longer(names_to="Metric", values_to="Value", cols=c(ler:ratio_high))%>%
   select(!c(`0.1`, `50`, `100`, `500`, `0.2`))
 
 boxplot(pi_temp_data_calc$Value)
 
 pi_temp_data_calc<-pi_temp_data_calc%>%
- filter(Value<10)
+ filter(Value<15)
 
 boxplot(pi_temp_data_calc$Value)
 ```
@@ -413,7 +413,7 @@ metric_plot1a<-pi_temp_data_calc%>%
 ggsave("figures/temp_pi_curves/pi_rd_ler.png", metric_plot1a, dpi=300, w=7, h=5, units="in")
 ```
 
-It is interesting that LER is lower than Rd. We would expect LER to be higher due to stimulation of host respiration through photosynthesis. I suspect that this is lower than Rd in our case because the larvae are just coming out of a high light period (500 par) and therefore this stress may reduce respiration in subsequent darkness. 
+LER is higher than Rd because photosynthesis stimulates respiration in the host.  
 
 View Rd and LER metrics by means. 
 ```{r}
@@ -545,8 +545,9 @@ model<-pi_temp_data_calc%>%
 summary(model)
 
 TukeyHSD(model, c("Temperature"))
+TukeyHSD(model, c("Symbiont"))
 ```
-LER is affected by temperature.
+LER is affected by temperature and symbiont. LER is higher in WT than Mix and almost higher in WT than C. 
 
 ```{r}
 model<-pi_temp_data_calc%>%
@@ -558,7 +559,7 @@ summary(model)
 TukeyHSD(model, c("Symbiont"))
 TukeyHSD(model, c("Temperature"))
 ```
-Rd is affected by temperature and symbiont. WT and MIX are different, WT is higher than MIX. No difference between MIX and C or WT and C (almost sign). There is higher dark respiration in WT. Dark respiration increases with temp then crashes at 36C. 
+Rd is affected by temperature. 
 
 ```{r}
 model<-pi_temp_data_calc%>%
@@ -650,7 +651,7 @@ pairs(emm)
 emm<-emmeans(model, ~ Symbiont | Temperature | Metric)
 pairs(emm)
 ```
-There are light and temperature and symbiont effects on P:R ratio. There is a symbiont x temperature effect as well. Only at 27C there are higher P:R ratios in MIX larvae than C larvae (p=0.005) particularly at medium light (p=0.005) and slightly at high light (p=0.08)! Overall, MIX is slightly higher than WT for P:R ratios (p=0.057). 
+There are light and temperature and symbiont effects on P:R ratio. Mix is higher than WT (p=0.025) and slightly higher than C (p=0.08). Mix is higher than WT at 30 C and higher than C at 27C. 
 
 Test effect of light on P gross.  
 ```{r}
