@@ -179,7 +179,7 @@ temp_plot2a<-tidbits%>%
   
   ggplot(aes(x=DateTime, y=temp.C, colour=group))+
   geom_point()+
-  scale_colour_manual(values=c("lightblue", "blue", "red"), name="Temperature")+
+  scale_colour_manual(values=c("red", "blue", "lightblue"), name="Temperature")+
   ylab("Temperature (°C)")+
   xlab("Time")+
   ylim(26,34)+
@@ -204,7 +204,7 @@ temp_plot2b<-tidbits%>%
   
   ggplot(aes(x=DateTime, y=temp.C, colour=group))+
   geom_point()+
-  scale_colour_manual(values=c("lightblue", "blue", "red"), name="Temperature")+
+  scale_colour_manual(values=c("red", "blue", "lightblue"), name="Temperature")+
   ylab("Temperature (°C)")+
   xlab("Time")+
   ylim(26,34)+
