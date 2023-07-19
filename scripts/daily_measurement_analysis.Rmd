@@ -139,13 +139,13 @@ daily_treatment_summary<-daily_calc.long %>%
   ggplot(aes(x=group, y=value, colour=group))+
   geom_point()+
   geom_boxplot()+
-  scale_colour_manual(values=c("orange", "brown4", "gray"))+
+  scale_colour_manual(name="", values=c("orange", "brown4", "gray"))+
   xlab("Date")+
   ylab("Value")+
   facet_wrap(~ metric, scales = "free")+
   theme_classic(); daily_treatment_summary
 
-ggsave(filename="figures/environmental/summary_daily_measurements.png", plot=daily_treatment_summary, dpi=300, width=8, height=8, units="in")
+ggsave(filename="figures/environmental/summary_daily_measurements.png", plot=daily_treatment_summary, dpi=300, width=9, height=6, units="in")
 ```
 
 ## Test for differences between tanks  
@@ -236,7 +236,9 @@ for (i in metric_list) {
   # Append the ANOVA result to the anova_results data frame
   anova_results <- rbind(anova_results, anova_result)
 }
-  
+
+# Replace "anova_results.csv" with the desired filename
+write.csv(anova_results, file = "output/environmental/anova_results.csv", row.names = FALSE)
 ```
 
 ## Summarize daily measurements  
