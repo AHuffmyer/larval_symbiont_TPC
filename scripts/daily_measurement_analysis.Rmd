@@ -87,6 +87,12 @@ daily_calc.long <-daily_calc %>% pivot_longer(cols=temp.C:flow.L.min,
   values_to = "value")
 ```
 
+Filter by relevant dates. 
+```{r}
+daily_calc.long<-daily_calc.long%>%
+  filter(date>as.POSIXct("2023-06-18"))
+```
+
 ## Plot metrics of interest  
 
 Plot by tank colored by symbiont treatment.      
@@ -136,10 +142,10 @@ daily_treatment_summary<-daily_calc.long %>%
   scale_colour_manual(values=c("orange", "brown4", "gray"))+
   xlab("Date")+
   ylab("Value")+
-  facet_grid(metric ~ ., scales = "free")+
+  facet_wrap(~ metric, scales = "free")+
   theme_classic(); daily_treatment_summary
 
-ggsave(filename="figures/environmental/summary_daily_measurements.png", plot=daily_treatment_summary, dpi=300, width=4, height=8, units="in")
+ggsave(filename="figures/environmental/summary_daily_measurements.png", plot=daily_treatment_summary, dpi=300, width=8, height=8, units="in")
 ```
 
 ## Test for differences between tanks  
@@ -147,7 +153,8 @@ ggsave(filename="figures/environmental/summary_daily_measurements.png", plot=dai
 Obtain a short format dataset.  
 ```{r}
 daily_calc.short<-daily_calc.long%>%
-  spread(metric, value)
+  spread(metric, value)%>%
+  filter(group %in% c("Cladocopium", "Mixed", "Wildtype"))
 ```
 
 Test for differences between tanks. 
@@ -204,6 +211,32 @@ daily_calc.short%>%
 daily_calc.short%>%
   aov(temp.C~group, data=.)%>%
   summary()
+```
+
+Output statistical results to a table. 
+```{r}
+stats<-daily_calc.long%>%
+  filter(group %in% c("Cladocopium", "Mixed", "Wildtype"))
+  
+metric_list <- unique(stats$metric)
+
+# Create an empty data frame to store the ANOVA results
+anova_results <- data.frame()
+
+# Loop through each metric and perform one-way ANOVA
+for (i in metric_list) {
+  anova_result <- stats %>%
+    filter(metric == i) %>%
+    aov(value ~ group, data = .) %>%
+    tidy()
+
+  # Add the metric column to the ANOVA result
+  anova_result$metric <- i
+
+  # Append the ANOVA result to the anova_results data frame
+  anova_results <- rbind(anova_results, anova_result)
+}
+  
 ```
 
 ## Summarize daily measurements  
