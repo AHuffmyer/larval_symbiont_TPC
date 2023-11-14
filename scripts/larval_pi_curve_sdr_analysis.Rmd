@@ -95,7 +95,7 @@ boxplot(pi_data$P.nmol.org.min~pi_data$PAR)
 
 pi_data<-pi_data%>%filter(P.nmol.org.min<0.06)
 
-boxplot(pi_data$P.nmol.org.min)
+boxplot(pi_data$P.nmol.org.min~pi_data$PAR)
 ```
 
 Log transform the data.
@@ -125,11 +125,9 @@ pi_data<-pi_data%>%
   mutate(Temp.C=round(Temp.C,1))
 ```
 
-Filter out high light runs (inconsistent temprature and O2 readings)
 ```{r}
 #pi_data<-pi_data%>%
-  #filter(PAR<1100)%>%
-  #filter(P.nmol.org.min>-0.03)
+#  filter(!PAR=="700")
 ```
 
 # Plot photosynthesis over PAR treatments  
@@ -270,7 +268,7 @@ library("emmeans")
 emm<-emmeans(model, ~ Symbiont | PAR)
 pairs(emm)
 ```
-PAR and symbiont are significant, there is an interaction between PAR and symbiont. 
+PAR is significant, symbiont is just barely not significant. 
 
 # Apply PI curve calculations and models 
 
@@ -359,7 +357,7 @@ Using fixed initial values (not using, but keeping for reference):
 #  mutate(Ik = Am/AQY) 
 ```
 
-Using flexible initial values based on input data:  
+Using flexible initial values based on input data:
 
 ```{r}
 nest <- nest_legacy
@@ -377,7 +375,8 @@ nls_data <- pi_data %>%
                               dplyr::select(term, estimate) %>% 
                               spread(term, estimate))) %>%
   unnest(model1) %>%
-  mutate(Ik = Am/AQY) 
+  mutate(Ik = Am/AQY) %>%
+  mutate(Ic=(Am*Rd)/(AQY*(sqrt(Am^2-Rd^2))))
 
 #save 
 pi_results<-nls_data
@@ -427,8 +426,8 @@ Plot PI curve metrics.
 
 ```{r}
 metrics_plot1<-pi_results%>%
-  pivot_longer(values_to="Value", names_to="Parameter", cols=c(Am:Ik))%>%
-  filter(Parameter=="Ik")%>%
+  pivot_longer(values_to="Value", names_to="Parameter", cols=c(Am:Ic))%>%
+  filter(Parameter %in% c("Ik", "Ic"))%>%
   
   ggplot(aes(x=Symbiont, y=Value, color=Symbiont))+
     facet_wrap(~Parameter)+
@@ -438,8 +437,9 @@ metrics_plot1<-pi_results%>%
     theme(legend.position="none");metrics_plot1
 
 metrics_plot1a<-pi_results%>%
-  pivot_longer(values_to="Value", names_to="Parameter", cols=c(Am:Ik))%>%
+  pivot_longer(values_to="Value", names_to="Parameter", cols=c(Am:Ic))%>%
   filter(!Parameter=="Ik")%>%
+  filter(!Parameter=="Ic")%>%
   
   ggplot(aes(x=Symbiont, y=Value, color=Symbiont))+
     facet_wrap(~Parameter)+
@@ -447,9 +447,9 @@ metrics_plot1a<-pi_results%>%
     scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
     theme_classic();metrics_plot1a
 
-metrics_plot<-plot_grid(metrics_plot1, metrics_plot1a, nrow=1, ncol=2, rel_widths=c(0.6,1))
+metrics_plot<-plot_grid(metrics_plot1, metrics_plot1a, nrow=1, ncol=2, rel_widths=c(0.8,1))
 
-ggsave("figures/larval_pi_curves/parameters.png", metrics_plot, width=8, height=6, dpi=300)
+ggsave("figures/larval_pi_curves/parameters.png", metrics_plot, width=10, height=6, dpi=300)
 ```
 
 Need to bootstrap for parameter estimates next  

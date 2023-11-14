@@ -183,7 +183,7 @@ for(file in 1:length(file.names)) { # for every file in list start at the first 
     
     Photo.Rb[j,1] <- as.character(date[file]) #stores the date
     Photo.Rb[j,2] <- as.character(plate[file]) #stores the run number
-    Photo.Rb[j,3] <- as.character(samp[j+(i-1)*ncol(Photo.Data.N)]) #stores the sample ID
+    Photo.Rb[j,3] <- as.character(samp[j]) #stores the sample ID
     Photo.Rb[j,4] <- as.character(rename[j]) #stores the chamber ID
     Photo.Rb[j,5] <- as.character(i) #stores the chamber ID
     Photo.Rb[j,6:7] <- model$allRegs[i,c(4,5)] #inserts slope and intercept in the dataframe
@@ -196,7 +196,7 @@ for(file in 1:length(file.names)) { # for every file in list start at the first 
 }
 ```
 
-Calculate average temperature of each run and export to a table to confirm temperatures are not different between PAR values.    
+Calculate average temperature of each run and export to a table.
 ```{r}
 # list files 
 file.names<-basename(list.files(path = path.p, pattern = "csv$", recursive = TRUE)) 
@@ -264,6 +264,8 @@ write.csv(Photo.R, paste0("output/larval_pi_curves/larval_pi_curves_sdr_rates_ra
 
 plot(Photo.R$umol.L.min~as.factor(Photo.R$Plate)*as.factor(Photo.R$Light), side = 2, las = 2, xlab="" )
 
+plot(Photo.R$umol.L.min)
+
 ```
 
 ```{r, warning=FALSE, message=FALSE}
@@ -298,12 +300,19 @@ oxygen$Salinity<-Sample.Info$Salinity[match(oxygen$unique, Sample.Info$unique)]
 oxygen$Run<-Sample.Info$Run[match(oxygen$unique, Sample.Info$unique)]
 oxygen$Volume<-Sample.Info$Volume[match(oxygen$unique, Sample.Info$unique)]
 oxygen$Org.Number<-Sample.Info$Org.Number[match(oxygen$unique, Sample.Info$unique)]
+
+plot(oxygen$P.umol.L.min)
+```
+
+Remove duplicates (AH come back to this to see why its duplicating data 20231113)
+```{r}
+oxygen<-oxygen%>%unique()
+
+plot(oxygen$P.umol.L.min)
 ```
 
 Remove samples that have inaccurate slope extraction for respiration rates (determined by PDF output files)  
 
-
-ADD LIGHT LEVELS TO THIS FILTER STEP 
 ```{r}
 oxygen<-oxygen%>%
   mutate(code=paste(Plate, Chamber.ID))%>%
@@ -325,27 +334,32 @@ Account for volume to obtain umol per minute.
 oxygen$P.umol.min <- oxygen$P.umol.L.min * oxygen$Volume #calculate
 
 plot(as.factor(oxygen$Plate), oxygen$P.umol.L.min, xlab="Plate", ylab="rate") #photo rates
+
+oxygen$code<-paste0(oxygen$Plate, "_", oxygen$Light)
 ```
 
 Subtract blank values. Average blank calculated for each run. Display mean blank value.  
 ```{r}
 blank_data <- subset(oxygen, Type == "Blank") #subset to blank data only
-plot(as.factor(blank_data$Plate), blank_data$P.umol.min, xlab="Plate", ylab="umol O2 min-1") #blanks during dark phase
+
+blank_data$code<-paste0(blank_data$Plate, "_", blank_data$Light)
+
+plot(as.factor(blank_data$code), blank_data$P.umol.min, xlab="Plate", ylab="umol O2 min-1") #blanks during dark phase
 
 #filter blank values 
 blank_data<-blank_data%>%
   filter(P.umol.min> -0.0004)%>%
   filter(P.umol.min < 0.0003)
 
-plot(as.factor(blank_data$Plate), blank_data$P.umol.min, xlab="Plate", ylab="umol O2 min-1") #blanks during dark phase
+plot(as.factor(blank_data$code), blank_data$P.umol.min, xlab="Plate", ylab="umol O2 min-1") #blanks during dark phase
 
 #display mean blank values
 mean(blank_data$P.umol.min, na.rm=TRUE) #mean P phase blanks
 
-photo.blnk <- aggregate(P.umol.min ~ Date*Plate, data=blank_data, mean) #calculate average blank during light for each run
+photo.blnk <- aggregate(P.umol.min ~ code, data=blank_data, mean) #calculate average blank during light for each run
 colnames(photo.blnk)[colnames(photo.blnk) == 'P.umol.min'] <- 'P.Blank.umol.min' #rename to specify blank for R
 
-oxygen <- full_join(oxygen, photo.blnk) #add R blanks to master
+oxygen <- full_join(oxygen, photo.blnk, by=c("code")) #add R blanks to master
 ```
 
 Subtract blank values to generate a "corrected" value for umol O2 min-1.  

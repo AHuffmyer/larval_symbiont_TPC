@@ -331,27 +331,30 @@ Account for volume to obtain umol per minute.
 #Account for chamber volume to convert from umol L-1 m-1 to umol m-1. This removes per Liter
 oxygen$P.umol.min <- oxygen$P.umol.L.min * oxygen$Volume #calculate
 
-plot(as.factor(oxygen$Plate), oxygen$P.umol.L.min, xlab="Plate", ylab="rate") #photo rates
+oxygen$code<-paste0(oxygen$Plate, "_", oxygen$Light)
 ```
 
-Subtract blank values. Average blank calculated for each run. Display mean blank value.  
+Subtract blank values. Average blank calculated for each light and run combination. Display mean blank value.
 ```{r}
 blank_data <- subset(oxygen, Type == "Blank") #subset to blank data only
-plot(as.factor(blank_data$Plate), blank_data$P.umol.min, xlab="Plate", ylab="umol O2 min-1") #blanks during dark phase
+
+blank_data$code<-paste0(blank_data$Plate, "_", blank_data$Light)
+
+hist(blank_data$P.umol.L.min)
+
+plot(as.factor(blank_data$code), blank_data$P.umol.min, xlab="Plate", ylab="umol O2 min-1") #blanks 
 
 #display mean blank values
 mean(blank_data$P.umol.min, na.rm=TRUE) #mean P phase blanks
-
-plot(as.factor(blank_data$Plate), blank_data$P.umol.L.min, xlab="Plate", ylab="rate") #photo rates
 
 #remove outlier blank 
 blank_data<-blank_data%>%
   filter(P.umol.L.min>-2.5)%>%
   filter(P.umol.L.min<1.2)
 
-plot(as.factor(blank_data$Plate), blank_data$P.umol.L.min, xlab="Plate", ylab="rate") #photo rates after outlier removal
+plot(as.factor(blank_data$code), blank_data$P.umol.min, xlab="Plate", ylab="umol O2 min-1") #blanks 
 
-photo.blnk <- aggregate(P.umol.min ~ Date*Plate, data=blank_data, mean) #calculate average blank during light for each run
+photo.blnk <- aggregate(P.umol.min ~ code, data=blank_data, mean) #calculate average blank during light for each run
 colnames(photo.blnk)[colnames(photo.blnk) == 'P.umol.min'] <- 'P.Blank.umol.min' #rename to specify blank for R
 
 oxygen <- full_join(oxygen, photo.blnk) #add R blanks to master
@@ -387,7 +390,7 @@ plot(oxygen.bio$P.nmol.org.min)
 Filter outliers. 
 ```{r}
 oxygen.bio<-oxygen.bio%>%
-  filter(P.nmol.org.min> -0.2)
+  filter(P.nmol.org.min>-0.2)
 
 plot(oxygen.bio$P.nmol.org.min)
 ```

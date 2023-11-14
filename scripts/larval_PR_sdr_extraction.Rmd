@@ -322,12 +322,20 @@ Account for volume to obtain umol per minute.
 oxygen$P.umol.min <- oxygen$P.umol.L.min * oxygen$Volume #calculate
 
 plot(as.factor(oxygen$Plate), oxygen$P.umol.L.min, xlab="Plate", ylab="rate") #photo rates
+
+oxygen$code<-paste0(oxygen$Plate, "_", oxygen$Light)
 ```
 
 Subtract blank values. Average blank calculated for each run. Display mean blank value.  
 ```{r}
 blank_data <- subset(oxygen, Type == "Blank") #subset to blank data only
 plot(as.factor(blank_data$Plate), blank_data$P.umol.min, xlab="Plate", ylab="umol O2 min-1") #blanks during dark phase
+
+blank_data$code<-paste0(blank_data$Plate, "_", blank_data$Light)
+
+hist(blank_data$P.umol.L.min)
+
+plot(as.factor(blank_data$code), blank_data$P.umol.min, xlab="Plate", ylab="umol O2 min-1") #blanks 
 
 #display mean blank values
 mean(blank_data$P.umol.min, na.rm=TRUE) #mean P phase blanks
