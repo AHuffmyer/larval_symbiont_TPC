@@ -246,10 +246,10 @@ summary(model)
 
 TukeyHSD(model, "PAR")
 
-emm<-emmeans(model, ~ PAR | Temperature)
+emm<-emmeans(model, ~ Temperature | PAR)
 pairs(emm)
 ```
-Oxygen values are different by light levels and temperature interactions. 
+Photosynthesis was lower at 33 degrees at 100 par. P was lower at 30 and 33 at 500 PAR. LER is lower at 30 degrees. 
 
 Run model for 27 
 ```{r}
@@ -271,7 +271,7 @@ model<-pr_data%>%
 
 summary(model)
 ```
-At 27, oxygen is different by PAR. 
+At 30, oxygen is different by PAR. 
 
 Run model for 33
 ```{r}
@@ -282,7 +282,7 @@ model<-pr_data%>%
 
 summary(model)
 ```
-At 27, oxygen is different by PAR. 
+At 33, oxygen is different by PAR. 
 
 # Calculate R, P, and P:R: 20230624 
 
@@ -306,7 +306,8 @@ pr_data_calc<-pr_data%>%
 boxplot(pr_data_calc$Value)
 
 pr_data_calc<-pr_data_calc%>%
-  filter(Value>0)
+  filter(Value>0)%>%
+  filter(Value<6)
 
 boxplot(pr_data_calc$Value)
 ```
@@ -410,8 +411,10 @@ model<-pr_data_calc%>%
   aov(Value~Temperature*Symbiont, data=.)
 
 summary(model)
+
+TukeyHSD(model, "Temperature")
 ```
-No effects. 
+PR ratio is higher at 33-36 compared to 27. 
 
 Look at 30C under high light specifically. 
 ```{r}
@@ -437,9 +440,9 @@ model<-pr_data_calc%>%
 
 summary(model)
 
-TukeyHSD(model, "Symbiont")
+TukeyHSD(model, "Temperature")
 ```
-No effects. 
+P:R ratios at low light decrease with temperatures (interesting, as this is opposite for high temperature). Higher at 27 than 30 and 33. 
 
 Test light enhanced respiration. 
 ```{r}
@@ -452,7 +455,7 @@ summary(model)
 
 TukeyHSD(model, "Temperature")
 ```
-There is an effect of temperature on LER. LER is lower at 27 than it is at 30 and 33. 
+There is an effect of temperature on LER. LER is lower at 27 than it is at 30, but not different by 33. LER peaks at 30.  
 
 Test P gross at high light. 
 ```{r}
@@ -476,7 +479,7 @@ summary(model)
 
 TukeyHSD(model, "Temperature")
 ```
-There is an effect of temperature at low light. P net is higher as temperature increases. 
+No effect of temp on P gross at low light. 
 
 Test P net under low light. 
 ```{r}
@@ -502,7 +505,7 @@ summary(model)
 emm<-emmeans(model, ~ Symbiont | Temperature)
 pairs(emm)
 ```
-There is an effect of temperature on P net at high light. Almost a symbiont effect. 
+P net is affected by symbiont and temperature. P net increases with temperature. MIX larvae are lower than WT at ambient temperature. C is not different than either group. 
 
 ## Test effect of light 
 
@@ -534,7 +537,7 @@ summary(model)
 TukeyHSD(model, "Metric")
 TukeyHSD(model, "Temperature")
 ```
-P gross increases with temperature.
+There is an interaction between light and temperature on P gross. P gross decreases with temp at low light. At high light, P gross peaks at 30 C then decreases. 
 
 Test effect of light on P net.   
 ```{r}
@@ -549,10 +552,10 @@ TukeyHSD(model, "Metric")
 TukeyHSD(model, "Temperature")
 TukeyHSD(model, "Symbiont")
 
-emm<-emmeans(model, ~ Symbiont | Metric | Temperature)
+emm<-emmeans(model, ~ Temperature | Metric)
 pairs(emm)
 ```
-P net increases with temperature and is higher in high light. P net is higher in WT than mix. 
+P net is higher at high light. At high light, P net is higher at 30 than 27. At low light, P net decreases with temperature. P net is lower in MIX larvae than either C or WT. 
 
 
 

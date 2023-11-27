@@ -225,7 +225,6 @@ Run anova on effect of PAR, group, and temperature.
 summary(aov(P.nmol.org.min~PAR*Group*Temperature, data=pr_data))
 ```
 There are strong effects of temperature and light and an interaction between light and group. 
-
 Run model for 27 degrees. 
 ```{r}
 model<-pr_data%>%
@@ -244,7 +243,7 @@ model<-pr_data%>%
 
 summary(model)
 ```
-Strong effect of light, group, and light x group at 33C. 
+Strong effect of light and group at 33C. 
 
 Run model for 36
 ```{r}
@@ -398,7 +397,7 @@ summary(model)
 TukeyHSD(model, "Temperature")
 
 ```
-P:R Ratio at high light is affected by temperature and decreases with temperature. 
+No effect of temp or group on PR ratio at high light. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -409,7 +408,7 @@ TukeyHSD(model, "Temperature")
 
 summary(model)
 ```
-P:R ratios decrease with temperature at medium light. 
+No effect of temp or group on PR ratios at medium light. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -430,8 +429,9 @@ model<-pr_data_calc%>%
 summary(model)
 
 TukeyHSD(model, "Group")
+TukeyHSD(model, "Temperature")
 ```
-LER is dfiferent by group. F2 NB has lower respiration than F1 NB. F2 NB also has lower Rd than F2 WT.  
+LER is different by group and temperature. F2 NB has lower respiration than F1 NB. F2 NB also has lower Rd than F2 WT. LER is lower at 33 and 36 C compared to 27. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -444,7 +444,7 @@ TukeyHSD(model, "Temperature")
 
 TukeyHSD(model, "Group")
 ```
-Dark respiration decreases with temperature. 
+No effect of temp on dark respiration. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -467,7 +467,7 @@ summary(model)
 TukeyHSD(model, "Temperature")
 TukeyHSD(model, "Group")
 ```
-At medium light, P gross decreases with temperature and is different by group. F2 WT has higher P than F2 NB. There is lower P in F2 NB than F1 NB. 
+At medium light, P gross decreases with temperature and is different by group. F2 NB is lower than F2 NB and F2 WT. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -479,8 +479,7 @@ summary(model)
 TukeyHSD(model, "Temperature")
 TukeyHSD(model, "Group")
 ```
-Gross photosynthesis at low light is affected by group. 
-
+Gross photosynthesis at low light is affected by group and temperature. Decreases with temperature. Is lower in F2 NB than F2 WT.   
 
 ```{r}
 model<-pr_data_calc%>%
@@ -502,7 +501,7 @@ summary(model)
 
 TukeyHSD(model, "Temperature")
 ```
-At medium light P net decreases at 36C. 
+No effect on Pnet at medium light. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -513,7 +512,7 @@ summary(model)
 
 TukeyHSD(model, "Group")
 ```
-P net is is affected by group at low light. 
+P net is is affected by group at low light. Lower in F1 NB than F2 WT.  
 
 Test effect of light on P:R ratio. 
 ```{r}
@@ -524,8 +523,9 @@ model<-pr_data_calc%>%
 summary(model)
 
 TukeyHSD(model, "Metric")
+TukeyHSD(model, "Temperature")
 ```
-P:R ratios are significantly different by light and temperature. There are higher P:R ratios at high light but only when at 27C. 
+P:R ratios are significantly different by light and temperature. There are higher P:R ratios at high light. Ratios are lower at 36C.  
 
 Test effect of light on P gross.  
 ```{r}
@@ -542,7 +542,7 @@ TukeyHSD(model, "Group")
 emm<-emmeans(model, ~ Group | Temperature)
 pairs(emm)
 ```
-There are interactive effects between light and temp and between temp and group. 
+There are effects of light, temperature, and group on P gross. P gross is higher at high light. P gross decreases with temperature. P gross is overall lower in F2 NB than all other groups. 
 
 Test effect of light on P net.   
 ```{r}

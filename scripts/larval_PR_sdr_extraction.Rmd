@@ -298,9 +298,9 @@ oxygen$Org.Number<-Sample.Info$Org.Number[match(oxygen$unique, Sample.Info$uniqu
 Remove samples that have inaccurate slope extraction for respiration rates (determined by PDF output files)  
 
 ```{r}
-oxygen<-oxygen%>%
-  mutate(code=paste(Plate, Chamber.ID))%>%
-  filter(!c(Plate==2 & Light==1))%>%
+#oxygen<-oxygen%>%
+  #mutate(code=paste(Plate, Chamber.ID)) #%>%
+  #filter(!c(Plate==2 & Light==1))%>%
   #filter(!code=="3 D4")%>%
   #filter(!code=="7 D6")%>%
   #filter(!code=="8 B4")%>%
@@ -312,7 +312,7 @@ oxygen<-oxygen%>%
   #filter(!code=="6 D5")%>%
   #filter(!code=="8 C4")%>%
   #filter(!code=="10 D4")%>%
-  select(!code)
+  #select(!code)
 ```
 
 Account for volume to obtain umol per minute.   
@@ -329,26 +329,26 @@ oxygen$code<-paste0(oxygen$Plate, "_", oxygen$Light)
 Subtract blank values. Average blank calculated for each run. Display mean blank value.  
 ```{r}
 blank_data <- subset(oxygen, Type == "Blank") #subset to blank data only
-plot(as.factor(blank_data$Plate), blank_data$P.umol.min, xlab="Plate", ylab="umol O2 min-1") #blanks during dark phase
+plot(as.factor(blank_data$code), blank_data$P.umol.min, xlab="Plate", ylab="umol O2 min-1") #blanks during dark phase
 
 blank_data$code<-paste0(blank_data$Plate, "_", blank_data$Light)
 
 hist(blank_data$P.umol.L.min)
 
-plot(as.factor(blank_data$code), blank_data$P.umol.min, xlab="Plate", ylab="umol O2 min-1") #blanks 
-
 #display mean blank values
 mean(blank_data$P.umol.min, na.rm=TRUE) #mean P phase blanks
 
-plot(as.factor(blank_data$Plate), blank_data$P.umol.L.min, xlab="Plate", ylab="rate") #photo rates
+plot(as.factor(blank_data$code), blank_data$P.umol.L.min, xlab="Plate", ylab="rate") #photo rates
 
 #remove outlier blank 
 blank_data<-blank_data%>%
-  filter(P.umol.L.min>-1.5) 
+  filter(P.umol.L.min>-5) 
 
-plot(as.factor(blank_data$Plate), blank_data$P.umol.L.min, xlab="Plate", ylab="rate") #photo rates after outlier removal
+hist(blank_data$P.umol.L.min)
 
-photo.blnk <- aggregate(P.umol.min ~ Date*Plate, data=blank_data, mean) #calculate average blank during light for each run
+plot(as.factor(blank_data$code), blank_data$P.umol.L.min, xlab="Plate", ylab="rate") #photo rates after outlier removal
+
+photo.blnk <- aggregate(P.umol.min ~ code, data=blank_data, mean) #calculate average blank during light for each run
 colnames(photo.blnk)[colnames(photo.blnk) == 'P.umol.min'] <- 'P.Blank.umol.min' #rename to specify blank for R
 
 oxygen <- full_join(oxygen, photo.blnk) #add R blanks to master
