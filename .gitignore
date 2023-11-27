@@ -55,5 +55,6 @@ rsconnect/
 output/tpc_sdr/RespirationPlots
 output/larval_pi_curves/PhotosynthesisPlots
 output/F1F2_sdr/PhotosynthesisPlots
-output/pr_sr/PhotosynthesisPlots
 output/temp_pi_curves/PhotosynthesisPlots
+output/fungia/RespirationPlots
+output/pr_sdr/PhotosynthesisPlots
