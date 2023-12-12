@@ -1,0 +1,21 @@
+Time.Start,Time.End,Light,Temperature,Phase
+0,14.99,0,26,Dark 26C
+15,29.99,350,26,Light 26C
+30,40,0,20-29,Dark - Temp Gradient
+40.01,50.99,10.3,20-29,Low Light - Temp Gradient
+51,51.99,42.5,20-29,Rapid light curve - Temp Gradient
+52,52.99,145,20-29,Rapid light curve - Temp Gradient
+53,53.99,247,20-29,Rapid light curve - Temp Gradient
+54,54.99,351,20-29,Rapid light curve - Temp Gradient
+55,55.99,451,20-29,Rapid light curve - Temp Gradient
+56,56.99,548,20-29,Rapid light curve - Temp Gradient
+57,57.99,635,20-29,Rapid light curve - Temp Gradient
+58,58.99,728,20-29,Rapid light curve - Temp Gradient
+59,59.99,826,20-29,Rapid light curve - Temp Gradient
+60,60.99,920,20-29,Rapid light curve - Temp Gradient
+61,61.99,1008,20-29,Rapid light curve - Temp Gradient
+62,62.99,1100,20-29,Rapid light curve - Temp Gradient
+63,63.99,1187,20-29,Rapid light curve - Temp Gradient
+64,64.99,1270,20-29,Rapid light curve - Temp Gradient
+65,65.99,1463,20-29,Rapid light curve - Temp Gradient
+65.01,75,10.3,26,Low Light 26C
