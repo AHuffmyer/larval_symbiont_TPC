@@ -14,13 +14,16 @@ editor_options:
   chunk_output_type: console
 ---
 
-Questions for AUS team: 
+O2 - Fo = measured at steady state light before saturating pulse for photophys measurements. Dont use this one. 
+O2 - Fm = measured after saturating pulse. Use this metric for O2, its consistent light. Lower flourescence = more O2; Higher fluorescence = less O2. 
+FvFm = Wont really make sense to use this since samples are not dark adapted. We won't worry about this one and will instead calculate rETR within the rapid light curve protocol. 
+NPQ = use this one! 
 
-- Explain O2 Fo vs O2 Fm
-- Can we use FvFm and NPQ from these worksheets?
-- Explain units of O2 fluorescence and how this relates to amount of oxygen 
-- Can/should we normalize O2 fluorescence to larvae and water volume to get actual oxygen concentrations per larvae? 
-- Same number of larvae in each well? 
+Separate the measurements by protocol - absolute changes/shifts between protocols are meaningless. Just analyze within a protocol for relative changes in values. 
+
+Phases were: 0-30 min; 30-40 min; 40-65 min; and end point at 75 min 
+
+Follow up with AUS team for rETR calculation method 
 
 # Setup  
 
