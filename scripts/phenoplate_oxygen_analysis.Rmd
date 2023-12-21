@@ -1,5 +1,5 @@
 ---
-title: "Larval PI Curve Plotting and Analysis - Hawaii 2023 - Temp x PI curve analysis" 
+title: "Larval Phenoplate Analysis" 
 author: "AS Huffmyer"
 date: '2023'
 output:
@@ -14,19 +14,10 @@ editor_options:
   chunk_output_type: console
 ---
 
-Analysis steps: 
-
-- Load data 
-- Plot full data set to visualize
-- Perform localized linear regressions to extract metabolic rates for each treatment group
-- Plot metabolic rates to visualize 
-- Statistically compare metabolic rates as a function of temperature, light, and symbiont
-
 Questions for AUS team: 
 
 - Explain O2 Fo vs O2 Fm
 - Can we use FvFm and NPQ from these worksheets?
-- How to get this worksheet fully reproducible
 - Explain units of O2 fluorescence and how this relates to amount of oxygen 
 - Can/should we normalize O2 fluorescence to larvae and water volume to get actual oxygen concentrations per larvae? 
 - Same number of larvae in each well? 
@@ -1897,6 +1888,10 @@ recovery_grid_l<-plot_grid(recovery_grid, legend_symbiont, ncol=2, nrow=1, rel_w
 
 ggsave(filename="figures/phenoplate/6_lowlight_recovery_metrics.jpeg", recovery_grid_l, width=20, height=5)
 ```
+
+
+
+
 
 
 
