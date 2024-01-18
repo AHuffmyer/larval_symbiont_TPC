@@ -397,11 +397,21 @@ augmented <- pi_data %>%
 #all together
 curve_plot1<-augmented %>%
   group_by(Symbiont)%>%
-  qplot(PAR, Pc, data = ., geom = 'point', colour = Symbiont) +
+  qplot(PAR, Pc, data = ., geom = 'point', colour = Symbiont, alpha=I(0.2)) +
   geom_line(aes(y=.fitted), size=2)+
   scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
   theme(legend.position="right")+
-  theme_classic();curve_plot1
+  xlab("Light (PAR)")+
+  ylab(expression(P[MAX]))+
+  ggtitle("A")+
+  theme_classic()+
+  ylim(-0.005, 0.01)+ 
+    theme(legend.position="none", 
+        text=element_text(size=18, color="black"), 
+        axis.title=element_text(size=20, color="black", face="bold"), 
+        axis.text.x=element_text(size=14, color="black", angle=45, hjust=1, vjust=1),
+        axis.text.y=element_text(size=14, color="black"),
+        title = element_text(size=20, color="black", face="bold"));curve_plot1
 
 ggsave("figures/larval_pi_curves/nls_curves_all.png", width=6, height=6, dpi=500)
 ```

@@ -1898,3 +1898,36 @@ ggsave(filename="figures/phenoplate/6_lowlight_recovery_metrics.jpeg", recovery_
 
 
 
+
+# Generate preliminary plots for NPQ during RLC 
+
+NPQ
+```{r}
+test_plot<-df%>%
+  filter(Phase=="Rapid light curve - Temp Gradient")%>%
+  group_by(Symbiont, Phase, Gradient_Temperature, Light)%>%
+  summarise(mean=mean(NPQ_norm, na.rm=TRUE), se=sd(NPQ_norm, na.rm=TRUE)/sqrt(length(NPQ_norm)))%>%
+  filter(Gradient_Temperature %in% c(28, 32, 38))%>%
+  filter(Light>15)%>%
+  
+  ggplot(aes(x=Light, y=mean, colour=Symbiont, fill=Symbiont))+
+  facet_wrap(~Gradient_Temperature)+
+  geom_ribbon(aes(ymin = mean - se, ymax = mean + se), alpha=0.2, linewidth=0) +
+  geom_line(aes(y = mean), linewidth=2)+
+  xlab("Light (PAR)")+
+  ylab("NPQ")+
+  scale_color_manual(name="Parental \nHistory", labels=c("Sensitive", "Tolerant", "Wildtype"), values=c("orange","brown4", "gray"))+
+  scale_fill_manual(name="Parental \nHistory", labels=c("Sensitive", "Tolerant", "Wildtype"), values=c("orange","brown4", "gray"))+
+  ylim(0, 1.4)+
+  ggtitle("B")+
+  theme_classic()+
+  theme(legend.position="right", 
+        text=element_text(size=18, color="black"), 
+        axis.title=element_text(size=20, color="black", face="bold"), 
+        axis.text.x=element_text(size=14, color="black", angle=45, hjust=1, vjust=1),
+        axis.text.y=element_text(size=14, color="black"),
+        title = element_text(size=20, color="black", face="bold")); test_plot
+
+ggsave(filename="figures/phenoplate/prelim_npq_plot.jpeg", test_plot, width=12, height=5)
+```
+
