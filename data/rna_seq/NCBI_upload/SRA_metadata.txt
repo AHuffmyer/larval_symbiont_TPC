@@ -1,0 +1,286 @@
+sample_name	library_ID	title	library_strategy	library_source	library_selection	library_layout	platform	instrument_model	design_description	filetype	filename	filename2	filename3	filename4	assembly	fasta_file
+R55	R55	27C_BleachedCladocopium_20230627_R55	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R55_R1_001.fastq.gz	R55_R2_001.fastq.gz				
+R56	R56	27C_BleachedCladocopium_20230627_R56	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R56_R1_001.fastq.gz	R56_R2_001.fastq.gz				
+R57	R57	27C_BleachedCladocopium_20230627_R57	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R57_R1_001.fastq.gz	R57_R2_001.fastq.gz				
+R58	R58	27C_BleachedCladocopium_20230627_R58	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R58_R1_001.fastq.gz	R58_R2_001.fastq.gz				
+R59	R59	27C_BleachedCladocopium_20230627_R59	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R59_R1_001.fastq.gz	R59_R2_001.fastq.gz				
+R60	R60	27C_BleachedCladocopium_20230627_R60	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R60_R1_001.fastq.gz	R60_R2_001.fastq.gz				
+R61	R61	27C_NonBleachedMixed_20230627_R61	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R61_R1_001.fastq.gz	R61_R2_001.fastq.gz				
+R62	R62	27C_NonBleachedMixed_20230627_R62	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R62_R1_001.fastq.gz	R62_R2_001.fastq.gz				
+R63	R63	27C_NonBleachedMixed_20230627_R63	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R63_R1_001.fastq.gz	R63_R2_001.fastq.gz				
+R64	R64	27C_NonBleachedMixed_20230627_R64	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R64_R1_001.fastq.gz	R64_R2_001.fastq.gz				
+R65	R65	27C_NonBleachedMixed_20230627_R65	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R65_R1_001.fastq.gz	R65_R2_001.fastq.gz				
+R66	R66	27C_NonBleachedMixed_20230627_R66	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R66_R1_001.fastq.gz	R66_R2_001.fastq.gz				
+R67	R67	27C_Wildtype_20230627_R67	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R67_R1_001.fastq.gz	R67_R2_001.fastq.gz				
+R68	R68	27C_Wildtype_20230627_R68	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R68_R1_001.fastq.gz	R68_R2_001.fastq.gz				
+R69	R69	27C_Wildtype_20230627_R69	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R69_R1_001.fastq.gz	R69_R2_001.fastq.gz				
+R70	R70	27C_Wildtype_20230627_R70	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R70_R1_001.fastq.gz	R70_R2_001.fastq.gz				
+R71	R71	27C_Wildtype_20230627_R71	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R71_R1_001.fastq.gz	R71_R2_001.fastq.gz				
+R72	R72	27C_Wildtype_20230627_R72	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R72_R1_001.fastq.gz	R72_R2_001.fastq.gz				
+R73	R73	30C_BleachedCladocopium_20230627_R73	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R73_R1_001.fastq.gz	R73_R2_001.fastq.gz				
+R74	R74	30C_BleachedCladocopium_20230627_R74	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R74_R1_001.fastq.gZ	R74_R2_001.fastq.gZ				
+R75	R75	30C_BleachedCladocopium_20230627_R75	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R75_R1_001.fastq.gz	R75_R2_001.fastq.gz				
+R76	R76	30C_BleachedCladocopium_20230627_R76	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R76_R1_001.fastq.gz	R76_R2_001.fastq.gz				
+R77	R77	30C_BleachedCladocopium_20230627_R77	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R77_R1_001.fastq.gz	R77_R2_001.fastq.gz				
+R78	R78	30C_BleachedCladocopium_20230627_R78	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R78_R1_001.fastq.gZ	R78_R2_001.fastq.gZ				
+R79	R79	30C_NonBleachedMixed_20230627_R79	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R79_R1_001.fastq.gz	R79_R2_001.fastq.gz				
+R80	R80	30C_NonBleachedMixed_20230627_R80	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R80_R1_001.fastq.gz	R80_R2_001.fastq.gz				
+R81	R81	30C_NonBleachedMixed_20230627_R81	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R81_R1_001.fastq.gz	R81_R2_001.fastq.gz				
+R82	R82	30C_NonBleachedMixed_20230627_R82	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R82_R1_001.fastq.gz	R82_R2_001.fastq.gz				
+R83	R83	30C_NonBleachedMixed_20230627_R83	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R83_R1_001.fastq.gz	R83_R2_001.fastq.gz				
+R84	R84	30C_NonBleachedMixed_20230627_R84	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R84_R1_001.fastq.gz	R84_R2_001.fastq.gz				
+R85	R85	30C_Wildtype_20230627_R85	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R85_R1_001.fastq.gz	R85_R2_001.fastq.gz				
+R86	R86	30C_Wildtype_20230627_R86	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R86_R1_001.fastq.gz	R86_R2_001.fastq.gz				
+R87	R87	30C_Wildtype_20230627_R87	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R87_R1_001.fastq.gz	R87_R2_001.fastq.gz				
+R88	R88	30C_Wildtype_20230627_R88	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R88_R1_001.fastq.gz	R88_R2_001.fastq.gz				
+R89	R89	30C_Wildtype_20230627_R89	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R89_R1_001.fastq.gz	R89_R2_001.fastq.gz				
+R90	R90	30C_Wildtype_20230627_R90	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R90_R1_001.fastq.gz	R90_R2_001.fastq.gz				
+R91	R91	33C_BleachedCladocopium_20230627_R91	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R91_R1_001.fastq.gz	R91_R2_001.fastq.gz				
+R92	R92	33C_BleachedCladocopium_20230627_R92	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R92_R1_001.fastq.gz	R92_R2_001.fastq.gz				
+R93	R93	33C_BleachedCladocopium_20230627_R93	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R93_R1_001.fastq.gz	R93_R2_001.fastq.gz				
+R94	R94	33C_BleachedCladocopium_20230627_R94	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R94_R1_001.fastq.gz	R94_R2_001.fastq.gz				
+R95	R95	33C_BleachedCladocopium_20230627_R95	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R95_R1_001.fastq.gz	R95_R2_001.fastq.gz				
+R96	R96	33C_BleachedCladocopium_20230627_R96	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R96_R1_001.fastq.gz	R96_R2_001.fastq.gz				
+R97	R97	33C_NonBleachedMixed_20230627_R97	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R97_R1_001.fastq.gz	R97_R2_001.fastq.gz				
+R98	R98	33C_NonBleachedMixed_20230627_R98	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R98_R1_001.fastq.gz	R98_R2_001.fastq.gz				
+R99	R99	33C_NonBleachedMixed_20230627_R99	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R99_R1_001.fastq.gz	R99_R2_001.fastq.gz				
+R100	R100	33C_NonBleachedMixed_20230627_R100	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R100_R1_001.fastq.gz	R100_R2_001.fastq.gz				
+R101	R101	33C_NonBleachedMixed_20230627_R101	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R101_R1_001.fastq.gz	R101_R2_001.fastq.gz				
+R102	R102	33C_NonBleachedMixed_20230627_R102	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R102_R1_001.fastq.gz	R102_R2_001.fastq.gz				
+R103	R103	33C_Wildtype_20230627_R103	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R103_R1_001.fastq.gz	R103_R2_001.fastq.gz				
+R104	R104	33C_Wildtype_20230627_R104	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R104_R1_001.fastq.gz	R104_R2_001.fastq.gz				
+R105	R105	33C_Wildtype_20230627_R105	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R105_R1_001.fastq.gz	R105_R2_001.fastq.gz				
+R106	R106	33C_Wildtype_20230627_R106	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R106_R1_001.fastq.gz	R106_R2_001.fastq.gz				
+R107	R107	33C_Wildtype_20230627_R107	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R107_R1_001.fastq.gz	R107_R2_001.fastq.gz				
+R108	R108	33C_Wildtype_20230627_R108	RNA-Seq	TRANSCRIPTOMIC	RANDOM PCR	paired	ILLUMINA	Illumina HiSeq X	Standard mRNA-seq from libraries prepared using Zymo Quick MiniPrep Plus DNA/RNA extraction kit at the Putnam Lab (University of Rhode Island) with sequencing at Azenta Life Sciences	fastq	R108_R1_001.fastq.gz	R108_R2_001.fastq.gz				
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
+																
