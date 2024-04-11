@@ -1,0 +1,182 @@
+---
+title: Protein analysis for lipid and metabolite extractions
+author: "AS Huffmyer"
+date: '2024'
+output:
+  html_document:
+    code_folding: hide
+    toc: yes
+    toc_depth: 6
+    toc_float: yes
+  pdf_document:
+    keep_tex: yes
+editor_options: 
+  chunk_output_type: console
+---
+This script analyzes protein data for normalization for lipid and metabolite extractions. 
+
+# Set up 
+
+```{r}
+if (!require("dplyr")) install.packages("dplyr")
+if (!require("readr")) install.packages("readr")
+if (!require("stringr")) install.packages("stringr")
+if (!require("gridExtra")) install.packages("gridExtra")
+if (!require("grid")) install.packages("grid")
+if (!require("ggplot2")) install.packages("ggplot2")
+if (!require("lattice")) install.packages("lattice")
+if (!require("Rmisc")) install.packages("Rmisc")
+if (!require("ggpubr")) install.packages("ggpubr")
+if (!require("lsmeans")) install.packages("lsmeans")
+if (!require("tidyverse")) install.packages("tidyverse")
+if (!require("car")) install.packages("car")
+if (!require("ggpubr")) install.packages("ggpubr")
+if (!require("kableExtra")) install.packages("kableExtra")
+if (!require("ggcorrplot")) install.packages("ggcorrplot")
+if (!require("corrr")) install.packages("corrr")
+if (!require("GGally")) install.packages("GGally")
+if (!require("cowplot")) install.packages("cowplot")
+
+library(dplyr)
+library(readr)
+library(stringr)
+library(gridExtra)
+library(grid)
+library(ggplot2)
+library(lattice)
+library(Rmisc)
+library(ggpubr)
+library(lsmeans)
+library(car)
+library(kableExtra)
+library(ggcorrplot)
+library(corrr)
+library(GGally)
+library(cowplot)
+library(tidyverse)
+```
+
+# Set plot theme 
+
+```{r}
+custom_theme<-theme_classic() + 
+  theme(axis.text = element_text(size=12, color="black"), 
+        axis.title=element_text(size=12, color="black", face="bold"), 
+        legend.text=element_text(size=12, color="black"), 
+        legend.title=element_text(size=12, face="bold", color="black"))
+```
+
+# Protein
+
+## Load data  
+
+Read in datafiles
+
+```{r}
+protein <- read.csv("data/lipids_metabolites/protein/test_protein_data.csv")
+metadata <- read.csv("data/lipids_metabolites/test_metadata.csv")
+volumes <- read.csv("data/lipids_metabolites/test_volumes.csv")
+```
+
+## Prepare dataframes  
+
+Merging Files and renaming columns
+
+```{r}
+protein <- merge(metadata, protein, by = c("Well", "Run"))
+protein <- left_join(protein, volumes, by=c("Tube.ID"))
+
+# Blank correction for each run separately
+
+Blank <- protein %>% 
+  filter(Sample.Type == "Blank") %>%
+  summarise(blk.avg = mean(X562))
+
+protein$abs.corr <- protein$X562 - Blank$blk.avg
+```
+
+Plot standard curve regressions for each plate.  
+
+```{r}
+protein %>% 
+  filter(Sample.Type == "Standard")%>%
+
+  ggplot(aes(x=Concentration, y=abs.corr))+
+  facet_wrap(~ Run)+
+  ylab("Absorbance (nm)")+ xlab("Protein (ug/mL)") + 
+  geom_point()+
+  ggtitle("Run")+
+  geom_smooth(method = "lm") +
+  stat_regline_equation(label.y = 1.0, aes(label = after_stat(eq.label))) +
+  custom_theme
+```
+
+Run a loop to extract regression for each plate and calculate protein concentration.  
+
+```{r}
+run_list<-c("1", "2", "3")
+
+df_protein = data.frame()
+
+for (run in run_list) {
+
+  #subset data
+Standard <- protein %>% 
+  filter(Sample.Type == "Standard")%>%
+  filter(Run==run)
+  
+#generate standard curve equation
+lmstandard <- lm (Concentration ~ abs.corr, data = Standard)
+lmsummary <- summary(lmstandard) 
+
+#select samples
+Samples <- protein %>% #subsetting Samples
+  filter(Sample.Type == "Sample")%>%
+  filter(Run==run)
+
+#calculate concentration
+Samples$Concentration <- predict(lmstandard, newdata = Samples) #using model to get concentration
+
+#add run column
+Samples$Run<-run
+
+#normalize to homogenate volume
+Samples$Protein.ug.mL <- Samples$Concentration #* (Samples$Resuspension_volume / 1000) * (25/Samples$Homo_vol)
+
+#join dataframes
+df <- data.frame(Samples)
+df_protein <- rbind(df_protein,df)
+
+} 
+
+```
+
+Plot results 
+
+```{r}
+Protein.Plot <- df_protein%>%
+  filter(!Treatment=="Astrangia")%>%
+  filter(Fraction=="Host")%>%
+  ggplot(aes(x=Sample.ID, y=Protein.ug.mL)) +
+  geom_point(pch = 21, position=position_dodge(0.4)) +
+  xlab("Temperature") + ylab(expression(bold("Protein " (ug/mL)))) + #Axis titles
+  custom_theme; Protein.Plot
+```
+
+Calculate total protein per unit volume.
+
+## Output file of volume needed for each sample to obtain a total of 50 µg protein   
+
+```{r}
+volume.needed <- 50 
+
+df_protein%>%
+  filter(!Treatment=="Astrangia")%>%
+  filter(Fraction=="Host")%>%
+  dplyr::select(Tube.ID, Sample.ID, Protein.ug.mL)%>%
+  group_by(Tube.ID, Sample.ID)%>%
+  dplyr::summarise(Protein.ug.mL=mean(Protein.ug.mL))%>%
+  dplyr::mutate(mL.50ug.protein=volume.needed/Protein.ug.mL)%>%
+  write_csv(., "output/lipids_metabolites/protein/volume_50ug_protein.csv")
+```
+
