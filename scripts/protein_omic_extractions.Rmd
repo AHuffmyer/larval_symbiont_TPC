@@ -174,7 +174,7 @@ df_protein%>%
   dplyr::select(Tube.ID, Sample.ID, Protein.ug.mL)%>%
   group_by(Tube.ID, Sample.ID)%>%
   dplyr::summarise(Protein.ug.mL=mean(Protein.ug.mL))%>%
-  dplyr::mutate(mL.50ug.protein=volume.needed/Protein.ug.mL)%>%
+  dplyr::mutate(uL.50ug.protein=(volume.needed/Protein.ug.mL)*1000)%>%
   write_csv(., "output/lipids_metabolites/protein/volume_50ug_protein.csv")
 ```
 
