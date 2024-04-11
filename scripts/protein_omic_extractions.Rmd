@@ -75,7 +75,6 @@ Read in datafiles
 ```{r}
 protein <- read.csv("data/lipids_metabolites/protein/test_protein_data.csv")
 metadata <- read.csv("data/lipids_metabolites/test_metadata.csv")
-volumes <- read.csv("data/lipids_metabolites/test_volumes.csv")
 ```
 
 ## Prepare dataframes  
@@ -140,8 +139,8 @@ Samples$Concentration <- predict(lmstandard, newdata = Samples) #using model to 
 #add run column
 Samples$Run<-run
 
-#normalize to homogenate volume
-Samples$Protein.ug.mL <- Samples$Concentration #* (Samples$Resuspension_volume / 1000) * (25/Samples$Homo_vol)
+#normalize to homogenate volume - used because samples were diluted - adjust as needed 
+Samples$Protein.ug.mL <- Samples$Concentration * (25/Samples$Homo_vol)
 
 #join dataframes
 df <- data.frame(Samples)
