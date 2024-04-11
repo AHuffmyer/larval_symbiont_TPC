@@ -84,7 +84,7 @@ Merging Files and renaming columns
 
 ```{r}
 protein <- merge(metadata, protein, by = c("Well", "Run"))
-protein <- left_join(protein, volumes, by=c("Tube.ID"))
+#protein <- left_join(protein, volumes, by=c("Tube.ID"))
 
 # Blank correction for each run separately
 
@@ -111,7 +111,7 @@ protein %>%
   custom_theme
 ```
 
-Run a loop to extract regression for each plate and calculate protein concentration.  
+Run a loop to extract regression for each plate and calculate protein concentration for samples within each plate.  
 
 ```{r}
 run_list<-c("1", "2", "3")
@@ -148,7 +148,6 @@ df <- data.frame(Samples)
 df_protein <- rbind(df_protein,df)
 
 } 
-
 ```
 
 Plot results 
