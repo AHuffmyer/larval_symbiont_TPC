@@ -89,9 +89,9 @@ protein <- merge(metadata, protein, by = c("Well", "Run"))
 
 Blank <- protein %>% 
   filter(Sample.Type == "Blank") %>%
-  summarise(blk.avg = mean(X562))
+  summarise(blk.avg = mean(X595))
 
-protein$abs.corr <- protein$X562 - Blank$blk.avg
+#protein$abs.corr <- protein$X595 - Blank$blk.avg
 ```
 
 Plot standard curve regressions for each plate.  
@@ -100,7 +100,7 @@ Plot standard curve regressions for each plate.
 protein %>% 
   filter(Sample.Type == "Standard")%>%
 
-  ggplot(aes(x=Concentration, y=abs.corr))+
+  ggplot(aes(x=Concentration.ug.ml, y=X595))+
   facet_wrap(~ Run)+
   ylab("Absorbance (nm)")+ xlab("Protein (ug/mL)") + 
   geom_point()+
@@ -113,7 +113,7 @@ protein %>%
 Run a loop to extract regression for each plate and calculate protein concentration for samples within each plate.  
 
 ```{r}
-run_list<-c("1", "2", "3")
+run_list<-c("1")
 
 df_protein = data.frame()
 
@@ -125,7 +125,7 @@ Standard <- protein %>%
   filter(Run==run)
   
 #generate standard curve equation
-lmstandard <- lm (Concentration ~ abs.corr, data = Standard)
+lmstandard <- lm (Concentration.ug.ml ~ X595, data = Standard) #CHANGE TO CURVILINEAR
 lmsummary <- summary(lmstandard) 
 
 #select samples
@@ -134,13 +134,13 @@ Samples <- protein %>% #subsetting Samples
   filter(Run==run)
 
 #calculate concentration
-Samples$Concentration <- predict(lmstandard, newdata = Samples) #using model to get concentration
+Samples$Concentration.ug.ml <- predict(lmstandard, newdata = Samples) #using model to get concentration
 
 #add run column
 Samples$Run<-run
 
 #normalize to homogenate volume - used because samples were diluted - adjust as needed 
-Samples$Protein.ug.mL <- Samples$Concentration * (25/Samples$Homo_vol)
+Samples$Protein.ug.mL <- Samples$Concentration.ug.ml * (10/Samples$Homo_vol)
 
 #join dataframes
 df <- data.frame(Samples)
@@ -153,9 +153,7 @@ Plot results
 
 ```{r}
 Protein.Plot <- df_protein%>%
-  filter(!Treatment=="Astrangia")%>%
-  filter(Fraction=="Host")%>%
-  ggplot(aes(x=Sample.ID, y=Protein.ug.mL)) +
+  ggplot(aes(x=Sample, y=Protein.ug.mL)) +
   geom_point(pch = 21, position=position_dodge(0.4)) +
   xlab("Temperature") + ylab(expression(bold("Protein " (ug/mL)))) + #Axis titles
   custom_theme; Protein.Plot
@@ -169,10 +167,8 @@ Calculate total protein per unit volume.
 volume.needed <- 50 
 
 df_protein%>%
-  filter(!Treatment=="Astrangia")%>%
-  filter(Fraction=="Host")%>%
-  dplyr::select(Tube.ID, Sample.ID, Protein.ug.mL)%>%
-  group_by(Tube.ID, Sample.ID)%>%
+  dplyr::select(Sample, Protein.ug.mL)%>%
+  group_by(Sample)%>%
   dplyr::summarise(Protein.ug.mL=mean(Protein.ug.mL))%>%
   dplyr::mutate(uL.50ug.protein=(volume.needed/Protein.ug.mL)*1000)%>%
   write_csv(., "output/lipids_metabolites/protein/volume_50ug_protein.csv")
