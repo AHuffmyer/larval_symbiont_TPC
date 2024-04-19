@@ -14,6 +14,36 @@ editor_options:
   chunk_output_type: console
 ---
 
+1. Fluroescent light curve = RLC 
+
+Subset RLC analyses 
+Calculate rETR as QY (effective quantum yield) / PAR 
+Plot y as rETR against x as PAR 
+
+
+Calculate
+
+Saturating irradiance
+rETR max 
+Alpha 
+Beta (maybe)
+
+
+
+2. Oxygen light curve (PI curve)
+
+Plot y as O2 Fm against x as PAR 
+Calculate 
+
+Pmax
+Saturating irradiance
+Alpha 
+
+
+
+
+
+
 O2 - Fo = measured at steady state light before saturating pulse for photophys measurements. Dont use this one. 
 O2 - Fm = measured after saturating pulse. Use this metric for O2, its consistent light. Lower flourescence = more O2; Higher fluorescence = less O2. 
 FvFm = Wont really make sense to use this since samples are not dark adapted. We won't worry about this one and will instead calculate rETR within the rapid light curve protocol. 
@@ -1891,13 +1921,6 @@ recovery_grid_l<-plot_grid(recovery_grid, legend_symbiont, ncol=2, nrow=1, rel_w
 
 ggsave(filename="figures/phenoplate/6_lowlight_recovery_metrics.jpeg", recovery_grid_l, width=20, height=5)
 ```
-
-
-
-
-
-
-
 
 # Generate preliminary plots for NPQ during RLC 
 
