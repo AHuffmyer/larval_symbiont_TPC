@@ -70,7 +70,7 @@ Save file. Then upload this to Andromeda for use in bioinformatic steps.
 write.table(gff, file="data/rna_seq/Montipora_capitata_HIv3.genes_fixed.gff3", sep="\t", col.names = FALSE, row.names=FALSE, quote=FALSE)
 
 #gzip the file 
-gzip("data/rna_seq/Montipora_capitata_HIv3.genes_fixed.gff3")
+#gzip("data/rna_seq/Montipora_capitata_HIv3.genes_fixed.gff3")
 ```
 
 `wget https://github.com/AHuffmyer/larval_symbiont_TPC/raw/master/data/rna_seq/Montipora_capitata_HIv3.genes_fixed.gff3.gz`  
