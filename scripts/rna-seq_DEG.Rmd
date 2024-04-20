@@ -661,7 +661,7 @@ dim(parent_deg_int3)
 ```
 There are 941 of these genes. 
 
-List of genes in NB vs B at 30°Ç
+List of genes in NB vs B overall 
 ```{r}
 resultsNames(DEG)
 parent_deg_int4<-results(DEG, contrast=list("parent_Bleached_vs_Wildtype", "parent_Nonbleached_vs_Wildtype"))
@@ -686,7 +686,7 @@ str(unique_genes)
 ```
 474
 
-There are 474 genes unique to 33°C NB vs B comparisons compared to overall NB vs B comparisons.  
+There are 474 genes unique to 33°C NB vs B comparisons compared to overall NB vs B comparisons. These genes represent uniquely thermally responsive genes by parental phenotype. 
 
 ```{r}
 DEGlist_unique <- gdds[rownames(unique_genes)]
