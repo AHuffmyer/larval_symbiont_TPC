@@ -462,3 +462,4 @@ pheatmap(assay(DEGvst27_33), cluster_rows=TRUE, show_rownames=FALSE, color=infer
 dev.off()
 ```
 
+Sample R93 looks like it has different expression from the others in the same group. It was not resequenced and has very high read depth (31+M). Does not appear to be an outlier due to technical differences. No record of anything weird happening with this sample during collection in online or physical notebook. No recorded problems with extraction, concentrations of RNA were in mid to upper range. 
