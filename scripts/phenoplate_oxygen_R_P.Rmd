@@ -693,7 +693,7 @@ df<-df%>%
   select(Plate, well, code, Time, Light, Gradient_Temperature, Symbiont, O2_Fm_norm, NPQ_norm, QY, Phase)
 ```
 
-## 1. Dark 26°C: Dark respiration, NPQ, and QY
+## 1. Dark 26°C: Dark respiration, NPQ, and QY ~ Phenotype 
 
 ### Respiration - O2 Fm
 
@@ -1125,13 +1125,13 @@ ggsave(filename="figures/phenoplate/1_dark_26c_metrics.jpeg", dark26_grid_l, wid
 
 
 
-## 2. Light 26°C: Net photosynthesis, Gross photosynthesis, NPQ, and QY 
+## 2. Light 26°C: Net photosynthesis, Gross photosynthesis, NPQ, and QY ~ Phenotype
 
 
 
 
 
-
+## 2. Dark [Temperature Gradient]: Light enhanced respiration, NPQ, and QY ~ Temperature and phenotype
 
 
 
