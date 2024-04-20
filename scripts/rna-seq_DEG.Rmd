@@ -384,3 +384,81 @@ dev.off()
 ```
 
 # DEG Analyses 
+
+## Parent comparisons 
+
+Specifically look for genes that are different between bleached and non bleached parental histories.  
+
+### Nonbleached vs Bleached
+```{r}
+parent_degNB_B<-results(DEG, contrast=c("parent","Nonbleached","Bleached"))
+parent_degNB_B <- as.data.frame(subset(parent_degNB_B, padj<0.01))
+parent_degNB_B <- as.data.frame(subset(parent_degNB_B, abs(log2FoldChange)>0.5))
+
+dim(parent_degNB_B)
+```
+There are 569 genes differentially expressed between nonbleached and bleached parents at p<0.01 and l2FC>0.5. 
+
+```{r}
+DEGlistNB_B <- gdds[rownames(parent_degNB_B)]
+DEGvstNB_B <- varianceStabilizingTransformation(DEGlistNB_B) 
+
+pdf("figures/rna_seq/DEG_heatmap_NBvsB.pdf", width=10, height=10)
+pheatmap(assay(DEGvstNB_B), cluster_rows=TRUE, show_rownames=FALSE, color=inferno(10), show_colnames=TRUE, fontsize_row=3, scale="row", cluster_cols=TRUE, annotation_col=df, annotation_colors = ann_colors, labels_col=legend_names_col)
+dev.off()
+```
+
+
+### Nonbleached vs Wildtype
+```{r}
+parent_parent_degNB_WT<-results(DEG, contrast=c("parent","Nonbleached","Wildtype"))
+parent_parent_degNB_WT <- as.data.frame(subset(parent_parent_degNB_WT, padj<0.01))
+parent_parent_degNB_WT <- as.data.frame(subset(parent_parent_degNB_WT, abs(log2FoldChange)>0.5))
+
+dim(parent_parent_degNB_WT)
+```
+There are 526 genes differentially expressed between nonbleached and bleached parents at p<0.01 and l2FC>0.5. 
+
+### Bleached vs Wildtype
+```{r}
+parent_parent_degB_WT<-results(DEG, contrast=c("parent","Bleached","Wildtype"))
+parent_parent_degB_WT <- as.data.frame(subset(parent_parent_degB_WT, padj<0.01))
+parent_parent_degB_WT <- as.data.frame(subset(parent_parent_degB_WT, abs(log2FoldChange)>0.5))
+
+dim(parent_parent_degB_WT)
+```
+There are 546 genes differentially expressed between nonbleached and bleached parents at p<0.01 and l2FC>0.5. 
+
+## Temperature comparisons 
+
+Next, look at 27 vs 30 degrees and 27 vs 33 degrees. 
+
+27 vs 30 degrees 
+```{r}
+temp30_deg<-results(DEG, contrast=c("temperature","30","27"))
+temp30_deg <- as.data.frame(subset(temp30_deg, padj<0.01))
+temp30_deg <- as.data.frame(subset(temp30_deg, abs(log2FoldChange)>0.5))
+
+dim(temp30_deg)
+```
+There are 317 DEGs between 27 and 30 degrees. 
+
+27 vs 33 degrees 
+```{r}
+temp33_deg<-results(DEG, contrast=c("temperature","33","27"))
+temp33_deg <- as.data.frame(subset(temp33_deg, padj<0.01))
+temp33_deg <- as.data.frame(subset(temp33_deg, abs(log2FoldChange)>0.5))
+
+dim(temp33_deg)
+```
+There are 5009 DEGs between 27 and 33 degrees. 
+
+```{r}
+DEGlist27_33 <- gdds[rownames(temp33_deg)]
+DEGvst27_33 <- varianceStabilizingTransformation(DEGlist27_33) 
+
+pdf("figures/rna_seq/DEG_heatmap_27vs33.pdf", width=10, height=20)
+pheatmap(assay(DEGvst27_33), cluster_rows=TRUE, show_rownames=FALSE, color=inferno(10), show_colnames=TRUE, fontsize_row=3, scale="row", cluster_cols=TRUE, annotation_col=df, annotation_colors = ann_colors, labels_col=legend_names_col)
+dev.off()
+```
+
