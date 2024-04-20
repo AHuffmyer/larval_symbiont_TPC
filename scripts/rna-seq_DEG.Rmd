@@ -211,7 +211,7 @@ gvst <- vst(gdds, blind=FALSE) #apply a variance stabilizing transforamtion to m
 head(assay(gvst), 3) #view transformed gene count data for the first three genes in the dataset.  
 ```
 
-# Conduct PERMANOVA by parent and temperature 
+# Conduct PERMANOVA by parent and temperature for all genes
 
 Export data for PERMANOVA test.  
 ```{r}
@@ -348,6 +348,77 @@ ggsave("figures/rna_seq/volcano.pdf", plot=volcano_plot, width=14, height=8)
 ggsave("figures/rna_seq/volcano.png", plot=volcano_plot, width=14, height=8)
 ```
 
+# View PCA of DEGs for all groups 
+
+Conduct PERMANOVA by parent and temperature 
+
+Export data for PERMANOVA test.  
+```{r}
+test_DEG<-t(assay(DEGvst)) #export as matrix
+test_DEG<-as.data.frame(test_DEG)
+
+#add category columns
+test_DEG$sample<-rownames(test_DEG)
+test_DEG$temperature<-metadata$temperature[match(test_DEG$sample, metadata$sample)]
+test_DEG$parent<-metadata$parent[match(test_DEG$sample, metadata$sample)]
+```
+
+Build PERMANOVA model for DEG's between NB and B at 33°C.  
+```{r}
+dim(test_DEG)
+
+scaled_test_DEG <-prcomp(test_DEG[c(1:700)], scale=TRUE, center=TRUE)
+fviz_eig(scaled_test_DEG)
+
+# scale data
+vegan_DEG <- scale(test_DEG[c(1:700)])
+
+# PerMANOVA 
+permanova_DEG<-adonis2(vegan_DEG ~ parent*temperature, data = test_DEG, method='eu')
+permanova_DEG
+```
+
+Permutation test for adonis under reduced model
+Terms added sequentially (first to last)
+Permutation: free
+Number of permutations: 999
+
+adonis2(formula = vegan_DEG ~ parent * temperature, data = test_DEG, method = "eu")
+                   Df SumOfSqs      R2       F Pr(>F)    
+parent              2     8747 0.23576 12.2931  0.001 ***
+temperature         2     9526 0.25677 13.3886  0.001 ***
+parent:temperature  4     2819 0.07597  1.9807  0.001 ***
+Residual           45    16009 0.43151                   
+Total              53    37100 1.00000  
+
+There is an interaction, as expected because we are selecting DEG's.
+
+Plot a PCA of samples by temperature and parental phenotype for DEGs.        
+```{r}
+gPCAdata_DEG <- plotPCA(DEGvst, intgroup = c("temperature", "parent"), returnData=TRUE)
+percentVar_DEG <- round(100*attr(gPCAdata_DEG, "percentVar")) #plot PCA of samples with all data
+
+DEG_PCA <- ggplot(gPCAdata_DEG, aes(PC1, PC2, color=parent, shape=temperature)) + 
+  geom_point(size=3) + 
+  ggtitle(expression(bold("DEGs: all groups (700 genes)")))+
+  xlab(paste0("PC1: ",percentVar_DEG[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar_DEG[2],"% variance")) +
+  scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
+  scale_shape_manual(name="Temperature", values=c(19,17,15))+
+  geom_text(x=0, y=-2, label="p[Parent]=0.001", color="black")+
+  geom_text(x=0, y=-3.5, label="p[Temperature]=0.001", color="black")+
+  geom_text(x=0, y=-5, label="p[Interaction]=0.001", color="black")+
+  theme_classic() + #Set background color
+  theme(panel.border = element_blank(), # Set border
+                     #panel.grid.major = element_blank(), #Set major gridlines 
+                     #panel.grid.minor = element_blank(), #Set minor gridlines
+                     axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank()); DEG_PCA
+
+ggsave("figures/rna_seq/pca_DEG.pdf", DEG_PCA, width=8, height=4)
+ggsave("figures/rna_seq/pca_DEG.jpeg", DEG_PCA, width=8, height=4)
+```
+
 # Add heatmap by parent and treatment  
 
 ```{r}
@@ -366,9 +437,9 @@ ann_colors = list(
 
 legend_names_col = colnames(assay(DEGvst))
 
-pdf("figures/rna_seq/DEG_all_heatmap.pdf", width=15, height=15)
+#pdf("figures/rna_seq/DEG_all_heatmap.pdf", width=15, height=15)
 pheatmap(assay(DEGvst), cluster_rows=TRUE, show_rownames=FALSE, color=inferno(10), show_colnames=TRUE, fontsize_row=3, scale="row", cluster_cols=TRUE, annotation_col=df, annotation_colors = ann_colors, labels_col=legend_names_col)
-dev.off()
+#dev.off()
 ```
 
 # Plot a heatmap of sample to sample distances    
@@ -479,12 +550,9 @@ dev.off()
 
 Sample R93 looks like it has different expression from the others in the same group. It was not resequenced and has very high read depth (31+ million reads). Does not appear to be an outlier due to technical differences. No record of anything weird happening with this sample during collection in online or physical notebook. No recorded problems with extraction, concentrations of RNA were in mid to upper range. 
 
-## Interactive tests 
+# Interaction betweeen NB and B at 33°C 
 
-Test for interactions between temperature and parent effects.
-
-### Interaction betweeen NB and B at 33°C 
-
+Examine the difference in NB and B larvae at 33°C. Analyze these contrasts to generate DEG's between B and NB at 33°C.  
 ```{r}
 resultsNames(DEG)
 parent_deg_int1<-results(DEG, contrast=list("temperature33.parentNonbleached", "temperature33.parentBleached"))
@@ -503,3 +571,212 @@ pdf("figures/rna_seq/DEG_heatmap_NBvsB_33C-Interaction.pdf", width=10, height=10
 pheatmap(assay(DEGvst_int1), cluster_rows=TRUE, show_rownames=FALSE, color=inferno(10), show_colnames=TRUE, fontsize_row=3, scale="row", cluster_cols=TRUE, annotation_col=df, annotation_colors = ann_colors, labels_col=legend_names_col)
 dev.off()
 ```
+
+## View PCA of DEGs between NB and B at 33°C 
+
+Conduct PERMANOVA by parent and temperature 
+
+Export data for PERMANOVA test.  
+```{r}
+test_int<-t(assay(DEGvst_int1)) #export as matrix
+test_int<-as.data.frame(test_int)
+
+#add category columns
+test_int$sample<-rownames(test_int)
+test_int$temperature<-metadata$temperature[match(test_int$sample, metadata$sample)]
+test_int$parent<-metadata$parent[match(test_int$sample, metadata$sample)]
+```
+
+Build PERMANOVA model for DEG's between NB and B at 33°C.  
+```{r}
+dim(test_int)
+
+scaled_test_int <-prcomp(test_int[c(1:941)], scale=TRUE, center=TRUE)
+fviz_eig(scaled_test_int)
+
+# scale data
+vegan_int <- scale(test_int[c(1:941)])
+
+# PerMANOVA 
+permanova_int<-adonis2(vegan_int ~ parent*temperature, data = test_int, method='eu')
+permanova_int
+```
+
+Permutation test for adonis under reduced model
+Terms added sequentially (first to last)
+Permutation: free
+Number of permutations: 999
+
+adonis2(formula = vegan_int ~ parent * temperature, data = test_int, method = "eu")
+                   Df SumOfSqs      R2       F Pr(>F)    
+parent              2    12824 0.25713 12.9333  0.001 ***
+temperature         2    10376 0.20805 10.4647  0.001 ***
+parent:temperature  4     4363 0.08749  2.2002  0.001 ***
+Residual           45    22310 0.44733                   
+Total              53    49873 1.00000   
+
+There is an interaction, as expected because we are selecting DEG's that result from interactive effects. 
+
+Plot a PCA of samples by temperature and parental phenotype for DEGs.        
+
+```{r}
+gPCAdata_int <- plotPCA(DEGvst_int1, intgroup = c("temperature", "parent"), returnData=TRUE)
+percentVar_int <- round(100*attr(gPCAdata_int, "percentVar")) #plot PCA of samples with all data
+
+int_PCA <- ggplot(gPCAdata_int, aes(PC1, PC2, color=parent, shape=temperature)) + 
+  geom_point(size=3) + 
+  ggtitle(expression(bold("DEGs: NB vs B at 33°C (941 genes)")))+
+  xlab(paste0("PC1: ",percentVar_int[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar_int[2],"% variance")) +
+  scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
+  scale_shape_manual(name="Temperature", values=c(19,17,15))+
+  geom_text(x=0, y=-2, label="p[Parent]=0.001", color="black")+
+  geom_text(x=0, y=-3.5, label="p[Temperature]=0.001", color="black")+
+  geom_text(x=0, y=-5, label="p[Interaction]=0.001", color="black")+
+  theme_classic() + #Set background color
+  theme(panel.border = element_blank(), # Set border
+                     #panel.grid.major = element_blank(), #Set major gridlines 
+                     #panel.grid.minor = element_blank(), #Set minor gridlines
+                     axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank()); int_PCA
+
+ggsave("figures/rna_seq/pca_NBvsB_33°C.pdf", int_PCA, width=8, height=4)
+ggsave("figures/rna_seq/pca_NBvsB_33°C.jpeg", int_PCA, width=8, height=4)
+```
+
+Larger degree of separation at 33°C compared to lower temperatures. 
+
+# Genes unique to NB vs B only at 33°C
+
+Find the list of DEGs in the interaction b/t NB and B at 30. Then find list of genes present in 30°C/27°C and keep the list only unique to 33°C. 
+
+List of genes in NB vs B at 33°Ç
+```{r}
+resultsNames(DEG)
+parent_deg_int3<-results(DEG, contrast=list("temperature33.parentNonbleached", "temperature33.parentBleached"))
+parent_deg_int3 <- as.data.frame(subset(parent_deg_int3, padj<0.01))
+parent_deg_int3 <- as.data.frame(subset(parent_deg_int3, abs(log2FoldChange)>1))
+
+dim(parent_deg_int3)
+```
+There are 941 of these genes. 
+
+List of genes in NB vs B at 30°Ç
+```{r}
+resultsNames(DEG)
+parent_deg_int4<-results(DEG, contrast=list("parent_Bleached_vs_Wildtype", "parent_Nonbleached_vs_Wildtype"))
+parent_deg_int4 <- as.data.frame(subset(parent_deg_int4, padj<0.01))
+parent_deg_int4 <- as.data.frame(subset(parent_deg_int4, abs(log2FoldChange)>1))
+
+dim(parent_deg_int4)
+```
+There are 1114 of these genes.
+
+Now keep only the genes in the 33°C list that are not in the NB vs B list. 
+
+```{r}
+parent_deg_int3 <- rownames_to_column(parent_deg_int3, var = "row_names")
+parent_deg_int4 <- rownames_to_column(parent_deg_int4, var = "row_names")
+unique_genes <- anti_join(parent_deg_int3, parent_deg_int4, by = "row_names")
+rownames(unique_genes) <- unique_genes$row_names
+unique_genes$row_names <- NULL
+
+dim(unique_genes)
+str(unique_genes)
+```
+474
+
+There are 474 genes unique to 33°C NB vs B comparisons compared to overall NB vs B comparisons.  
+
+```{r}
+DEGlist_unique <- gdds[rownames(unique_genes)]
+DEGvst_unique <- varianceStabilizingTransformation(DEGlist_unique) 
+
+pdf("figures/rna_seq/DEG_heatmap_NBvsB_33C-Unique.PDF", width=10, height=10)
+pheatmap(assay(DEGvst_unique), cluster_rows=TRUE, show_rownames=FALSE, color=inferno(10), show_colnames=TRUE, fontsize_row=3, scale="row", cluster_cols=TRUE, annotation_col=df, annotation_colors = ann_colors, labels_col=legend_names_col)
+dev.off()
+```
+
+## View PCA of DEGs between NB and B at 33°C 
+
+Conduct PERMANOVA by parent and temperature 
+
+Export data for PERMANOVA test.  
+```{r}
+test_unique<-t(assay(DEGvst_unique)) #export as matrix
+test_unique<-as.data.frame(test_unique)
+
+#add category columns
+test_unique$sample<-rownames(test_unique)
+test_unique$temperature<-metadata$temperature[match(test_unique$sample, metadata$sample)]
+test_unique$parent<-metadata$parent[match(test_unique$sample, metadata$sample)]
+```
+
+Build PERMANOVA model for unique DEGs  
+```{r}
+dim(test_unique)
+
+scaled_test_unique <-prcomp(test_unique[c(1:474)], scale=TRUE, center=TRUE)
+fviz_eig(scaled_test_unique)
+
+# scale data
+vegan_unique <- scale(test_unique[c(1:474)])
+
+# PerMANOVA 
+permanova_unique<-adonis2(vegan_unique ~ parent*temperature, data = test_unique, method='eu')
+permanova_unique
+```
+
+Permutation test for adonis under reduced model
+Terms added sequentially (first to last)
+Permutation: free
+Number of permutations: 999
+
+adonis2(formula = vegan_unique ~ parent * temperature, data = test_unique, method = "eu")
+                   Df SumOfSqs      R2       F Pr(>F)    
+parent              2   4381.6 0.17441  8.3935  0.001 ***
+temperature         2   6320.8 0.25160 12.1083  0.001 ***
+parent:temperature  4   2674.2 0.10645  2.5614  0.001 ***
+Residual           45  11745.4 0.46754                   
+Total              53  25122.0 1.00000 
+
+There is an interaction, as expected because we are selecting DEG's that result from interactive effects. 
+
+Plot a PCA of samples by temperature and parental phenotype for DEGs.        
+
+```{r}
+gPCAdata_unique <- plotPCA(DEGvst_unique, intgroup = c("temperature", "parent"), returnData=TRUE)
+percentVar_unique <- round(100*attr(gPCAdata_unique, "percentVar")) #plot PCA of samples with all data
+
+unique_PCA <- ggplot(gPCAdata_unique, aes(PC1, PC2, color=parent, shape=temperature)) + 
+  geom_point(size=3) + 
+  ggtitle(expression(bold("DEGs: Unique DEGs NB vs B at 33°C (474 genes)")))+
+  xlab(paste0("PC1: ",percentVar_unique[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar_unique[2],"% variance")) +
+  scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
+  scale_shape_manual(name="Temperature", values=c(19,17,15))+
+  geom_text(x=0, y=12, label="p[Parent]=0.001", color="black")+
+  geom_text(x=0, y=10.5, label="p[Temperature]=0.001", color="black")+
+  geom_text(x=0, y=9, label="p[Interaction]=0.001", color="black")+
+  theme_classic() + #Set background color
+  theme(panel.border = element_blank(), # Set border
+                     #panel.grid.major = element_blank(), #Set major gridlines 
+                     #panel.grid.minor = element_blank(), #Set minor gridlines
+                     axis.line = element_line(colour = "black"), #Set axes color
+        plot.background=element_blank()); unique_PCA
+
+ggsave("figures/rna_seq/pca_NBvsB_33°C_unique.pdf", unique_PCA, width=8, height=4)
+ggsave("figures/rna_seq/pca_NBvsB_33°C_unique.jpeg", unique_PCA, width=8, height=4)
+```
+
+# Export lists of genes for functional enrichment 
+
+1. DEGs by parent
+2. DEGs at temperature
+3. DEGs at 33°C by B vs NB 
+4. Unique DEGs only DEG at 33°C for B vs NB 
+
+
+
+ 
+
