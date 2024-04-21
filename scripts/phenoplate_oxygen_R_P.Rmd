@@ -14,7 +14,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-1. Dark 26°C
+1. Dark 26°C DONE 
 - Respiration (O2 Fm)
 - QY (relative quantum yield)
 - NPQ (non photochemical quenching under dark)
@@ -73,6 +73,8 @@ library('nls.multstart')
 library('broom')
 library('emmeans')
 library('readxl')
+library('multcomp')
+library('dplyr')
 ```
 
 # Load data 
@@ -310,11 +312,12 @@ df$Symbiont<-as.factor(df$Symbiont)
 
 ## O2 Fm
 
-Normalize each O2 observation to the first measurement at Time 0 for each well. 
+Normalize each O2 observation to the first measurement at Time 0 for each well. Calculate the inverse value such that a higher Y axis value indicates more oxygen. This will make it easier to interpret. 
 ```{r}
 df<-df%>%
   group_by(Plate, well)%>%
-  mutate(O2_Fm_norm=O2_Fm_raw-first(O2_Fm_raw))
+  mutate(O2_Fm_norm=O2_Fm_raw-first(O2_Fm_raw))%>%
+  mutate(O2_Fm_norm=-1*O2_Fm_norm)
 ```
 
 ## QY
@@ -365,7 +368,7 @@ custom_theme<-theme(text=element_text(size=20, face="bold", color="black"),
 Make a light plot to add onto the bottom of each plot for reference. 
 ```{r}
 light_plot<-df%>%
-  select(Time, Light)%>%
+  dplyr::select(Time, Light)%>%
   group_by(Time, Light)%>%
   summarise(Light=mean(Light, na.rm=TRUE))%>%
   
@@ -395,7 +398,7 @@ c_o2_fm_plot<-df%>%
   geom_ribbon(aes(ymin = mean - se, ymax = mean + se), alpha=0.2, linewidth=0) +
   geom_line(aes(y = mean), linewidth=2)+
   xlab("Time (min)")+
-  ylab("Change in O2 fluorescence (Fm)")+
+  ylab("O2 concentration (-1*Fm)")+
   ggtitle("Cladocopium - Bleached Parents")+
   
   scale_colour_manual(values=palette, name="Gradient \nTemperature")+
@@ -471,7 +474,7 @@ mix_o2_fm_plot<-df%>%
   geom_ribbon(aes(ymin = mean - se, ymax = mean + se), alpha=0.2, linewidth=0) +
   geom_line(aes(y = mean), linewidth=2)+
   xlab("Time (min)")+
-  ylab("Change in O2 fluorescence (Fm)")+
+  ylab("O2 concentration (-1*Fm)")+
   ggtitle("Mixed - Non-Bleached Parents")+
   
   scale_colour_manual(values=palette, name="Gradient \nTemperature")+
@@ -545,7 +548,7 @@ wt_o2_fm_plot<-df%>%
   geom_ribbon(aes(ymin = mean - se, ymax = mean + se), alpha=0.2, linewidth=0) +
   geom_line(aes(y = mean), linewidth=2)+
   xlab("Time (min)")+
-  ylab("Change in O2 fluorescence (Fm)")+
+  ylab("O2 concentration (-1*Fm)")+
   ggtitle("Wildtype")+
   ylim(-13000, 13000)+
   scale_colour_manual(values=palette, name="Gradient \nTemperature")+
@@ -602,7 +605,7 @@ wt_o2_npq_plot<-df%>%
 wt_o2_npq_grid<-plot_grid(wt_o2_npq_plot, light_plot, ncol=1, nrow=2, rel_heights=c(1, 0.3))
 ```
 
-## Make a panel of all symbiont types together 
+## Make a panel of all parent types together 
 
 Grab the legend from the plot. 
 ```{r}
@@ -690,24 +693,23 @@ Select only required columns.
 
 ```{r}
 df<-df%>%
-  select(Plate, well, code, Time, Light, Gradient_Temperature, Symbiont, O2_Fm_norm, NPQ_norm, QY, Phase)
+  dplyr::select(Plate, well, code, Time, Light, Gradient_Temperature, Symbiont, O2_Fm_norm, NPQ_norm, QY, Phase)
 ```
 
 ## 1. Dark 26°C: Dark respiration, NPQ, and QY ~ Phenotype 
 
 ### Respiration - O2 Fm
 
-Plot the data from the first phase (dark respiration at 26°C) faceted by symbiont type. 
+Plot the data from the first phase (dark respiration at 26°C) faceted by parent type. 
 
-Higher value on Y = more oxygen depleted. 
+Higher value on Y = more oxygen. 
 ```{r}
-dark_26c_plot2<-df%>%
+dark_26c_plot1<-df%>%
   filter(Phase=="Dark 26C")%>%
   group_by(Symbiont, Phase, Time, Light)%>%
-  mutate(inv_02_Fm_norm=-1*O2_Fm_norm)%>%
-  summarise(mean=mean(inv_02_Fm_norm, na.rm=TRUE), se=sd(inv_02_Fm_norm, na.rm=TRUE)/sqrt(length(inv_02_Fm_norm)))%>%
+  summarise(mean=mean(O2_Fm_norm, na.rm=TRUE), se=sd(O2_Fm_norm, na.rm=TRUE)/sqrt(length(O2_Fm_norm)))%>%
   
-  ggplot(aes(x=Time, y=(mean), colour=Symbiont, fill=Symbiont))+
+  ggplot(aes(x=Time, y=mean, colour=Symbiont, fill=Symbiont))+
   geom_ribbon(aes(ymin = mean - se, ymax = mean + se), alpha=0.2, linewidth=0) +
   geom_line(aes(y = mean), linewidth=2)+
   xlab("Time (min)")+
@@ -720,9 +722,9 @@ dark_26c_plot2<-df%>%
   theme(legend.position="none", 
         text=element_text(size=18, color="black"), 
         axis.title=element_text(size=20, color="black", face="bold"), 
-        title = element_text(size=20, color="black", face="bold")); dark_26c_plot2
+        title = element_text(size=20, color="black", face="bold")); dark_26c_plot1
 ```
-There appears to be a higher respiration rate in wildtype and perhaps a lower rate in tolerant compared to sensitive parental phenotypes. 
+There appears to be a higher respiration rate in wildtype and perhaps a lower rate in NB compared to B parental phenotypes. 
 
 Calculate respiration rate as the mean total change in relative O2 Fm values divided by the total time (15 min). Use the last 3 minutes as the interval from which to summarize total   change in normalized (normalized to starting value) oxygen concentration.  
 
@@ -731,31 +733,14 @@ Summarize oxygen values in last 3 minutes. Calculate as relative change in Fm pe
 resp_dark26<-df%>%
   filter(Phase=="Dark 26C")%>%
   filter(Time>=13)%>%
-  group_by(Plate, well, code, Symbiont, Phase)%>%
+  group_by(Plate, well, code, Symbiont)%>%
   summarise(Rdark26=mean(O2_Fm_norm, na.rm=TRUE)/15)
 ```
 
 Plot values. 
 
 ```{r}
-dark_26c_plot3<-resp_dark26%>%
-  
-  ggplot(aes(x=Symbiont, y=Rdark26, colour=Symbiont))+
-  geom_boxplot()+
-  geom_point(position=position_jitterdodge())+
-  xlab("Symbiont")+
-  ylab("O2 per min [-1*norm. Fm]")+
-  ggtitle("Dark 26°C")+
-  scale_colour_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
-  scale_fill_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
-  #ylim(-800, 200)+
-  theme_classic()+
-  theme(legend.position="none", 
-        text=element_text(size=18, color="black"), 
-        axis.title=element_text(size=20, color="black", face="bold"), 
-        title = element_text(size=20, color="black", face="bold")); dark_26c_plot3
-
-dark_26c_plot4<-resp_dark26%>%
+dark_26c_plot2<-resp_dark26%>%
   group_by(Symbiont)%>%
   summarise(mean=mean(Rdark26, na.rm=TRUE), se=sd(Rdark26, na.rm=TRUE)/sqrt(length(Rdark26)))%>%
   
@@ -763,21 +748,21 @@ dark_26c_plot4<-resp_dark26%>%
   geom_point(size=4)+
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.1)+
   xlab("Parental Phenotype")+
-  ylab(expression(bold(paste("Oxygen Consumed [-1*rel Fm min" ^-1, "]"))))+
+  ylab(expression(bold(paste("Oxygen Change [-1*rel Fm min" ^-1, "]"))))+
   ggtitle(expression(bold(paste("R" [D], " 26°C"))))+
-  geom_text(x=2, y=28, label="p=0.040", size=6, color="black")+
-  geom_text(x=3, y=23, label="*", size=6, color="black")+
+  geom_text(x=2, y=-28, label="p=0.040", size=6, color="black")+
+  geom_text(x=1, y=-3.5, label="ab", size=6, color="black")+
+  geom_text(x=2, y=-0.5, label="b", size=6, color="black")+
+  geom_text(x=3, y=-13, label="a", size=6, color="black")+
   scale_colour_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
   scale_fill_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
-  scale_x_discrete(labels=c("Sensitive", "Tolerant", "Wildtype"))+
-  ylim(0, 30)+
+  scale_x_discrete(labels=c("Bleached", "Nonbleached", "Wildtype"))+
+  ylim(-30,0)+
   theme_classic()+
   theme(legend.position="none", 
         text=element_text(size=14, color="black"), 
         axis.title=element_text(size=12, color="black", face="bold"), 
-        title = element_text(size=12, color="black", face="bold")); dark_26c_plot4
-
-ggsave("figures/phenoplate/respiration_dark26.png", width=4.5, heigh=4.5)
+        title = element_text(size=12, color="black", face="bold")); dark_26c_plot2
 ```
 
 Run ANOVA model on these values. 
@@ -790,13 +775,14 @@ summary(model)
 
 emm<-emmeans(model, ~Symbiont)
 pairs(emm)
+cld(emm, Letters = letters)
 ```
 Slightly significant differences detected (P=0.0403). Lower respiration rates in MIX compared to WT, but no differences between C and other groups (P=0.0334).  
 
 Create a new master data frame to populate and add in dark respiration data. 
 ```{r}
 master<-df%>%
-  select(Plate, well, code, Light, Gradient_Temperature, Symbiont, Phase)%>%
+  dplyr::select(Plate, well, code, Gradient_Temperature, Symbiont)%>%
   unique()
 
 master<-left_join(master, resp_dark26)
@@ -804,10 +790,10 @@ master<-left_join(master, resp_dark26)
 
 ### Relative quantum yield - QY
 
-Plot the data from the first phase (dark at 26°C) faceted by symbiont type. 
+Plot the data from the first phase (dark at 26°C) faceted by parent type. 
 
 ```{r}
-dark_26c_QY_plot2<-df%>%
+dark_26c_QY_plot1<-df%>%
   filter(Phase=="Dark 26C")%>%
   group_by(Symbiont, Phase, Time, Light)%>%
   summarise(mean=mean(QY, na.rm=TRUE), se=sd(QY, na.rm=TRUE)/sqrt(length(QY)))%>%
@@ -825,7 +811,7 @@ dark_26c_QY_plot2<-df%>%
   theme(legend.position="none", 
         text=element_text(size=18, color="black"), 
         axis.title=element_text(size=20, color="black", face="bold"), 
-        title = element_text(size=20, color="black", face="bold")); dark_26c_QY_plot2
+        title = element_text(size=20, color="black", face="bold")); dark_26c_QY_plot1
 ```
 There appears to be lower QY in wildtype larvae. 
 
@@ -836,31 +822,14 @@ Summarize oxygen values in last 5 minutes.
 QY_dark26<-df%>%
   filter(Phase=="Dark 26C")%>%
   filter(Time>=10)%>%
-  group_by(Plate, well, code, Symbiont, Phase)%>%
+  group_by(Plate, well, code, Symbiont)%>%
   summarise(QYdark26=mean(QY, na.rm=TRUE))
 ```
 
 Plot values. 
 
 ```{r}
-dark_26c_QY_plot3<-QY_dark26%>%
-  
-  ggplot(aes(x=Symbiont, y=QYdark26, colour=Symbiont))+
-  geom_boxplot()+
-  geom_point(position=position_jitterdodge())+
-  xlab("Symbiont")+
-  ylab("Relative QY")+
-  ggtitle("Dark 26°C")+
-  scale_colour_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
-  scale_fill_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
-  ylim(0.2, 0.8)+
-  theme_classic()+
-  theme(legend.position="none", 
-        text=element_text(size=18, color="black"), 
-        axis.title=element_text(size=20, color="black", face="bold"), 
-        title = element_text(size=20, color="black", face="bold")); dark_26c_QY_plot3
-
-dark_26c_QY_plot4<-QY_dark26%>%
+dark_26c_QY_plot2<-QY_dark26%>%
   group_by(Symbiont)%>%
   summarise(mean=mean(QYdark26, na.rm=TRUE), se=sd(QYdark26, na.rm=TRUE)/sqrt(length(QYdark26)))%>%
   
@@ -871,18 +840,18 @@ dark_26c_QY_plot4<-QY_dark26%>%
   ylab(expression(bold(paste("Relative Quantum Yield"))))+
   ggtitle(expression(bold(paste("QY 26°C"))))+
   geom_text(x=2, y=0.68, label="p<0.001", size=6, color="black")+
-  geom_text(x=3, y=0.62, label="*", size=6, color="black")+
+  geom_text(x=1, y=0.66, label="b", size=6, color="black")+
+  geom_text(x=2, y=0.65, label="b", size=6, color="black")+
+  geom_text(x=3, y=0.625, label="a", size=6, color="black")+
   scale_colour_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
   scale_fill_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
-  scale_x_discrete(labels=c("Sensitive", "Tolerant", "Wildtype"))+
+  scale_x_discrete(labels=c("Bleached", "Nonbleached", "Wildtype"))+
   ylim(0.55, 0.7)+
   theme_classic()+
   theme(legend.position="none", 
         text=element_text(size=14, color="black"), 
         axis.title=element_text(size=12, color="black", face="bold"), 
-        title = element_text(size=12, color="black", face="bold")); dark_26c_QY_plot4
-
-ggsave("figures/phenoplate/QY_dark26.png", width=4.5, heigh=4.5)
+        title = element_text(size=12, color="black", face="bold")); dark_26c_QY_plot2
 ```
 
 Run ANOVA model on these values. 
@@ -895,6 +864,7 @@ summary(model)
 
 emm<-emmeans(model, ~Symbiont)
 pairs(emm)
+cld(emm, Letters=letters)
 ```
 Lower QY in wildtype (P<0.001).  
 
@@ -905,10 +875,10 @@ master<-left_join(master, QY_dark26)
 
 ### Non-photochemical quenching (NPQ)
 
-Plot the data from the first phase (dark at 26°C) faceted by symbiont type. 
+Plot the data from the first phase (dark at 26°C) faceted by parent type. 
 
 ```{r}
-dark_26c_NPQ_plot2<-df%>%
+dark_26c_NPQ_plot1<-df%>%
   filter(Phase=="Dark 26C")%>%
   group_by(Symbiont, Phase, Time, Light)%>%
   summarise(mean=mean(NPQ_norm, na.rm=TRUE), se=sd(NPQ_norm, na.rm=TRUE)/sqrt(length(NPQ_norm)))%>%
@@ -926,9 +896,9 @@ dark_26c_NPQ_plot2<-df%>%
   theme(legend.position="none", 
         text=element_text(size=18, color="black"), 
         axis.title=element_text(size=20, color="black", face="bold"), 
-        title = element_text(size=20, color="black", face="bold")); dark_26c_NPQ_plot2
+        title = element_text(size=20, color="black", face="bold")); dark_26c_NPQ_plot1
 ```
-There appears to be lower NPQ in wildtype larvae. 
+There appears to be lower NPQ in wildtype larvae by the end of the phase. 
 
 Calculate mean NPQ using the last 5 minutes. 
 
@@ -937,31 +907,14 @@ Summarize values in last 5 minutes.
 NPQ_dark26<-df%>%
   filter(Phase=="Dark 26C")%>%
   filter(Time>=10)%>%
-  group_by(Plate, well, code, Symbiont, Phase)%>%
+  group_by(Plate, well, code, Symbiont)%>%
   summarise(NPQdark26=mean(NPQ_norm, na.rm=TRUE))
 ```
 
 Plot values. 
 
 ```{r}
-dark_26c_NPQ_plot3<-NPQ_dark26%>%
-  
-  ggplot(aes(x=Symbiont, y=NPQdark26, colour=Symbiont))+
-  geom_boxplot()+
-  geom_point(position=position_jitterdodge())+
-  xlab("Symbiont")+
-  ylab("NPQ")+
-  ggtitle("Dark 26°C")+
-  scale_colour_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
-  scale_fill_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
-  ylim(-0.1, 0.2)+
-  theme_classic()+
-  theme(legend.position="none", 
-        text=element_text(size=18, color="black"), 
-        axis.title=element_text(size=20, color="black", face="bold"), 
-        title = element_text(size=20, color="black", face="bold")); dark_26c_NPQ_plot3
-
-dark_26c_NPQ_plot4<-NPQ_dark26%>%
+dark_26c_NPQ_plot2<-NPQ_dark26%>%
   group_by(Symbiont)%>%
   summarise(mean=mean(NPQdark26, na.rm=TRUE), se=sd(NPQdark26, na.rm=TRUE)/sqrt(length(NPQdark26)))%>%
   
@@ -972,18 +925,18 @@ dark_26c_NPQ_plot4<-NPQ_dark26%>%
   ylab(expression(bold(paste("Non-Photochemical Quenching"))))+
   ggtitle(expression(bold(paste("NPQ 26°C"))))+
   geom_text(x=2, y=0.09, label="p=0.007", size=6, color="black")+
-  geom_text(x=3, y=0.051, label="*", size=6, color="black")+
+  geom_text(x=1, y=0.068, label="b", size=6, color="black")+
+  geom_text(x=2, y=0.064, label="b", size=6, color="black")+
+  geom_text(x=3, y=0.051, label="a", size=6, color="black")+
   scale_colour_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
   scale_fill_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
-  scale_x_discrete(labels=c("Sensitive", "Tolerant", "Wildtype"))+
+  scale_x_discrete(labels=c("Bleached", "Nonbleached", "Wildtype"))+
   ylim(0, 0.1)+
   theme_classic()+
   theme(legend.position="none", 
         text=element_text(size=14, color="black"), 
         axis.title=element_text(size=12, color="black", face="bold"), 
-        title = element_text(size=12, color="black", face="bold")); dark_26c_NPQ_plot4
-
-ggsave("figures/phenoplate/NPQ_dark26.png", width=4.5, heigh=4.5)
+        title = element_text(size=12, color="black", face="bold")); dark_26c_NPQ_plot2
 ```
 
 Run ANOVA model on these values. 
@@ -996,148 +949,550 @@ summary(model)
 
 emm<-emmeans(model, ~Symbiont)
 pairs(emm)
+cld(emm, Letters=letters)
 ```
 Lower QY in wildtype (P=0.007).  
 
 Create a new master data frame to populate and add in dark NPQ data. 
 ```{r}
 master<-left_join(master, NPQ_dark26)
-
-levels(as.factor(master$Phase))
-
-master<-master%>%
-  filter(Phase %in% c("Dark 26C", "Light 26C", "Dark - Temp Gradient"))
 ```
 
 
-
-
-
-
-
-
-
-
-
-
-FvFm
+### Plot all for this phase together 
 ```{r}
-dark_26c_plot3<-df%>%
-  filter(Phase=="Dark 26C")%>%
-  group_by(Symbiont, Phase, Time, Light)%>%
-  summarise(mean=mean(FvFm, na.rm=TRUE), se=sd(FvFm, na.rm=TRUE)/sqrt(length(FvFm)))%>%
-  
-  ggplot(aes(x=Time, y=mean, fill=Symbiont, colour=Symbiont))+
-  geom_ribbon(aes(ymin = mean - se, ymax = mean + se), alpha=0.2, linewidth=0) +
-  geom_line(aes(y = mean), linewidth=2)+
-  xlab("Time (min)")+
-  ylab("FvFm")+
-  ggtitle("Dark 26°C")+
-  scale_colour_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
-  scale_fill_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
-  ylim(0.5,0.75)+
-  theme_classic()+
-  theme(legend.position="none", 
-        text=element_text(size=18, color="black"), 
-        axis.title=element_text(size=20, color="black", face="bold"), 
-        title = element_text(size=20, color="black", face="bold")); dark_26c_plot3
+dark26_grid<-plot_grid(dark_26c_plot2, dark_26c_QY_plot2, dark_26c_NPQ_plot2, 
+                    ncol=3, nrow=1, align="vh", axis = "lr")
 
-model<-df%>%
-  filter(Phase=="Dark 26C")%>%
-  
-  aov(FvFm~Symbiont*Time, data=.)
-
-summary(model)
-```
-There are symbiont and symbiont x time effects.
-
-NPQ
-```{r}
-dark_26c_plot4<-df%>%
-  filter(Phase=="Dark 26C")%>%
-  group_by(Symbiont, Phase, Time, Light)%>%
-  summarise(mean=mean(NPQ_norm, na.rm=TRUE), se=sd(NPQ_norm, na.rm=TRUE)/sqrt(length(NPQ_norm)))%>%
-  
-  ggplot(aes(x=Time, y=mean, fill=Symbiont, colour=Symbiont))+
-  geom_ribbon(aes(ymin = mean - se, ymax = mean + se), alpha=0.2, linewidth=0) +
-  geom_line(aes(y = mean), linewidth=2)+
-  xlab("Time (min)")+
-  ylab("NPQ")+
-  ggtitle("Dark 26°C")+
-  scale_colour_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
-  scale_fill_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
-  ylim(-0.3,0.3)+
-  theme_classic()+
-  theme(legend.position="none", 
-        text=element_text(size=18, color="black"), 
-        axis.title=element_text(size=20, color="black", face="bold"), 
-        title = element_text(size=20, color="black", face="bold")); dark_26c_plot4
-
-model<-df%>%
-  filter(Phase=="Dark 26C")%>%
-  
-  aov(NPQ_norm~Symbiont*Time, data=.)
-
-summary(model)
-```
-There are time and symbiont x time effects. 
-
-Make a legend for symbiont type. 
-```{r}
-my_plot_sym <- df%>%
-  filter(Phase=="Dark 26C")%>%
-  group_by(Symbiont, Phase, Time, Light)%>%
-  summarise(mean=mean(NPQ_norm, na.rm=TRUE), se=sd(NPQ_norm, na.rm=TRUE)/sqrt(length(NPQ_norm)))%>%
-  
-  ggplot(aes(x=Time, y=mean, fill=Symbiont, colour=Symbiont))+
-  geom_ribbon(aes(ymin = mean - se, ymax = mean + se), alpha=0.2, linewidth=0) +
-  geom_line(aes(y = mean), linewidth=2)+
-  xlab("Time (min)")+
-  ylab("NPQ")+
-  ggtitle("Dark 26°C")+
-  scale_colour_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
-  scale_fill_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
-  ylim(-0.3,0.3)+
-  theme_classic()+
-  theme(text=element_text(size=18, color="black"), 
-        axis.title=element_text(size=20, color="black", face="bold"), 
-        title = element_text(size=20, color="black", face="bold"))+
-  theme(legend.position="right")+
-  theme(legend.text=element_text(size=15, face="bold"))+
-  theme(legend.title=element_text(size=15, face="bold"))+
-  theme(legend.key.size = unit(1, 'cm'), #change legend key size
-        legend.key.height = unit(1, 'cm'), #change legend key height
-        legend.key.width = unit(1, 'cm'))
-
-# Extract the legend
-legend_symbiont <- get_legend(my_plot_sym)
+ggsave(filename="figures/phenoplate/1_dark_26c_metrics.jpeg", dark26_grid, width=15, height=5)
 ```
 
-Plot all together. 
-```{r}
-dark26_grid<-plot_grid(dark_26c_plot1, dark_26c_plot2, dark_26c_plot3, dark_26c_plot4,
-                    ncol=4, nrow=1, align="vh", axis = "lr")
-
-dark26_grid_l<-plot_grid(dark26_grid, legend_symbiont, ncol=2, nrow=1, rel_widths = c(1, 0.1), align="vh", axis = "lr")
-
-ggsave(filename="figures/phenoplate/1_dark_26c_metrics.jpeg", dark26_grid_l, width=20, height=5)
-```
 
 
 
 ## 2. Light 26°C: Net photosynthesis, Gross photosynthesis, NPQ, and QY ~ Phenotype
 
+### Net photosynthesis - O2 Fm
 
+Plot the data from the second phase (net photosynthesis at 26°C) faceted by parent type. 
 
+Higher value on Y = more oxygen. 
+```{r}
+light_26c_plot1<-df%>%
+  filter(Phase=="Light 26C")%>%
+  group_by(Symbiont, Phase, Time, Light)%>%
+  summarise(mean=mean(O2_Fm_norm, na.rm=TRUE), se=sd(O2_Fm_norm, na.rm=TRUE)/sqrt(length(O2_Fm_norm)))%>%
+  
+  ggplot(aes(x=Time, y=mean, colour=Symbiont, fill=Symbiont))+
+  geom_ribbon(aes(ymin = mean - se, ymax = mean + se), alpha=0.2, linewidth=0) +
+  geom_line(aes(y = mean), linewidth=2)+
+  xlab("Time (min)")+
+  ylab("Oxygen Concentration [-1*rel Fm]")+
+  ggtitle("Light 26°C")+
+  scale_colour_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
+  scale_fill_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
+  ylim(-1000, 500)+
+  theme_classic()+
+  theme(legend.position="none", 
+        text=element_text(size=18, color="black"), 
+        axis.title=element_text(size=20, color="black", face="bold"), 
+        title = element_text(size=20, color="black", face="bold")); light_26c_plot1
+```
+It does not look like photosynthesis was enough to compensate for respiration to result in increases in oxygen. We will calculate gross photosynthesis in the next step. 
 
+Calculate photosynthesis rate as the mean total change in relative O2 Fm values divided by the total time (15 min). Use the last 3 minutes as the interval from which to summarize total change in normalized (normalized to starting value) oxygen concentration.  
 
-## 2. Dark [Temperature Gradient]: Light enhanced respiration, NPQ, and QY ~ Temperature and phenotype
+Summarize oxygen values in last 3 minutes. Calculate as relative change in Fm per min. 
+```{r}
+photo_light26<-df%>%
+  filter(Phase=="Light 26C")%>%
+  filter(Time>=25)%>%
+  group_by(Plate, well, code, Symbiont)%>%
+  summarise(NPlight26=mean(O2_Fm_norm, na.rm=TRUE)/15)
+```
 
+Plot values. 
+```{r}
+light_26c_plot2<-photo_light26%>%
+  group_by(Symbiont)%>%
+  summarise(mean=mean(NPlight26, na.rm=TRUE), se=sd(NPlight26, na.rm=TRUE)/sqrt(length(NPlight26)))%>%
+  
+  ggplot(aes(x=Symbiont, y=mean, colour=Symbiont, fill=Symbiont))+
+  geom_point(size=4)+
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.1)+
+  xlab("Parental Phenotype")+
+  ylab(expression(bold(paste("Oxygen Change [-1*rel Fm min" ^-1, "]"))))+
+  ggtitle(expression(bold(paste("P" [N], " 26°C"))))+
+  geom_text(x=2, y=-75, label="p=0.006", size=6, color="black")+
+  geom_text(x=1, y=-16, label="b", size=6, color="black")+
+  geom_text(x=2, y=-13, label="b", size=6, color="black")+
+  geom_text(x=3, y=-40, label="a", size=6, color="black")+
+  scale_colour_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
+  scale_fill_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
+  scale_x_discrete(labels=c("Bleached", "Nonbleached", "Wildtype"))+
+  ylim(-80,0)+
+  theme_classic()+
+  theme(legend.position="none", 
+        text=element_text(size=14, color="black"), 
+        axis.title=element_text(size=12, color="black", face="bold"), 
+        title = element_text(size=12, color="black", face="bold")); light_26c_plot2
+```
 
+Run ANOVA model on these values. 
+```{r}
+model<-photo_light26%>%
+  
+  aov(NPlight26~Symbiont, data=.)
 
+summary(model)
 
+emm<-emmeans(model, ~Symbiont)
+pairs(emm)
+cld(emm, Letters = letters)
+```
 
+Create a new master data frame to populate and add in net photosynthesis data. 
+```{r}
+master<-left_join(master, photo_light26)
+```
 
+### Relative quantum yield - QY
+
+```{r}
+light_26c_QY_plot1<-df%>%
+  filter(Phase=="Light 26C")%>%
+  group_by(Symbiont, Phase, Time, Light)%>%
+  summarise(mean=mean(QY, na.rm=TRUE), se=sd(QY, na.rm=TRUE)/sqrt(length(QY)))%>%
+  
+  ggplot(aes(x=Time, y=mean, colour=Symbiont, fill=Symbiont))+
+  geom_ribbon(aes(ymin = mean - se, ymax = mean + se), alpha=0.2, linewidth=0) +
+  geom_line(aes(y = mean), linewidth=2)+
+  xlab("Time (min)")+
+  ylab("Relative Quantum Yield")+
+  ggtitle("Light 26°C")+
+  scale_colour_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
+  scale_fill_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
+  ylim(0.2, 0.75)+
+  theme_classic()+
+  theme(legend.position="none", 
+        text=element_text(size=18, color="black"), 
+        axis.title=element_text(size=20, color="black", face="bold"), 
+        title = element_text(size=20, color="black", face="bold")); light_26c_QY_plot1
+```
+
+Calculate mean QY using the last 5 minutes. 
+
+```{r}
+QY_light26<-df%>%
+  filter(Phase=="Light 26C")%>%
+  filter(Time>=25)%>%
+  group_by(Plate, well, code, Symbiont)%>%
+  summarise(QYlight26=mean(QY, na.rm=TRUE))
+```
+
+Plot values. 
+
+```{r}
+light_26c_QY_plot2<-QY_light26%>%
+  group_by(Symbiont)%>%
+  summarise(mean=mean(QYlight26, na.rm=TRUE), se=sd(QYlight26, na.rm=TRUE)/sqrt(length(QYlight26)))%>%
+  
+  ggplot(aes(x=Symbiont, y=mean, colour=Symbiont, fill=Symbiont))+
+  geom_point(size=4)+
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.1)+
+  xlab("Parental Phenotype")+
+  ylab(expression(bold(paste("Relative Quantum Yield"))))+
+  ggtitle(expression(bold(paste("QY Light 26°C"))))+
+  geom_text(x=2, y=0.44, label="p<0.001", size=6, color="black")+
+  geom_text(x=1, y=0.42, label="c", size=6, color="black")+
+  geom_text(x=2, y=0.39, label="b", size=6, color="black")+
+  geom_text(x=3, y=0.37, label="a", size=6, color="black")+
+  scale_colour_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
+  scale_fill_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
+  scale_x_discrete(labels=c("Bleached", "Nonbleached", "Wildtype"))+
+  ylim(0.3, 0.45)+
+  theme_classic()+
+  theme(legend.position="none", 
+        text=element_text(size=14, color="black"), 
+        axis.title=element_text(size=12, color="black", face="bold"), 
+        title = element_text(size=12, color="black", face="bold"));light_26c_QY_plot2
+```
+
+Run ANOVA model on these values. 
+```{r}
+model<-QY_light26%>%
+  
+  aov(QYlight26~Symbiont, data=.)
+
+summary(model)
+
+emm<-emmeans(model, ~Symbiont)
+pairs(emm)
+cld(emm, Letters=letters)
+```
+
+Create a new master data frame to populate and add in light QY data. 
+```{r}
+master<-left_join(master, QY_light26)
+```
+
+### Non-photochemical quenching (NPQ)
+
+```{r}
+light_26c_NPQ_plot1<-df%>%
+  filter(Phase=="Light 26C")%>%
+  group_by(Symbiont, Phase, Time, Light)%>%
+  summarise(mean=mean(NPQ_norm, na.rm=TRUE), se=sd(NPQ_norm, na.rm=TRUE)/sqrt(length(NPQ_norm)))%>%
+  
+  ggplot(aes(x=Time, y=mean, colour=Symbiont, fill=Symbiont))+
+  geom_ribbon(aes(ymin = mean - se, ymax = mean + se), alpha=0.2, linewidth=0) +
+  geom_line(aes(y = mean), linewidth=2)+
+  xlab("Time (min)")+
+  ylab("NPQ")+
+  ggtitle("Light 26°C")+
+  scale_colour_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
+  scale_fill_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
+  ylim(0.0, 0.75)+
+  theme_classic()+
+  theme(legend.position="none", 
+        text=element_text(size=18, color="black"), 
+        axis.title=element_text(size=20, color="black", face="bold"), 
+        title = element_text(size=20, color="black", face="bold"));light_26c_NPQ_plot1
+```
+
+Calculate mean NPQ using the last 5 minutes. 
+```{r}
+NPQ_light26<-df%>%
+  filter(Phase=="Light 26C")%>%
+  filter(Time>=25)%>%
+  group_by(Plate, well, code, Symbiont)%>%
+  summarise(NPQlight26=mean(NPQ_norm, na.rm=TRUE))
+```
+
+Plot values. 
+
+```{r}
+light_26c_NPQ_plot2<-NPQ_light26%>%
+  group_by(Symbiont)%>%
+  summarise(mean=mean(NPQlight26, na.rm=TRUE), se=sd(NPQlight26, na.rm=TRUE)/sqrt(length(NPQlight26)))%>%
+  
+  ggplot(aes(x=Symbiont, y=mean, colour=Symbiont, fill=Symbiont))+
+  geom_point(size=4)+
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.1)+
+  xlab("Parental Phenotype")+
+  ylab(expression(bold(paste("Non-Photochemical Quenching"))))+
+  ggtitle(expression(bold(paste("NPQ Light 26°C"))))+
+  geom_text(x=2, y=0.58, label="p=0.006", size=6, color="black")+
+  geom_text(x=1, y=0.51, label="b", size=6, color="black")+
+  geom_text(x=2, y=0.51, label="b", size=6, color="black")+
+  geom_text(x=3, y=0.46, label="a", size=6, color="black")+
+  scale_colour_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
+  scale_fill_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
+  scale_x_discrete(labels=c("Bleached", "Nonbleached", "Wildtype"))+
+  ylim(0.35, 0.6)+
+  theme_classic()+
+  theme(legend.position="none", 
+        text=element_text(size=14, color="black"), 
+        axis.title=element_text(size=12, color="black", face="bold"), 
+        title = element_text(size=12, color="black", face="bold"));light_26c_NPQ_plot2
+```
+
+Run ANOVA model on these values. 
+```{r}
+model<-NPQ_light26%>%
+  
+  aov(NPQlight26~Symbiont, data=.)
+
+summary(model)
+
+emm<-emmeans(model, ~Symbiont)
+pairs(emm)
+cld(emm, Letters=letters)
+```
+
+Create a new master data frame to populate and add in light NPQ data. 
+```{r}
+master<-left_join(master, NPQ_light26)
+```
+
+### Plot all for this phase together 
+```{r}
+light26_grid<-plot_grid(light_26c_plot2, light_26c_QY_plot2, light_26c_NPQ_plot2, 
+                    ncol=3, nrow=1, align="vh", axis = "lr")
+
+ggsave(filename="figures/phenoplate/2_light_26c_metrics.jpeg", light26_grid, width=15, height=5)
+```
+
+## 3. Dark [Temperature Gradient]: Light enhanced respiration, NPQ, and QY ~ Temperature and phenotype
+
+### Respiration (light enhanced) - O2 Fm
+
+Plot the data from the third phase (light enhanced respiration at multiple temperatures) by parent type. 
+
+Higher value on Y = more oxygen. 
+```{r}
+gradient_r_plot1<-df%>%
+  filter(Phase=="Dark - Temp Gradient")%>%
+  group_by(Symbiont, Phase, Time, Light, Gradient_Temperature)%>%
+  summarise(mean=mean(O2_Fm_norm, na.rm=TRUE), se=sd(O2_Fm_norm, na.rm=TRUE)/sqrt(length(O2_Fm_norm)))%>%
+  
+  ggplot(aes(x=Time, y=mean, colour=Gradient_Temperature, fill=Gradient_Temperature))+
+  facet_grid(~Symbiont, labeller = as_labeller(parent_names))+
+  geom_ribbon(aes(ymin = mean - se, ymax = mean + se), alpha=0.2, linewidth=0) +
+  geom_line(aes(y = mean), linewidth=2)+
+  xlab("Time (min)")+
+  ylab("Oxygen Concentration [-1*rel Fm]")+
+  ggtitle("LEDR - Dark Temp Gradient")+
+  scale_colour_manual(values=palette, name="Gradient \nTemperature")+
+  scale_fill_manual(values=palette, name="Gradient \nTemperature")+
+  #ylim(-1000, 500)+
+  theme_classic()+
+  theme(legend.position="none", 
+        text=element_text(size=18, color="black"), 
+        axis.title=element_text(size=20, color="black", face="bold"), 
+        title = element_text(size=20, color="black", face="bold")); gradient_r_plot1
+```
+Calculate LEDR rate as the mean total change in relative O2 Fm values divided by the total time (10 min). Use the last 5 minutes as the interval from which to summarize total change in normalized (normalized to starting value) oxygen concentration.  
+
+Summarize oxygen values in last 5 minutes. Calculate as relative change in Fm per min. 
+```{r}
+LEDR_gradient<-df%>%
+  filter(Phase=="Dark - Temp Gradient")%>%
+  filter(Time>=35)%>%
+  group_by(Plate, well, code, Symbiont, Gradient_Temperature)%>%
+  summarise(LEDRgradient=mean(O2_Fm_norm, na.rm=TRUE)/15)
+```
+
+Plot values. 
+```{r}
+LEDR_gradient_plot2<-LEDR_gradient%>%
+  group_by(Symbiont, Gradient_Temperature)%>%
+  summarise(mean=mean(LEDRgradient, na.rm=TRUE), se=sd(LEDRgradient, na.rm=TRUE)/sqrt(length(LEDRgradient)))%>%
+  
+  ggplot(aes(x=as.integer(as.character(Gradient_Temperature)), y=mean, colour=Symbiont, fill=Symbiont))+
+  geom_point(size=2)+
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.1)+
+  geom_smooth(aes(group=Symbiont, fill=Symbiont, color=Symbiont), linewidth=2, alpha=0.1)+
+  xlab("Temperature")+
+  ylab(expression(bold(paste("Oxygen Change [-1*rel Fm min" ^-1, "]"))))+
+  ggtitle(expression(bold(paste("LEDR Dark Temp. Gradient"))))+
+  geom_text(x=30, y=175, label="p[temp]<0.001", size=6, color="black")+
+  geom_text(x=30, y=250, label="p[parent]=0.99", size=6, color="darkgray")+
+  geom_text(x=30, y=100, label="p[interaction]=1.00", size=6, color="darkgray")+
+  scale_colour_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
+  scale_fill_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
+  ylim(-800,300)+
+  theme_classic()+
+  theme(legend.position="none", 
+        text=element_text(size=14, color="black"), 
+        axis.title=element_text(size=12, color="black", face="bold"), 
+        title = element_text(size=12, color="black", face="bold")); LEDR_gradient_plot2
+```
+
+Run ANOVA model on these values. 
+```{r}
+model<-LEDR_gradient%>%
+  
+  aov(LEDRgradient~Symbiont*Gradient_Temperature, data=.)
+
+summary(model)
+
+emm<-emmeans(model, ~Gradient_Temperature)
+pairs(emm)
+cld(emm, Letters = letters)
+```
+
+Create a new master data frame to populate and add in net photosynthesis data. 
+```{r}
+master<-left_join(master, LEDR_gradient)
+```
+
+### Relative Quantum Yield - QY
+
+Plot the data from the third phase (QY at multiple temperatures) by parent type. 
+
+```{r}
+gradient_QY_plot1<-df%>%
+  filter(Phase=="Dark - Temp Gradient")%>%
+  group_by(Symbiont, Phase, Time, Light, Gradient_Temperature)%>%
+  summarise(mean=mean(QY, na.rm=TRUE), se=sd(QY, na.rm=TRUE)/sqrt(length(QY)))%>%
+  
+  ggplot(aes(x=Time, y=mean, colour=Gradient_Temperature, fill=Gradient_Temperature))+
+  facet_grid(~Symbiont)+
+  geom_ribbon(aes(ymin = mean - se, ymax = mean + se), alpha=0.2, linewidth=0) +
+  geom_line(aes(y = mean), linewidth=2)+
+  xlab("Time (min)")+
+  ylab("Relative Quantum Yield")+
+  ggtitle("QY - Dark Temp Gradient")+
+  scale_colour_manual(values=palette, name="Gradient \nTemperature")+
+  scale_fill_manual(values=palette, name="Gradient \nTemperature")+
+  #ylim(-1000, 500)+
+  theme_classic()+
+  theme(legend.position="none", 
+        text=element_text(size=18, color="black"), 
+        axis.title=element_text(size=20, color="black", face="bold"), 
+        title = element_text(size=20, color="black", face="bold")); gradient_QY_plot1
+```
+Use the last 5 minutes as the interval from which to summarize QY.  
+
+Summarize QY values in last 5 minutes. Calculate as relative change in Fm per min. 
+```{r}
+QY_gradient<-df%>%
+  filter(Phase=="Dark - Temp Gradient")%>%
+  filter(Time>=35)%>%
+  group_by(Plate, well, code, Symbiont, Gradient_Temperature)%>%
+  summarise(QYgradient=mean(QY, na.rm=TRUE)/15)
+```
+
+Plot values. 
+```{r}
+QY_gradient_plot2<-QY_gradient%>%
+  group_by(Symbiont, Gradient_Temperature)%>%
+  summarise(mean=mean(QYgradient, na.rm=TRUE), se=sd(QYgradient, na.rm=TRUE)/sqrt(length(QYgradient)))%>%
+  
+  ggplot(aes(x=as.integer(as.character(Gradient_Temperature)), y=mean, colour=Symbiont, fill=Symbiont))+
+  geom_point(size=2)+
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.1)+
+  geom_smooth(aes(group=Symbiont, fill=Symbiont, color=Symbiont), linewidth=2, alpha=0.1)+
+  xlab("Temperature")+
+  ylab(expression(bold(paste("Relative Quantum Yield"))))+
+  ggtitle(expression(bold(paste("QY Dark Temp. Gradient"))))+
+  geom_text(x=30, y=0.0495, label="p[temp]<0.001", size=6, color="black")+
+  geom_text(x=30, y=0.048, label="p[parent]<0.001", size=6, color="black")+
+  geom_text(x=30, y=0.0465, label="p[interaction]=0.479", size=6, color="darkgray")+
+  scale_colour_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
+  scale_fill_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
+  ylim(0.03,0.05)+
+  theme_classic()+
+  theme(legend.position="none", 
+        text=element_text(size=14, color="black"), 
+        axis.title=element_text(size=12, color="black", face="bold"), 
+        title = element_text(size=12, color="black", face="bold")); QY_gradient_plot2
+```
+
+Run ANOVA model on these values. 
+```{r}
+model<-QY_gradient%>%
+  
+  aov(QYgradient~Symbiont*Gradient_Temperature, data=.)
+
+summary(model)
+
+emm<-emmeans(model, ~Symbiont)
+pairs(emm)
+cld(emm, Letters = letters)
+
+emm<-emmeans(model, ~Gradient_Temperature)
+pairs(emm)
+cld(emm, Letters = letters)
+```
+
+Create a new master data frame to populate and add in net photosynthesis data. 
+```{r}
+master<-left_join(master, QY_gradient)
+```
+
+### Non photochemical quenching - NPQ_norm
+
+Plot the data from the third phase (NPQ at multiple temperatures) by parent type. 
+
+```{r}
+gradient_NPQ_plot1<-df%>%
+  filter(Phase=="Dark - Temp Gradient")%>%
+  group_by(Symbiont, Phase, Time, Light, Gradient_Temperature)%>%
+  summarise(mean=mean(NPQ_norm, na.rm=TRUE), se=sd(NPQ_norm, na.rm=TRUE)/sqrt(length(NPQ_norm)))%>%
+  
+  ggplot(aes(x=Time, y=mean, colour=Gradient_Temperature, fill=Gradient_Temperature))+
+  facet_grid(~Symbiont)+
+  geom_ribbon(aes(ymin = mean - se, ymax = mean + se), alpha=0.2, linewidth=0) +
+  geom_line(aes(y = mean), linewidth=2)+
+  xlab("Time (min)")+
+  ylab("Non-Photochemical Quenching")+
+  ggtitle("NPQ - Dark Temp Gradient")+
+  scale_colour_manual(values=palette, name="Gradient \nTemperature")+
+  scale_fill_manual(values=palette, name="Gradient \nTemperature")+
+  #ylim(-1000, 500)+
+  theme_classic()+
+  theme(legend.position="none", 
+        text=element_text(size=18, color="black"), 
+        axis.title=element_text(size=20, color="black", face="bold"), 
+        title = element_text(size=20, color="black", face="bold")); gradient_NPQ_plot1
+```
+Use the last 5 minutes as the interval from which to summarize NPQ.  
+
+Summarize NPQ values in last 5 minutes. Calculate as relative change in Fm per min. 
+```{r}
+NPQ_gradient<-df%>%
+  filter(Phase=="Dark - Temp Gradient")%>%
+  filter(Time>=35)%>%
+  group_by(Plate, well, code, Symbiont, Gradient_Temperature)%>%
+  summarise(NPQgradient=mean(NPQ_norm, na.rm=TRUE)/15)
+```
+
+Plot values. 
+```{r}
+NPQ_gradient_plot2<-NPQ_gradient%>%
+  group_by(Symbiont, Gradient_Temperature)%>%
+  summarise(mean=mean(NPQgradient, na.rm=TRUE), se=sd(NPQgradient, na.rm=TRUE)/sqrt(length(NPQgradient)))%>%
+  
+  ggplot(aes(x=as.integer(as.character(Gradient_Temperature)), y=mean, colour=Symbiont, fill=Symbiont))+
+  geom_point(size=2)+
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.1)+
+  geom_smooth(aes(group=Symbiont, fill=Symbiont, color=Symbiont), linewidth=2, alpha=0.1)+
+  xlab("Temperature")+
+  ylab(expression(bold(paste("Non-Photochemical Quenching"))))+
+  ggtitle(expression(bold(paste("NPQ Temp. Gradient"))))+
+  geom_text(x=30, y=0.051, label="p[temp]<0.001", size=6, color="black")+
+  geom_text(x=30, y=0.047, label="p[parent]<0.001", size=6, color="black")+
+  geom_text(x=30, y=0.043, label="p[interaction]<0.001", size=6, color="black")+
+  scale_colour_manual(values=c("orange", "brown4", "gray"), name="Parent \nPhenotype", labels=c("Bleached", "Nonbleached", "Wildtype"))+
+  scale_fill_manual(values=c("orange", "brown4", "gray"), name="Parent \nPhenotype", labels=c("Bleached", "Nonbleached", "Wildtype"))+
+  ylim(-0.01,0.055)+
+  theme_classic()+
+  theme(legend.position="right", 
+        text=element_text(size=14, color="black"), 
+        axis.title=element_text(size=12, color="black", face="bold"), 
+        title = element_text(size=12, color="black", face="bold")); NPQ_gradient_plot2
+```
+
+Run ANOVA model on these values. 
+```{r}
+model<-NPQ_gradient%>%
+  
+  aov(NPQgradient~Symbiont*Gradient_Temperature, data=.)
+
+summary(model)
+
+emm<-emmeans(model, ~Symbiont)
+pairs(emm)
+cld(emm, Letters = letters)
+
+emm<-emmeans(model, ~Gradient_Temperature)
+pairs(emm)
+cld(emm, Letters = letters)
+
+emm<-emmeans(model, ~Symbiont | Gradient_Temperature)
+pairs(emm)
+cld(emm, Letters = letters)
+```
+
+Create a new master data frame to populate and add in net photosynthesis data. 
+```{r}
+master<-left_join(master, NPQ_gradient)
+```
+
+### Plot all for this phase together 
+```{r}
+gradient_grid<-plot_grid(LEDR_gradient_plot2, QY_gradient_plot2, NPQ_gradient_plot2, 
+                    ncol=3, nrow=1, axis = "lr", rel_widths=c(1,1,1.25))
+
+ggsave(filename="figures/phenoplate/3_dark_gradient_metrics.jpeg", gradient_grid, width=15, height=5)
+```
+
+# Output master dataframe
+```{r}
+write_csv(file="output/phenoplate/metrics_master.csv", master)
+```
 
 
 
