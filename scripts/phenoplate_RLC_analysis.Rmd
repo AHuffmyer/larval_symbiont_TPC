@@ -645,7 +645,6 @@ From this we will extract parameters:
 
 Reference: https://enveurope.springeropen.com/articles/10.1186/s12302-020-00306-9 
 
-
 This model runs, but doesn't account for beta currently 
 
 ```{r}
@@ -720,8 +719,8 @@ rlc_metrics_plot1<-results%>%
   geom_smooth(aes(group=Symbiont, fill=Symbiont, color=Symbiont), linewidth=2, alpha=0.1)+
   xlab("Temperature")+
   ylab(expression(bold(paste("Value"))))+
-  scale_colour_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
-  scale_fill_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
+  scale_colour_manual(values=c("orange", "brown4", "gray"), name="Parental \nPhenotype", labels=c("Bleached", "Nonbleached", "Wildtype"))+
+  scale_fill_manual(values=c("orange", "brown4", "gray"), name="Parental \nPhenotype", labels=c("Bleached", "Nonbleached", "Wildtype"))+
   #ylim(-0.01,0.055)+
   theme_classic()+
   theme(legend.position="right", 
@@ -729,7 +728,7 @@ rlc_metrics_plot1<-results%>%
         axis.title=element_text(size=12, color="black", face="bold"), 
         title = element_text(size=12, color="black", face="bold")); rlc_metrics_plot1
 
-ggsave(filename="figures/phenoplate/rlc_metrics.jpeg", rlc_metrics_plot1, width=5, height=10)
+ggsave(filename="figures/phenoplate/rlc_metrics.jpeg", rlc_metrics_plot1, width=7, height=10)
 ```
 
 Ic isn't very meaningful to be below 0 though? What about Rd/dark rETR? 
@@ -808,4 +807,3 @@ emm<-emmeans(model, ~Gradient_Temperature)
 cld(emm, Letters=letters)
 ```
 Significant main effects of symbiont and gradient temp. rETR is higher in mix than WT, but no difference in MIX and C. Bimodal temperature effects. 
-
