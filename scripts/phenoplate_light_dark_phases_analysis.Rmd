@@ -14,7 +14,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-1. Dark 26°C DONE 
+1. Dark 26°C  
 - Respiration (O2 Fm)
 - QY (relative quantum yield)
 - NPQ (non photochemical quenching under dark)
@@ -29,10 +29,9 @@ editor_options:
 - QY (relative quantum yield) under temperatures in dark
 - NPQ (non photochemical quenching under dark) under temperatures in dark
 
-Use the last 5 min averaged for QY and NPQ. 
-Extract slopes excluding first 5 min from R and P O2 Fm measurements 
+Use the last 5 min averaged for O2, QY and NPQ to give final value reached in each phase. 
 
-O2 - Fm = measured after saturating pulse. Use this metric for O2, it is measured under standardized light pulse consistent light. Lower flourescence = more O2; Higher fluorescence = less O2. 02 quenches the fluorescence. 
+O2 - Fm = measured after saturating pulse. Use this metric for O2, it is measured under standardized light pulse consistent light. Lower flourescence = more O2; Higher fluorescence = less O2. O2 quenches the fluorescence. Will calculate this as the inverse to be intuitive for analyses. 
 
 Analyze within a protocol - shifts between phases are meaningless. 
 
@@ -1229,6 +1228,10 @@ ggsave(filename="figures/phenoplate/2_light_26c_metrics.jpeg", light26_grid, wid
 
 Plot the data from the third phase (light enhanced respiration at multiple temperatures) by parent type. 
 
+```{r}
+parent_names<-c("C"="Bleached", "MIX"="Nonbleached", "WT"="Wildtype")
+```
+
 Higher value on Y = more oxygen. 
 ```{r}
 gradient_r_plot1<-df%>%
@@ -1335,13 +1338,13 @@ gradient_QY_plot1<-df%>%
 ```
 Use the last 5 minutes as the interval from which to summarize QY.  
 
-Summarize QY values in last 5 minutes. Calculate as relative change in Fm per min. 
+Summarize QY values in last 5 minutes.  
 ```{r}
 QY_gradient<-df%>%
   filter(Phase=="Dark - Temp Gradient")%>%
   filter(Time>=35)%>%
   group_by(Plate, well, code, Symbiont, Gradient_Temperature)%>%
-  summarise(QYgradient=mean(QY, na.rm=TRUE)/15)
+  summarise(QYgradient=mean(QY, na.rm=TRUE))
 ```
 
 Plot values. 
@@ -1357,12 +1360,12 @@ QY_gradient_plot2<-QY_gradient%>%
   xlab("Temperature")+
   ylab(expression(bold(paste("Relative Quantum Yield"))))+
   ggtitle(expression(bold(paste("QY Dark Temp. Gradient"))))+
-  geom_text(x=30, y=0.0495, label="p[temp]<0.001", size=6, color="black")+
-  geom_text(x=30, y=0.048, label="p[parent]<0.001", size=6, color="black")+
-  geom_text(x=30, y=0.0465, label="p[interaction]=0.479", size=6, color="darkgray")+
+  geom_text(x=30, y=0.74, label="p[temp]<0.001", size=6, color="black")+
+  geom_text(x=30, y=0.72, label="p[parent]<0.001", size=6, color="black")+
+  geom_text(x=30, y=0.70, label="p[interaction]=0.479", size=6, color="darkgray")+
   scale_colour_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
   scale_fill_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
-  ylim(0.03,0.05)+
+  ylim(0.4,0.75)+
   theme_classic()+
   theme(legend.position="none", 
         text=element_text(size=14, color="black"), 
@@ -1420,13 +1423,13 @@ gradient_NPQ_plot1<-df%>%
 ```
 Use the last 5 minutes as the interval from which to summarize NPQ.  
 
-Summarize NPQ values in last 5 minutes. Calculate as relative change in Fm per min. 
+Summarize NPQ values in last 5 minutes.  
 ```{r}
 NPQ_gradient<-df%>%
   filter(Phase=="Dark - Temp Gradient")%>%
   filter(Time>=35)%>%
   group_by(Plate, well, code, Symbiont, Gradient_Temperature)%>%
-  summarise(NPQgradient=mean(NPQ_norm, na.rm=TRUE)/15)
+  summarise(NPQgradient=mean(NPQ_norm, na.rm=TRUE))
 ```
 
 Plot values. 
@@ -1442,12 +1445,12 @@ NPQ_gradient_plot2<-NPQ_gradient%>%
   xlab("Temperature")+
   ylab(expression(bold(paste("Non-Photochemical Quenching"))))+
   ggtitle(expression(bold(paste("NPQ Temp. Gradient"))))+
-  geom_text(x=30, y=0.051, label="p[temp]<0.001", size=6, color="black")+
-  geom_text(x=30, y=0.047, label="p[parent]<0.001", size=6, color="black")+
-  geom_text(x=30, y=0.043, label="p[interaction]<0.001", size=6, color="black")+
+  geom_text(x=30, y=0.75, label="p[temp]<0.001", size=6, color="black")+
+  geom_text(x=30, y=0.70, label="p[parent]<0.001", size=6, color="black")+
+  geom_text(x=30, y=0.65, label="p[interaction]<0.001", size=6, color="black")+
   scale_colour_manual(values=c("orange", "brown4", "gray"), name="Parent \nPhenotype", labels=c("Bleached", "Nonbleached", "Wildtype"))+
   scale_fill_manual(values=c("orange", "brown4", "gray"), name="Parent \nPhenotype", labels=c("Bleached", "Nonbleached", "Wildtype"))+
-  ylim(-0.01,0.055)+
+  ylim(-0.1,0.75)+
   theme_classic()+
   theme(legend.position="right", 
         text=element_text(size=14, color="black"), 
