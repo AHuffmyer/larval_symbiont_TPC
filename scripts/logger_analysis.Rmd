@@ -224,6 +224,8 @@ incubation_plots<-plot_grid(temp_plot2a, temp_plot2b, align="vh")
 ggsave("figures/environmental/incubation_temps.png", incubation_plots, width=8, height=4, dpi=300)
 ```
 
+
+
 Calculate mean temperature for each treatment      
 ```{r}
 tidbits %>%

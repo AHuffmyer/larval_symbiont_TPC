@@ -139,13 +139,15 @@ daily_treatment_summary<-daily_calc.long %>%
   ggplot(aes(x=group, y=value, colour=group))+
   geom_point()+
   geom_boxplot()+
-  scale_colour_manual(name="", values=c("orange", "brown4", "gray"))+
+  scale_colour_manual(name="Parental \nPhenotype", values=c("orange", "brown4", "gray"), labels=c("Bleached", "Nonbleached", "Wildtype")) +
+  scale_x_discrete(name="Parental Phenotype", labels=c("Bleached", "Nonbleached", "Wildtype")) +
   xlab("Date")+
   ylab("Value")+
   facet_wrap(~ metric, scales = "free")+
-  theme_classic(); daily_treatment_summary
+  theme_classic()+
+  theme(legend.position="none"); daily_treatment_summary
 
-ggsave(filename="figures/environmental/summary_daily_measurements.png", plot=daily_treatment_summary, dpi=300, width=9, height=6, units="in")
+ggsave(filename="figures/environmental/summary_daily_measurements.png", plot=daily_treatment_summary, dpi=300, width=10, height=6, units="in")
 ```
 
 ## Test for differences between tanks  
