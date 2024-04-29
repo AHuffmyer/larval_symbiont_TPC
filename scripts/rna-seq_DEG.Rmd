@@ -1,11 +1,15 @@
 ---
 title: "RNAseq Differential Gene Expression Analysis"
 author: "Ariana S Huffmyer"
-date: "2/18/2022"
+date: "4/21/2024"
 output: html_document
 editor_options: 
   chunk_output_type: console
 ---
+
+LEFT OFF WITH INCREASING FOLD CHANGE AND ADDING UP AND DOWN REGULATED DFS 
+
+
 
 Analysis of RNAseq Differential Gene Expression (DEG).  
 
@@ -208,10 +212,12 @@ All size factors are less than 4, so we can use VST transformation.
 
 ```{r}
 gvst <- vst(gdds, blind=FALSE) #apply a variance stabilizing transforamtion to minimize effects of small counts and normalize wrt library size
-head(assay(gvst), 3) #view transformed gene count data for the first three genes in the dataset.  
+head(assay(gvst), 3) #view transformed gene count data for the first three genes in the dataset. 
+
+dim(gvst)
 ```
 
-# Conduct PERMANOVA by parent and temperature for all genes
+# Conduct PERMANOVA and PCA by parent and temperature for all genes
 
 Export data for PERMANOVA test.  
 ```{r}
@@ -257,7 +263,7 @@ Total              53  1272159 1.00000
 
 Gene expression is significantly different between temperature and parent, no interactive effect detected.  
 
-# Examine PCA and sample distances of all genes  
+## Examine PCA and sample distances of all genes  
 
 Plot a PCA of samples by temperature and parental phenotype for all genes.        
 
@@ -313,14 +319,15 @@ resultsNames(DEG)
 DEG.df<-as.data.frame(DEG.results.all)
 
 DEG.results.all <- as.data.frame(subset(DEG.results.all, padj<0.01))
-DEG.results.all <- as.data.frame(subset(DEG.results.all, abs(log2FoldChange)>1))
+DEG.results.all <- as.data.frame(subset(DEG.results.all, abs(log2FoldChange)>1.5))
 dim(DEG.results.all)
 
 DEGlist <- gdds[rownames(DEG.results.all)]
+dim(DEGlist)
 
 DEGvst <- varianceStabilizingTransformation(DEGlist) #apply a variance stabilizing transforamtion to minimize effects of small counts and normalize
 ```
-There are 935 genes differentially expressed at p<0.01 and log2FoldChange>1 between temperature x parent groups. Because we did not have interactive effects in the PERMANOVA, it makes sense that this is a lower number than within temperature and within parent comparisons that are done below. 
+There are 387 genes differentially expressed at p<0.01 and log2FoldChange>1.5 between temperature x parent groups. Because we did not have interactive effects in the PERMANOVA, it makes sense that this is a lower number than within temperature and within parent comparisons that are done below. 
 
 What does this value mean if we don't provide contrasts? 
 
@@ -340,7 +347,7 @@ volcano_plot<-EnhancedVolcano(res,
     y = 'pvalue',
     title = '',
     pCutoff = 0.01,
-    FCcutoff = 1,
+    FCcutoff = 1.5,
     pointSize = 3.0,
     labSize = 0.0);volcano_plot
 
@@ -367,11 +374,11 @@ Build PERMANOVA model for DEG's between NB and B at 33°C.
 ```{r}
 dim(test_DEG)
 
-scaled_test_DEG <-prcomp(test_DEG[c(1:700)], scale=TRUE, center=TRUE)
+scaled_test_DEG <-prcomp(test_DEG[c(1:387)], scale=TRUE, center=TRUE)
 fviz_eig(scaled_test_DEG)
 
 # scale data
-vegan_DEG <- scale(test_DEG[c(1:700)])
+vegan_DEG <- scale(test_DEG[c(1:387)])
 
 # PerMANOVA 
 permanova_DEG<-adonis2(vegan_DEG ~ parent*temperature, data = test_DEG, method='eu')
@@ -385,11 +392,11 @@ Number of permutations: 999
 
 adonis2(formula = vegan_DEG ~ parent * temperature, data = test_DEG, method = "eu")
                    Df SumOfSqs      R2       F Pr(>F)    
-parent              2     8747 0.23576 12.2931  0.001 ***
-temperature         2     9526 0.25677 13.3886  0.001 ***
-parent:temperature  4     2819 0.07597  1.9807  0.001 ***
-Residual           45    16009 0.43151                   
-Total              53    37100 1.00000  
+parent              2   4939.3 0.24081 12.2885  0.001 ***
+temperature         2   4910.6 0.23941 12.2172  0.001 ***
+parent:temperature  4   1617.3 0.07885  2.0119  0.001 ***
+Residual           45   9043.7 0.44092                   
+Total              53  20511.0 1.00000    
 
 There is an interaction, as expected because we are selecting DEG's.
 
@@ -400,7 +407,7 @@ percentVar_DEG <- round(100*attr(gPCAdata_DEG, "percentVar")) #plot PCA of sampl
 
 DEG_PCA <- ggplot(gPCAdata_DEG, aes(PC1, PC2, color=parent, shape=temperature)) + 
   geom_point(size=3) + 
-  ggtitle(expression(bold("DEGs: all groups (700 genes)")))+
+  ggtitle(expression(bold("DEGs: all groups (391 genes)")))+
   xlab(paste0("PC1: ",percentVar_DEG[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar_DEG[2],"% variance")) +
   scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
@@ -419,7 +426,7 @@ ggsave("figures/rna_seq/pca_DEG.pdf", DEG_PCA, width=8, height=4)
 ggsave("figures/rna_seq/pca_DEG.jpeg", DEG_PCA, width=8, height=4)
 ```
 
-# Add heatmap by parent and treatment  
+# View heatmap by parent and treatment  
 
 ```{r}
 df <- as.data.frame(colData(gdds)[,c("temperature","parent")])
@@ -437,9 +444,10 @@ ann_colors = list(
 
 legend_names_col = colnames(assay(DEGvst))
 
-#pdf("figures/rna_seq/DEG_all_heatmap.pdf", width=15, height=15)
+dev.off()
+pdf("figures/rna_seq/DEG_all_heatmap.pdf", width=15, height=15)
 pheatmap(assay(DEGvst), cluster_rows=TRUE, show_rownames=FALSE, color=inferno(10), show_colnames=TRUE, fontsize_row=3, scale="row", cluster_cols=TRUE, annotation_col=df, annotation_colors = ann_colors, labels_col=legend_names_col)
-#dev.off()
+dev.off()
 ```
 
 # Plot a heatmap of sample to sample distances    
@@ -476,15 +484,17 @@ dev.off()
 Specifically look for genes that are different between bleached and non bleached parental histories.  
 
 ### Nonbleached vs Bleached
+
+Compare NB in numerator and B in denominator (positive FC = upregulated in NB group). 
 ```{r}
 resultsNames(DEG)
 parent_degNB_B<-results(DEG, contrast=c("parent","Nonbleached","Bleached"))
 parent_degNB_B <- as.data.frame(subset(parent_degNB_B, padj<0.01))
-parent_degNB_B <- as.data.frame(subset(parent_degNB_B, abs(log2FoldChange)>1))
+parent_degNB_B <- as.data.frame(subset(parent_degNB_B, abs(log2FoldChange)>1.5))
 
 dim(parent_degNB_B)
 ```
-There are 1114 genes differentially expressed between nonbleached and bleached parents at p<0.01 and l2FC>1. 
+There are 463 genes differentially expressed between nonbleached and bleached parents at p<0.01 and l2FC>1.5. 
 
 ```{r}
 DEGlistNB_B <- gdds[rownames(parent_degNB_B)]
@@ -499,45 +509,44 @@ dev.off()
 ```{r}
 parent_parent_degNB_WT<-results(DEG, contrast=c("parent","Nonbleached","Wildtype"))
 parent_parent_degNB_WT <- as.data.frame(subset(parent_parent_degNB_WT, padj<0.01))
-parent_parent_degNB_WT <- as.data.frame(subset(parent_parent_degNB_WT, abs(log2FoldChange)>1))
+parent_parent_degNB_WT <- as.data.frame(subset(parent_parent_degNB_WT, abs(log2FoldChange)>1.5))
 
 dim(parent_parent_degNB_WT)
 ```
-There are 855 genes differentially expressed between nonbleached and wildype parents at p<0.01 and l2FC>1. 
+There are 259 genes differentially expressed between nonbleached and wildype parents at p<0.01 and l2FC>1.5. 
 
 ### Bleached vs Wildtype
 ```{r}
 parent_parent_degB_WT<-results(DEG, contrast=c("parent","Bleached","Wildtype"))
 parent_parent_degB_WT <- as.data.frame(subset(parent_parent_degB_WT, padj<0.01))
-parent_parent_degB_WT <- as.data.frame(subset(parent_parent_degB_WT, abs(log2FoldChange)>1))
+parent_parent_degB_WT <- as.data.frame(subset(parent_parent_degB_WT, abs(log2FoldChange)>1.5))
 
 dim(parent_parent_degB_WT)
 ```
-There are 1007 genes differentially expressed between wildtype and bleached parents at p<0.01 and l2FC>1. 
-
+There are 396 genes differentially expressed between wildtype and bleached parents at p<0.01 and l2FC>1.5. 
 ## Temperature comparisons 
 
 Next, look at 27 vs 30 degrees and 27 vs 33 degrees. 
 
-27 vs 30 degrees 
+27 vs 30 degrees. Compare 30 in numerator and 27 in denominator (positive FC = upregulated in 20 group). 
 ```{r}
 temp30_deg<-results(DEG, contrast=c("temperature","30","27"))
 temp30_deg <- as.data.frame(subset(temp30_deg, padj<0.01))
-temp30_deg <- as.data.frame(subset(temp30_deg, abs(log2FoldChange)>1))
+temp30_deg <- as.data.frame(subset(temp30_deg, abs(log2FoldChange)>1.5))
 
 dim(temp30_deg)
 ```
-There are 507 DEGs between 27 and 30 degrees. 
+There are 128 DEGs between 27 and 30 degrees. 
 
 27 vs 33 degrees 
 ```{r}
 temp33_deg<-results(DEG, contrast=c("temperature","33","27"))
 temp33_deg <- as.data.frame(subset(temp33_deg, padj<0.01))
-temp33_deg <- as.data.frame(subset(temp33_deg, abs(log2FoldChange)>1))
+temp33_deg <- as.data.frame(subset(temp33_deg, abs(log2FoldChange)>1.5))
 
 dim(temp33_deg)
 ```
-There are 2533 DEGs between 27 and 33 degrees. 
+There are 574 DEGs between 27 and 33 degrees. 
 
 ```{r}
 DEGlist27_33 <- gdds[rownames(temp33_deg)]
@@ -557,11 +566,11 @@ Examine the difference in NB and B larvae at 33°C. Analyze these contrasts to g
 resultsNames(DEG)
 parent_deg_int1<-results(DEG, contrast=list("temperature33.parentNonbleached", "temperature33.parentBleached"))
 parent_deg_int1 <- as.data.frame(subset(parent_deg_int1, padj<0.01))
-parent_deg_int1 <- as.data.frame(subset(parent_deg_int1, abs(log2FoldChange)>1))
+parent_deg_int1 <- as.data.frame(subset(parent_deg_int1, abs(log2FoldChange)>1.5))
 
 dim(parent_deg_int1)
 ```
-There are 941 genes differentially expressed genes in the interaction between temperature and parent. This shows DEG's contrasted between NB and B at 33°C. 
+There are 302 genes differentially expressed genes in the interaction between temperature and parent. This shows DEG's contrasted between NB and B at 33°C. 
 
 ```{r}
 DEGlist_int1 <- gdds[rownames(parent_deg_int1)]
@@ -591,11 +600,11 @@ Build PERMANOVA model for DEG's between NB and B at 33°C.
 ```{r}
 dim(test_int)
 
-scaled_test_int <-prcomp(test_int[c(1:941)], scale=TRUE, center=TRUE)
+scaled_test_int <-prcomp(test_int[c(1:302)], scale=TRUE, center=TRUE)
 fviz_eig(scaled_test_int)
 
 # scale data
-vegan_int <- scale(test_int[c(1:941)])
+vegan_int <- scale(test_int[c(1:302)])
 
 # PerMANOVA 
 permanova_int<-adonis2(vegan_int ~ parent*temperature, data = test_int, method='eu')
@@ -609,11 +618,11 @@ Number of permutations: 999
 
 adonis2(formula = vegan_int ~ parent * temperature, data = test_int, method = "eu")
                    Df SumOfSqs      R2       F Pr(>F)    
-parent              2    12824 0.25713 12.9333  0.001 ***
-temperature         2    10376 0.20805 10.4647  0.001 ***
-parent:temperature  4     4363 0.08749  2.2002  0.001 ***
-Residual           45    22310 0.44733                   
-Total              53    49873 1.00000   
+parent              2   4384.9 0.27395 12.8111  0.001 ***
+temperature         2   2535.3 0.15840  7.4074  0.001 ***
+parent:temperature  4   1384.7 0.08651  2.0228  0.002 ** 
+Residual           45   7701.1 0.48114                   
+Total              53  16006.0 1.00000  
 
 There is an interaction, as expected because we are selecting DEG's that result from interactive effects. 
 
@@ -625,7 +634,7 @@ percentVar_int <- round(100*attr(gPCAdata_int, "percentVar")) #plot PCA of sampl
 
 int_PCA <- ggplot(gPCAdata_int, aes(PC1, PC2, color=parent, shape=temperature)) + 
   geom_point(size=3) + 
-  ggtitle(expression(bold("DEGs: NB vs B at 33°C (941 genes)")))+
+  ggtitle(expression(bold("DEGs: NB vs B at 33°C (302 genes)")))+
   xlab(paste0("PC1: ",percentVar_int[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar_int[2],"% variance")) +
   scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
@@ -655,22 +664,22 @@ List of genes in NB vs B at 33°Ç
 resultsNames(DEG)
 parent_deg_int3<-results(DEG, contrast=list("temperature33.parentNonbleached", "temperature33.parentBleached"))
 parent_deg_int3 <- as.data.frame(subset(parent_deg_int3, padj<0.01))
-parent_deg_int3 <- as.data.frame(subset(parent_deg_int3, abs(log2FoldChange)>1))
+parent_deg_int3 <- as.data.frame(subset(parent_deg_int3, abs(log2FoldChange)>1.5))
 
 dim(parent_deg_int3)
 ```
-There are 941 of these genes. 
+There are 302 of these genes. 
 
 List of genes in NB vs B overall 
 ```{r}
 resultsNames(DEG)
-parent_deg_int4<-results(DEG, contrast=list("parent_Bleached_vs_Wildtype", "parent_Nonbleached_vs_Wildtype"))
+parent_deg_int4<-results(DEG, contrast=list("parent_Nonbleached_vs_Wildtype", "parent_Bleached_vs_Wildtype"))
 parent_deg_int4 <- as.data.frame(subset(parent_deg_int4, padj<0.01))
-parent_deg_int4 <- as.data.frame(subset(parent_deg_int4, abs(log2FoldChange)>1))
+parent_deg_int4 <- as.data.frame(subset(parent_deg_int4, abs(log2FoldChange)>1.5))
 
 dim(parent_deg_int4)
 ```
-There are 1114 of these genes.
+There are 463 of these genes.
 
 Now keep only the genes in the 33°C list that are not in the NB vs B list. 
 
@@ -684,9 +693,9 @@ unique_genes$row_names <- NULL
 dim(unique_genes)
 str(unique_genes)
 ```
-474
+There are 150 genes. 
 
-There are 474 genes unique to 33°C NB vs B comparisons compared to overall NB vs B comparisons. These genes represent uniquely thermally responsive genes by parental phenotype. 
+There are 150 genes unique to 33°C NB vs B comparisons compared to overall NB vs B comparisons. These genes represent uniquely thermally responsive genes by parental phenotype. 
 
 ```{r}
 DEGlist_unique <- gdds[rownames(unique_genes)]
@@ -716,11 +725,11 @@ Build PERMANOVA model for unique DEGs
 ```{r}
 dim(test_unique)
 
-scaled_test_unique <-prcomp(test_unique[c(1:474)], scale=TRUE, center=TRUE)
+scaled_test_unique <-prcomp(test_unique[c(1:150)], scale=TRUE, center=TRUE)
 fviz_eig(scaled_test_unique)
 
 # scale data
-vegan_unique <- scale(test_unique[c(1:474)])
+vegan_unique <- scale(test_unique[c(1:150)])
 
 # PerMANOVA 
 permanova_unique<-adonis2(vegan_unique ~ parent*temperature, data = test_unique, method='eu')
@@ -733,12 +742,12 @@ Permutation: free
 Number of permutations: 999
 
 adonis2(formula = vegan_unique ~ parent * temperature, data = test_unique, method = "eu")
-                   Df SumOfSqs      R2       F Pr(>F)    
-parent              2   4381.6 0.17441  8.3935  0.001 ***
-temperature         2   6320.8 0.25160 12.1083  0.001 ***
-parent:temperature  4   2674.2 0.10645  2.5614  0.001 ***
-Residual           45  11745.4 0.46754                   
-Total              53  25122.0 1.00000 
+                   Df SumOfSqs      R2      F Pr(>F)    
+parent              2   1733.7 0.21807 9.5673  0.001 ***
+temperature         2   1294.2 0.16279 7.1419  0.001 ***
+parent:temperature  4    845.0 0.10629 2.3317  0.001 ***
+Residual           45   4077.1 0.51285                  
+Total              53   7950.0 1.00000   
 
 There is an interaction, as expected because we are selecting DEG's that result from interactive effects. 
 
@@ -750,7 +759,7 @@ percentVar_unique <- round(100*attr(gPCAdata_unique, "percentVar")) #plot PCA of
 
 unique_PCA <- ggplot(gPCAdata_unique, aes(PC1, PC2, color=parent, shape=temperature)) + 
   geom_point(size=3) + 
-  ggtitle(expression(bold("DEGs: Unique DEGs NB vs B at 33°C (474 genes)")))+
+  ggtitle(expression(bold("DEGs: Unique DEGs NB vs B at 33°C (150 genes)")))+
   xlab(paste0("PC1: ",percentVar_unique[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar_unique[2],"% variance")) +
   scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
@@ -771,10 +780,123 @@ ggsave("figures/rna_seq/pca_NBvsB_33°C_unique.jpeg", unique_PCA, width=8, heigh
 
 # Export lists of genes for functional enrichment 
 
-1. DEGs by parent
-2. DEGs at temperature
-3. DEGs at 33°C by B vs NB 
-4. Unique DEGs only DEG at 33°C for B vs NB 
+
+SPLIT WITH UP VS DOWN REGULATED  
+
+
+1. DEGs by NB vs B parent (DEGvstNB_B) = 1114 genes 
+
+Upregulated in NB compared to B (619 genes). 
+```{r}
+up_list<-parent_degNB_B%>%
+  filter(log2FoldChange>0)
+
+up_list<-rownames(up_list)
+length(up_list)
+
+dim(DEGvstNB_B)
+
+parent_DEGs<-t(assay(DEGvstNB_B))
+parent_DEGs<-as.data.frame(parent_DEGs)
+parent_DEGs$sample<-rownames(parent_DEGs)
+parent_DEGs<-parent_DEGs%>%
+  select(sample, everything())
+
+dim(parent_DEGs)
+
+parent_DEGs_up <- parent_DEGs[, intersect(up_list, colnames(parent_DEGs))]
+
+dim(parent_DEGs_up)
+
+write_csv(file="output/rna_seq/parent_DEGs_up.csv", parent_DEGs_up)
+```
+
+Downregulated in NB compared to B. 
+```{r}
+down_list<-parent_degNB_B%>%
+  filter(log2FoldChange<0)
+
+down_list<-rownames(down_list)
+length(down_list)
+
+dim(DEGvstNB_B)
+
+parent_DEGs<-t(assay(DEGvstNB_B))
+parent_DEGs<-as.data.frame(parent_DEGs)
+parent_DEGs$sample<-rownames(parent_DEGs)
+parent_DEGs<-parent_DEGs%>%
+  select(sample, everything())
+
+dim(parent_DEGs)
+
+parent_DEGs_down <- parent_DEGs[, intersect(down_list, colnames(parent_DEGs))]
+
+dim(parent_DEGs_down)
+
+write_csv(file="output/rna_seq/parent_DEGs_down.csv", parent_DEGs_down)
+```
+
+
+
+
+
+
+
+
+
+
+
+2. DEGs at 27 vs 33 temperature (DEGvst27_33) = 2533 genes
+
+```{r}
+dim(DEGvst27_33)
+temp_DEGs<-t(assay(DEGvst27_33))
+temp_DEGs<-as.data.frame(temp_DEGs)
+dim(temp_DEGs)
+temp_DEGs$sample<-rownames(temp_DEGs)
+temp_DEGs<-temp_DEGs%>%
+  select(sample, everything())
+
+write_csv(file="output/rna_seq/temp_DEGs.csv", temp_DEGs)
+```
+
+3. DEGs uniquely differential between B and NB at 33°C (DEGvst_unique) = 474 genes
+
+```{r}
+#subset for up vs down regualted 
+str(unique_genes)
+
+up_unique<-unique_genes%>%
+  filter(log2FoldChange>1) #positive values = up regulated in the group listed first in the model; negative values = down regulated in the group listed second in the model
+
+
+
+dim(DEGvst_unique)
+unique_DEGs<-t(assay(DEGvst_unique))
+unique_DEGs<-as.data.frame(unique_DEGs)
+dim(unique_DEGs)
+unique_DEGs$sample<-rownames(unique_DEGs)
+unique_DEGs<-unique_DEGs%>%
+  select(sample, everything())
+
+write_csv(file="output/rna_seq/unique_NBvsB_33C_DEGs.csv", unique_DEGs)
+```
+
+4. List of all genes in the dataset (gvst) = 24005 genes.  
+
+```{r}
+dim(gvst)
+all_genes<-t(assay(gvst))
+all_genes<-as.data.frame(all_genes)
+dim(all_genes)
+all_genes$sample<-rownames(all_genes)
+all_genes<-all_genes%>%
+  select(sample, everything())
+
+write_csv(file="output/rna_seq/all_genes.csv", all_genes)
+```
+
+
 
 
 
