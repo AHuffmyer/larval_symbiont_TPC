@@ -14,6 +14,13 @@ editor_options:
   chunk_output_type: console
 ---
 
+NEED TO CALCULATE ALL AS PERCENT CHANGE IN METRIC FROM START TO FINISH OF EACH PHASE 
+
+ADD LOW LIGHT RECOVERY FROM RLC 
+
+
+
+
 1. Dark 26°C  
 - Respiration (O2 Fm)
 - QY (relative quantum yield)

@@ -14,6 +14,34 @@ editor_options:
   chunk_output_type: console
 ---
 
+
+Look at temperature induced NPQ responses (Suggett paper) + symbiont/bacteria co culture phenoplate paper
+- Look at NPQ levels before RLC to see if NPQ is starting at a different point in RLC from previous treatment, could explain why NPQ starts at different points
+- Look at NPQ at end of dark t gradient and end of low light t gradient 
+- Then calculate relative change in NPQ within the light curve 
+
+Low light t gradient is to keep photosynthesis going so that its ready for light curve, otherwise dark to light would hvae lag time 
+
+Add statistically different points to all figures to visualize 
+
+Differences are temperature specific - difference in parents are dependent by temperatures 
+
+Plot a heatmap for all metrics - put each metri and temp as own column
+
+Higher NPQ = experiencing stress and or ability to protect self? Decline in NPQ at high temp x light could be sign of damage not repairable 
+
+Bimodal temperature responses of Rd and rETR - expected, optimum in middle with high stress at end. NPQ increase at low temps iss insteresting - Andrei will look into this more. High stress at low and high temps, optimum in mid temperatures 
+
+Andrei - environmental plasticity of phenoplate data? Will look into this 
+
+Think about making conceptual model of biological response with phenotype with PHenoplate as performance metric
+
+Dont use O2 data - maybe use for respiration 
+
+
+
+
+
 1. Fluorescent light curve = RLC 
 
 Subset RLC analyses 
@@ -646,6 +674,13 @@ From this we will extract parameters:
 Reference: https://enveurope.springeropen.com/articles/10.1186/s12302-020-00306-9 
 
 This model runs, but doesn't account for beta currently 
+
+
+
+For now, running - 
+
+Nonlinear Least Squares regression of a quadratic fit, test nls fit
+Aquatic Photosynthesis, Falkowski   
 
 ```{r}
 library(purrr)
