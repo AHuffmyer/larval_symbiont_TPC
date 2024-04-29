@@ -1,0 +1,65 @@
+Order,Batch,Tube ID,Sample ID,Volume Dried,Name,Contents,Organism,Type,Timepoint,Temperature,Symbiont
+1,1,L95M,L95,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Moderate (+3),Wildtype
+2,1,L106M,L106,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,High (+6),Mixed
+3,1,L69M,L69,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Ambient,Cladocopium
+4,1,L91M,L91,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Moderate (+3),Mixed
+5,1,L65M,L65,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Ambient,Cladocopium
+NA,1,EB-1M,EB-1,800 uL,Huffmyer/Matthews,Dried metabolite extract,NA,Blank,NA,NA,NA
+6,2,L60M,L60,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,High (+6),Wildtype
+7,2,L81M,L81,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Ambient,Wildtype
+8,2,L102M,L102,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,High (+6),Cladocopium
+9,2,L63M,L63,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,High (+6),Wildtype
+10,2,L68M,L68,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Ambient,Cladocopium
+NA,2,EB-2M,EB-2,800 uL,Huffmyer/Matthews,Dried metabolite extract,NA,Blank,NA,NA,NA
+11,3,L83M,L83,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Moderate (+3),Cladocopium
+12,3,L67M,L67,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Ambient,Cladocopium
+13,3,L100M,L100,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,High (+6),Cladocopium
+14,3,L90M,L90,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Moderate (+3),Mixed
+15,3,L73M,L73,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Ambient,Mixed
+NA,3,EB-3M,EB-3,800 uL,Huffmyer/Matthews,Dried metabolite extract,NA,Blank,NA,NA,NA
+16,4,L82M,L82,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Moderate (+3),Cladocopium
+17,4,L86M,L86,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Moderate (+3),Cladocopium
+18,4,L89M,L89,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Moderate (+3),Mixed
+19,4,L107M,L107,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,High (+6),Mixed
+20,4,L85M,L85,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Moderate (+3),Cladocopium
+NA,4,EB-4M,EB-4,800 uL,Huffmyer/Matthews,Dried metabolite extract,NA,Blank,NA,NA,NA
+21,5,L56M,L56,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,High (+6),Mixed
+22,5,L80M,L80,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Ambient,Wildtype
+23,5,L57M,L57,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,High (+6),Mixed
+24,5,L75M,L75,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Ambient,Mixed
+25,5,L71M,L71,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Ambient,Mixed
+NA,5,EB-5M,EB-5,800 uL,Huffmyer/Matthews,Dried metabolite extract,NA,Blank,NA,NA,NA
+26,6,L105M,L105,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,High (+6),Cladocopium
+27,6,L101M,L101,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,High (+6),Cladocopium
+28,6,L108M,L108,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,High (+6),Mixed
+29,6,L66M,L66,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Ambient,Cladocopium
+30,6,L62M,L62,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,High (+6),Wildtype
+NA,6,EB-6M,EB-6,800 uL,Huffmyer/Matthews,Dried metabolite extract,NA,Blank,NA,NA,NA
+31,7,L103M,L103,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,High (+6),Cladocopium
+32,7,L94M,L94,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Moderate (+3),Wildtype
+33,7,L104M,L104,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,High (+6),Cladocopium
+34,7,L99M,L99,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Moderate (+3),Wildtype
+35,7,L76M,L76,800 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Ambient,Wildtype
+NA,7,EB-7M,EB-7,800 uL,Huffmyer/Matthews,Dried metabolite extract,NA,Blank,NA,NA,NA
+36,8,L87M,L87,640 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Moderate (+3),Cladocopium
+37,8,L72M,L72,640 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Ambient,Mixed
+38,8,L88M,L88,640 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Moderate (+3),Mixed
+39,8,L93M,L93,640 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Moderate (+3),Mixed
+40,8,L61M,L61,640 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,High (+6),Wildtype
+41,8,L58M,L58,640 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,High (+6),Wildtype
+42,8,L64M,L64,640 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Ambient,Cladocopium
+43,8,L59M,L59,640 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,High (+6),Wildtype
+44,8,L97M,L97,640 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Moderate (+3),Wildtype
+45,8,L84M,L84,640 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Moderate (+3),Cladocopium
+NA,8,EB-8M,EB-8,640 uL,Huffmyer/Matthews,Dried metabolite extract,NA,Blank,NA,NA,NA
+46,9,L98M,L98,640 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Moderate (+3),Wildtype
+47,9,L74M,L74,640 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Ambient,Mixed
+48,9,L55M,L55,640 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,High (+6),Mixed
+49,9,L92M,L92,640 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Moderate (+3),Mixed
+50,9,L70M,L70,640 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Ambient,Mixed
+51,9,L77M,L77,640 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Ambient,Wildtype
+52,9,L96M,L96,640 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Moderate (+3),Wildtype
+53,9,L79M,L79,640 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Ambient,Wildtype
+54,9,L78M,L78,640 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,Sample,20230627,Ambient,Wildtype
+NA,9,EB-9M,EB-9,640 uL,Huffmyer/Matthews,Dried metabolite extract,NA,Blank,NA,NA,NA
+NA,NA,PBQC-M,PBQC,630 uL,Huffmyer/Matthews,Dried metabolite extract,Montipora capitata coral larvae,PBQC,NA,NA,NA
