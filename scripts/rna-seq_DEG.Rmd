@@ -944,7 +944,7 @@ volcano_plot_NBvsB_30C<-EnhancedVolcano(res,
     legendPosition = 'none');volcano_plot_NBvsB_30C
 ```
 
-NB vs B at 30°C
+NB vs B at 33°C
 ```{r}
 res <- results(DEG_I, contrast=list("temperature33.parentNonbleached", "temperature33.parentBleached"))
 
