@@ -36,7 +36,7 @@ if ("vegan" %in% rownames(installed.packages()) == 'FALSE') install.packages('ve
 
 #BiocManager::install('apeglm')
 #BiocManager::install('EnhancedVolcano')
-BiocManager::install("VennDetail")
+#BiocManager::install("VennDetail")
 
 library("tidyverse")
 library("genefilter")
@@ -362,7 +362,7 @@ resultsNames(DEG_T)
 temp30_deg<-results(DEG_T, contrast=c("temperature","30","27"))
 temp30_deg <- as.data.frame(subset(temp30_deg, padj<0.01))
 temp30_deg <- as.data.frame(subset(temp30_deg, abs(log2FoldChange)>1.5))
-temp30_deg$contrast <- c("27vs30")
+temp30_deg$contrast <- c("30vs27")
 temp30_deg$gene <- rownames(temp30_deg)
 rownames(temp30_deg) <- NULL
 
@@ -371,7 +371,7 @@ dim(temp30_deg)
 temp33_deg<-results(DEG_T, contrast=c("temperature","33","27"))
 temp33_deg <- as.data.frame(subset(temp33_deg, padj<0.01))
 temp33_deg <- as.data.frame(subset(temp33_deg, abs(log2FoldChange)>1.5))
-temp33_deg$contrast <- c("27vs33")
+temp33_deg$contrast <- c("33vs27")
 temp33_deg$gene <- rownames(temp33_deg)
 rownames(temp33_deg) <- NULL
 
@@ -380,7 +380,7 @@ dim(temp33_deg)
 temp30vs33_deg<-results(DEG_T, contrast=c("temperature","33","30"))
 temp30vs33_deg <- as.data.frame(subset(temp30vs33_deg, padj<0.01))
 temp30vs33_deg <- as.data.frame(subset(temp30vs33_deg, abs(log2FoldChange)>1.5))
-temp30vs33_deg$contrast <- c("30vs33")
+temp30vs33_deg$contrast <- c("33vs30")
 temp30vs33_deg$gene <- rownames(temp30vs33_deg)
 rownames(temp30vs33_deg) <- NULL
 
@@ -412,16 +412,16 @@ Create an upset diagram showing genes unique and shared in each temperature comp
 
 ```{r}
 list1<-DEG_temperature%>%
-  filter(contrast=="27vs30")
+  filter(contrast=="30vs27")
 
 list2<-DEG_temperature%>%
-  filter(contrast=="27vs33")
+  filter(contrast=="33vs27")
 
 list3<-DEG_temperature%>%
-  filter(contrast=="30vs33")
+  filter(contrast=="33vs30")
 
-ven <- venndetail(list("27vs30" = list1$gene, "27vs33" = list2$gene,
-                    "30vs33" = list3$gene))
+ven <- venndetail(list("30vs27" = list1$gene, "33vs27" = list2$gene,
+                    "33vs30" = list3$gene))
 
 upset_temperature<-plot(ven, type = "upset");upset_temperature
 
@@ -442,7 +442,7 @@ volcano_plot_27vs30<-EnhancedVolcano(res,
     lab = rownames(res),
     x = 'log2FoldChange',
     y = 'pvalue',
-    title = '27 vs 30°C',
+    title = '30 vs 27°C',
     pCutoff = 0.01,
     FCcutoff = 1.5,
     pointSize = 3.0,
@@ -458,7 +458,7 @@ volcano_plot_27vs33<-EnhancedVolcano(res,
     lab = rownames(res),
     x = 'log2FoldChange',
     y = 'pvalue',
-    title = '27 vs 33°C',
+    title = '33 vs 27°C',
     pCutoff = 0.01,
     FCcutoff = 1.5,
     pointSize = 3.0,
@@ -474,7 +474,7 @@ volcano_plot_30vs33<-EnhancedVolcano(res,
     lab = rownames(res),
     x = 'log2FoldChange',
     y = 'pvalue',
-    title = '30 vs 33°C',
+    title = '33 vs 30°C',
     pCutoff = 0.01,
     FCcutoff = 1.5,
     pointSize = 3.0,
@@ -1147,3 +1147,4 @@ all_genes<-all_genes%>%
 
 write_csv(file="output/rna_seq/all_genes.csv", all_genes)
 ```
+
