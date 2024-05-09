@@ -7,15 +7,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-1. read in files 
-2. Split into up and down regulated for each contrast 
-2. functional enrichment in goseq of specific contrasts or whole set and for up and down? Maybe run a loop for each analysis with "for" being for each contrast and within this each up vs down? 
-3. Plot with contrast on X, GO on y, values as pvalue and fold change or num in cat? 
-4. Output results table 
-
-Repeat for temperature (27 vs 30, 27 vs 33, 30 vs 33) up vs down regulated 
-Parent (NB vs WT, B vs WT, NB vs B) up vs down regulated 
-Interaction (NB vs B at 30°C, NB vs B at 33°C) up vs down regulated 
+Functional enrichment of M. capitata larvae DEGs.  
 
 # Set up 
 
