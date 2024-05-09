@@ -876,7 +876,7 @@ interaction_DEG_list<-left_join(interaction_DEG_list, Mcap.annot, by="gene")
 
 ```{r}
 interaction_deg_FC <- interaction_DEG_list %>%
-  mutate(label=paste0(Description, "-", gene))%>%
+  mutate(label=paste0(Description, "-", gene, "-", Preferred_name))%>%
   dplyr::arrange(log2FoldChange) %>%
   
   ggplot(aes(x=log2FoldChange, y=reorder(label, -log2FoldChange), colour=padj)) +
