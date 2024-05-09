@@ -183,6 +183,92 @@ Mcap.annot$GOs <- gsub("-", NA, Mcap.annot$GOs)
 head(Mcap.annot$GOs)
 ```
 
+# Goseq settings and information  
+
+**nullp function** 
+
+nullp: Calculate probability weighting function
+
+It is essential that the entire analysis pipeline, from summarizing raw reads through to using goseq be done in just one gene identifier format. If your data is in a different format you will need to obtain the gene lengths and supply them to the nullp function using the bias.data arguement. Converting to a supported format from another format should be avoided whenever possible as this will almost always result in data loss.
+
+NAs are allowed in the bias.data vector if you do not have information about a certain gene. Setting a gene to NA is preferable to removing it from the analysis.
+
+gene.vector: A named binary vector where 1 represents DE, 0 not DE and the names are gene IDs. List of all genes in reference list (either all genes detected or all genes in genome).  
+
+genome: A string identifying the genome that genes refer to if using a model organism. We don't use this because we don't have a model organism.  
+
+ID.vector: 	A string identifying the gene identifier used by genes. This is our list of DEGs.  
+
+bias.data: A numeric vector containing the data on which the DE may depend. Usually this is the median transcript length of each gene in bp. If set to NULL nullp will attempt to fetch length using getlength. This is our gene length vector LENGTH.vector. 
+
+**xxx**
+
+pwf: The pwf argument is almost always the output of the function nullp. This is a data frame with 3 columns, named "DEgenes", "bias.data" and "pwf" with the rownames set to the gene names. Each row corresponds to a gene with the DEgenes column specifying if the gene is DE (1 for DE, 0 for not DE), the bias.data column giving the numeric value of the DE bias being accounted for (usually the gene length or number of counts) and the pwf column giving the genes value on the probability weighting function. This includes a list of full genes generated from our ALL.vector, which here is the list of all genes present in our dataset. Alternatively, this can be a list of all genes in the genome.  
+
+*Discussion point: Shoud you use genes from your dataset or genes from the genome? When would you use either option?*  
+
+ID.vector: list of DEGs that we are testing 
+
+gene2cat: To use your own gene to category mapping with goseq, use the gene2cat arguement. This arguement takes a data.frame, with one column containing gene IDs and the other containing the associated categories. As the mapping from gene <-> category is in general many to many there will be multiple rows containing the same gene identifier. Alternatively, gene2cat can take a list, where the names are the genes and the entries are the GO categories associated with the genes. If gene2cat is left as NULL, goseq attempts to use getgo to fetch GO catgeory to gene identifier mappings.
+
+Wallenius: "Wallenius" approximates the true distribution of numbers of members of a category amongst DE genes by the Wallenius non-central hypergeometric distribution. This distribution assumes that within a category all genes have the same probability of being chosen. Therefore, this approximation works best when the range in probabilities obtained by the probability weighting function is small. "Wallenius" is the recommended method for calculating p-values.
+
+test.cats: Valid options for the test.cats arguement are any combination of "GO:CC", "GO:BP", "GO:MF" & "KEGG". The three GO terms refer to the Cellular Component, Biological Process and Molecular Function respectively. "KEGG" refers to KEGG pathways.
+
+# rrvgo settings and information 
+
+**calculateSimMatrix** 
+https://rdrr.io/bioc/rrvgo/f/vignettes/rrvgo.Rmd  
+
+Calculate the score similarity matrix between terms. The function calculateSimMatrix takes a list of GO terms for which the semantic simlarity is to be calculated, an OrgDb object for an organism, the ontology of interest and the method to calculate the similarity scores.
+
+Example:  
+calculateSimMatrix(go_results$GOterm, orgdb="org.Ce.eg.db", ont=c("BP"), method="Rel")
+
+go_results$GOterm: vector of GO terms  
+
+orgdb: reference database; one of org.* Bioconductor packages (the package name, or the package itself). Here we will use C. elegans.  
+
+ont: ontlogy. One of c("BP", "MF", "CC")  
+
+method: distance method. One of the supported methods by GOSemSim: c("Resnik", "Lin", "Rel", "Jiang", "Wang")
+
+https://academic.oup.com/bioinformatics/article/26/7/976/213143
+https://yulab-smu.top/biomedical-knowledge-mining-book/  
+
+Four IC-based (Resnik's, Lin's, Jiang and Conrath's and Schlicker's) and one graph-based (Wang's) semantic similarity measure algorithms mentioned before are selected to be integrated in GOSemSim, and can be selected by setting the ‘method’ parameter of the package functions to ‘Resnik’, ‘Lin’, ‘Jiang’, ‘Rel’ and ‘Wang’, respectively. The Resnik's, Lin's and Jiang and Conrath's algorithms are the most common semantic similarity measures used with GO (Pesquita et al., 2009). Several assessment results had shown that the Resnik's measure had consistently high correlation with sequence similarity (Lord et al., 2003; Mistry and Pavlidis, 2008; Pesquita et al., 2008) and gene co-expression (Sevilla et al., 2005). By using a best-match average combination strategy, Pesquita et al. found that Jiang and Conrath's measure had the highest correlation with sequence similarity (Pesquita et al., 2009). The Schlicker's measure had been found to perform better than Resnik's measure in distinguishing orthologous gene products from gene products with other levels of sequence similarity (Schlicker et al., 2006). The Wang's measure had also been shown to produce more accurate results than Resnik's measure in clustering gene pairs according to their semantic similarity (Wang et al., 2007). The details about the semantic similarity measure algorithms used in GOSemSim can be found in the user's manual (Supplementary Material 1).
+
+**reduceSimMatrix**  
+
+rrvgo provides the reduceSimMatrix function for that. It takes as arguments i) the similarity matrix, ii) an optional named vector of scores associated to each GO term, iii) a similarity threshold used for grouping terms, and iv) an orgdb object.
+
+reduceSimMatrix selects as the group representative the term with the higher score within the group. In case the vector of scores is not available, reduceSimMatrix will get the GO term size from the OrgDb object and use it as the score, thus favoring broader terms. Please note that scores are interpreted in the direction that higher are better, therefore if you use p-values as scores, minus log-transform them before. This is what we do in the script below.  
+
+Higher thresholds force higher similarity between terms of a groups, resulting in more groups containing less similar terms.
+
+scores: named vector with scores (weights) assigned to each term. Higher is better. Can be NULL (default, means no scores. In this case, a default score based on set size is assigned, thus favoring larger sets). Note: if you have p-values as scores, consider -1*log-transforming them ('-log(p)')
+                              
+threshold: similarity threshold (0-1). Some guidance: Large (allowed similarity=0.9), Medium (0.7), Small (0.5), Tiny (0.4) Defaults to Medium (0.7)     
+
+simMatrix: a (square) similarity matrix generated from calculateSimMatrix  
+
+Example:   
+scores <- setNames(-log(go_results$bh_adjust), go_results$GOterm) 
+reducedTerms <- reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Ce.eg.db")
+
+
+
+
+
+
+
+
+
+
+
 # Temperature DEGs 
 
 ## Add in annotation information
