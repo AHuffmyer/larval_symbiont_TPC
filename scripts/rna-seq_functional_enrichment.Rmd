@@ -146,6 +146,15 @@ print(missing)
 
 There are 9390 genes from our data set that are not in the annotation file but that are in the genome. 
 
+## Reduce annotation file to only contain genes detected in our dataset.  
+
+```{r}
+filtered_Mcap.annot <- Mcap.annot[Mcap.annot$gene %in% probes, ]
+dim(filtered_Mcap.annot)
+```
+
+The annotation file now only contains genes that were detected in our dataset that have annotation information.  
+
 ## Generate a vector of gene lenghts 
 
 ```{r}
@@ -168,19 +177,19 @@ lengths<-as.data.frame(lengths) #convert to data frame
 Add in length to the annotation file.    
 
 ```{r}
-Mcap.annot$length<-lengths$transcript_lengths[match(Mcap.annot$gene, lengths$seqnames)]
+filtered_Mcap.annot$length<-lengths$transcript_lengths[match(filtered_Mcap.annot$gene, lengths$seqnames)]
 
-which(is.na(Mcap.annot$length)) #all genes have lengths 
+which(is.na(filtered_Mcap.annot$length)) #all genes have lengths 
 ```
 
 Format GO terms to remove dashes and quotes.  
 ```{r}
 #remove dashes, remove quotes from columns and separate by semicolons (replace , with ;) in KEGG_ko, KEGG_pathway, and Annotation.GO.ID columns
-head(Mcap.annot$GOs)
-Mcap.annot$GOs <- gsub(",", ";", Mcap.annot$GOs)
-Mcap.annot$GOs <- gsub('"', "", Mcap.annot$GOs)
-Mcap.annot$GOs <- gsub("-", NA, Mcap.annot$GOs)
-head(Mcap.annot$GOs)
+head(filtered_Mcap.annot$GOs)
+filtered_Mcap.annot$GOs <- gsub(",", ";", filtered_Mcap.annot$GOs)
+filtered_Mcap.annot$GOs <- gsub('"', "", filtered_Mcap.annot$GOs)
+filtered_Mcap.annot$GOs <- gsub("-", NA, filtered_Mcap.annot$GOs)
+head(filtered_Mcap.annot$GOs)
 ```
 
 # Goseq settings and information  
@@ -201,11 +210,12 @@ ID.vector: 	A string identifying the gene identifier used by genes. This is our 
 
 bias.data: A numeric vector containing the data on which the DE may depend. Usually this is the median transcript length of each gene in bp. If set to NULL nullp will attempt to fetch length using getlength. This is our gene length vector LENGTH.vector. 
 
-**xxx**
 
-pwf: The pwf argument is almost always the output of the function nullp. This is a data frame with 3 columns, named "DEgenes", "bias.data" and "pwf" with the rownames set to the gene names. Each row corresponds to a gene with the DEgenes column specifying if the gene is DE (1 for DE, 0 for not DE), the bias.data column giving the numeric value of the DE bias being accounted for (usually the gene length or number of counts) and the pwf column giving the genes value on the probability weighting function. This includes a list of full genes generated from our ALL.vector, which here is the list of all genes present in our dataset. Alternatively, this can be a list of all genes in the genome.  
+pwf: The pwf argument is almost always the output of the function nullp. This is a data frame with 3 columns, named "DEgenes", "bias.data" and "pwf" with the rownames set to the gene names. Each row corresponds to a gene with the DEgenes column specifying if the gene is DE (1 for DE, 0 for not DE), the bias.data column giving the numeric value of the DE bias being accounted for (usually the gene length or number of counts) and the pwf column giving the genes value on the probability weighting function. This includes a list of full genes generated from our ALL.vector, which here is the list of all genes present in our dataset. Alternatively, this can be a list of all genes in the genome. 
 
-*Discussion point: Shoud you use genes from your dataset or genes from the genome? When would you use either option?*  
+Our list of background genes is all genes expressed with a count of at least 10 in at least 11% of samples (pOverA filtering).  
+
+*Discussion point: Should you use genes from your dataset or genes from the genome? When would you use either option?*
 
 ID.vector: list of DEGs that we are testing 
 
@@ -259,16 +269,6 @@ reducedTerms <- reduceSimMatrix(simMatrix,
                                 threshold=0.7,
                                 orgdb="org.Ce.eg.db")
 
-
-
-
-
-
-
-
-
-
-
 # Temperature DEGs 
 
 ## Add in annotation information
@@ -276,7 +276,7 @@ reducedTerms <- reduceSimMatrix(simMatrix,
 Merge in relevant annotation information to the DEG list file.  
 
 ```{r}
-temperature_DEG_list<-left_join(temperature_DEG_list, Mcap.annot, by="gene")
+temperature_DEG_list<-left_join(temperature_DEG_list, filtered_Mcap.annot, by="gene")
 ```
 
 ## Plot fold change of temperature DEGs
@@ -331,24 +331,23 @@ temp_contrasts<-c("30vs27", "33vs27", "33vs30")
 
 Conduct functional enrichment for each contrast using goseq and rrvgo. Compare against all genes detected in the dataset. I am choosing to compare against genes in our dataset because we are looking at one developmental stage (larvae). Therefore, I do not want to conduct enrichment of all genes in the genome because many functions including calcification and gametogenesis do not apply to the biological function of larvae.  
 
-Conduct at biological process level. Filter for adjusted p-value <0.01 because we have a lot of DEGs.  
+Conduct at biological process level. Filter for adjusted p-value <0.05.  
 ```{r}
 for (temp in temp_contrasts) {
   
     ### Generate vector with names of all genes detected in our dataset 
-    ALL.vector <- c(Mcap.annot$gene)
+    ALL.vector <- c(filtered_Mcap.annot$gene)
     
     ### Generate length vector for all genes 
-    LENGTH.vector <- as.integer(Mcap.annot$length)
+    LENGTH.vector <- as.integer(filtered_Mcap.annot$length)
     
     ### Generate vector with names in just the contrast we are analyzing
     ID.vector <- temperature_up_list%>%
       filter(contrast==temp)%>%
       pull(gene)
     
-    ##Get a list of GO Terms for each constrast
-    GO.terms <- temperature_up_list%>%
-      filter(contrast==temp)%>%
+    ##Get a list of GO Terms for all genes detected in our dataset 
+    GO.terms <- filtered_Mcap.annot%>%
       dplyr::select(gene, GOs)
     
     ##Format to have one goterm per row with gene ID repeated
@@ -375,7 +374,7 @@ for (temp in temp_contrasts) {
   
     #Filtering for p < 0.01
     GO <- GO %>%
-        dplyr::filter(bh_adjust<0.01) %>%
+        dplyr::filter(bh_adjust<0.05) %>%
         dplyr::arrange(., ontology, bh_adjust)
 
     #Write file of results 
@@ -390,9 +389,9 @@ Create an empty dataframe to populate (only do this once).
 temp_go_results <- data.frame()
 ```
 
-Run a loop to filter enrichment for each temperature contrast using rrvgo. 
+Run a loop to filter enrichment for each temperature contrast using rrvgo. There were no enriched terms for 27 vs 30°C. Proceed with only 27vs33 and 30vs33.    
 ```{r}
-temp_contrasts<-c("30vs27", "33vs27", "33vs30")
+temp_contrasts<-c("33vs27", "33vs30")
 
 for (temp in temp_contrasts) {
 
@@ -402,8 +401,11 @@ for (temp in temp_contrasts) {
     go_results<-go_results%>%
       filter(ontology=="BP")%>%
       filter(bh_adjust != "NA") %>%
-      filter(numInCat>5)%>%
+      #filter(numInCat>5)%>%
       arrange(., bh_adjust)
+    
+    print(temp)
+    print(length(unique(go_results$GOterm)))
     
     #Reduce/collapse GO term set with the rrvgo package 
       simMatrix <- calculateSimMatrix(go_results$GOterm,
@@ -411,7 +413,7 @@ for (temp in temp_contrasts) {
                                 ont=c("BP"),
                                 method="Rel")
     #claculate similarity 
-    scores <- setNames(-log(go_results$bh_adjust), go_results$GOterm)
+    scores <- setNames(-log10(go_results$bh_adjust), go_results$GOterm)
     reducedTerms <- reduceSimMatrix(simMatrix,
                                 scores,
                                 threshold=0.7,
@@ -428,44 +430,46 @@ for (temp in temp_contrasts) {
     go_results$direction<-c("upregulated")
     go_results$contrast<-temp
     
+    print(length(unique(go_results$GOterm)))
+    
     #add to data frame 
     temp_go_df <- go_results
     temp_go_results <- rbind(temp_go_results, temp_go_df) 
 
 }
 ```
+There are 175 terms before sem sim for 33 vs 27 and 115 after. There are 42 terms before sem sim for 33 vs 30 and 30 after.  
 
 ```{r}
-dim(temp_go_results)
+length(unique(temp_go_results$GOterm))
 ```
-702 total enriched GO terms.  
+126 total enriched GO terms that are upregulated.  
 
 ## Conduct enrichment for down regulated genes 
 
-Make a list of contrasts to loop through.  
+Make a list of contrasts to loop through. 27vs30 had no enriched terms.   
 
 ```{r}
 temp_contrasts<-c("30vs27", "33vs27", "33vs30")
 ```
 
-Conduct at biological process level. Filter for adjusted p-value <0.01 because we have a lot of DEGs.  
+Conduct at biological process level. Filter for adjusted p-value <0.05.   
 ```{r}
 for (temp in temp_contrasts) {
   
     ### Generate vector with names of all genes detected in our dataset 
-    ALL.vector <- c(Mcap.annot$gene)
+    ALL.vector <- c(filtered_Mcap.annot$gene)
     
     ### Generate length vector for all genes 
-    LENGTH.vector <- as.integer(Mcap.annot$length)
+    LENGTH.vector <- as.integer(filtered_Mcap.annot$length)
     
     ### Generate vector with names in just the contrast we are analyzing
     ID.vector <- temperature_down_list%>%
       filter(contrast==temp)%>%
       pull(gene)
     
-    ##Get a list of GO Terms for each constrast
-    GO.terms <- temperature_down_list%>%
-      filter(contrast==temp)%>%
+    ##Get a list of GO Terms for all genes expressed
+    GO.terms <- filtered_Mcap.annot%>%
       dplyr::select(gene, GOs)
     
     ##Format to have one goterm per row with gene ID repeated
@@ -492,7 +496,7 @@ for (temp in temp_contrasts) {
   
     #Filtering for p < 0.01
     GO <- GO %>%
-        dplyr::filter(bh_adjust<0.01) %>%
+        dplyr::filter(bh_adjust<0.05) %>%
         dplyr::arrange(., ontology, bh_adjust)
 
     #Write file of results 
@@ -501,9 +505,9 @@ for (temp in temp_contrasts) {
 }
 ```
 
-Run a loop to filter enrichment for each temperature contrast using rrvgo.   
+Run a loop to filter enrichment for each temperature contrast using rrvgo. There are no enriched terms for 30vs27 and it is not used in this next section.   
 ```{r}
-temp_contrasts<-c("30vs27", "33vs27", "33vs30")
+temp_contrasts<-c("33vs27", "33vs30")
 
 for (temp in temp_contrasts) {
 
@@ -516,13 +520,16 @@ for (temp in temp_contrasts) {
       #filter(numInCat>5)%>%
       arrange(., bh_adjust)
     
+    print(temp)
+    print(length(unique(go_results$GOterm)))
+    
     #Reduce/collapse GO term set with the rrvgo package 
       simMatrix <- calculateSimMatrix(go_results$GOterm,
                                 orgdb="org.Ce.eg.db", #c. elegans database
                                 ont=c("BP"),
                                 method="Rel")
     #claculate similarity 
-    scores <- setNames(-log(go_results$bh_adjust), go_results$GOterm)
+    scores <- setNames(-log10(go_results$bh_adjust), go_results$GOterm)
     reducedTerms <- reduceSimMatrix(simMatrix,
                                 scores,
                                 threshold=0.7,
@@ -539,17 +546,20 @@ for (temp in temp_contrasts) {
     go_results$direction<-c("downregulated")
     go_results$contrast<-temp
     
+    print(length(unique(go_results$GOterm)))
+     
     #add to data frame 
     temp_go_df <- go_results
     temp_go_results <- rbind(temp_go_results, temp_go_df) 
 
 }
 ```
+There are 107 enriched downregulated terms at 33vs27 before sem sim and 100 after. There are 110 terms at 33vs30 before sem sim and 102 after. 
 
 ```{r}
-dim(temp_go_results)
+length(unique(temp_go_results$GOterm))
 ```
-There are now 3,651 enriched GO terms (702 were upregulated, leaving 2,949 downregulated). 
+There are now 245 enriched GO terms (126 were upregulated, leaving 119 downregulated). 
 
 ## Plot enrichment for up and down regulated genes for each contrast 
 
@@ -558,14 +568,15 @@ Upregulated genes
 temp_go_plot_up <- temp_go_results %>% 
   filter(direction=="upregulated")%>%
   dplyr::arrange(over_represented_pvalue) %>%
+  mutate(percHits=(numDEInCat/numInCat)*100)%>%
   
-  ggplot(aes(x=contrast, y=GOterm, colour=over_represented_pvalue)) +
-  facet_grid(ParentTerm ~ ., scales="free", labeller = label_wrap_gen(width = 2, multi_line = TRUE))+
-  geom_point(aes(size=numDEInCat))+
+  ggplot(aes(x=contrast, y=term, fill=over_represented_pvalue, size=percHits, colour=over_represented_pvalue)) +
+  facet_grid(ParentTerm ~ ., scales="free_y", labeller = label_wrap_gen(multi_line = TRUE))+
+  geom_point()+
   scale_colour_gradientn(colours = colorspace::heat_hcl(7))+
-  scale_size(name="numDEInCat", trans="reverse", range = c(0.1, 2))+
-  #geom_segment(aes(x=0, xend=-log10(over_represented_pvalue), y=GOterm, yend=GOterm),linewidth=1) +
-  #geom_vline(xintercept = 0, linetype = "dashed") + # Add vertical line
+  scale_fill_gradientn(colours = colorspace::heat_hcl(7))+
+  scale_size(name="Hits (%)", range = c(1, 5))+
+  scale_x_discrete(limits=c("30vs27", "33vs30", "33vs27"))+
   theme_classic() +
   ylab("GO Term")+
   theme(legend.position = "right",
@@ -575,7 +586,7 @@ temp_go_plot_up <- temp_go_results %>%
         plot.title = element_text(size = 14, face = "bold"))+
   ggtitle('Enrichment: Upregulated Temperature DEGs'); temp_go_plot_up
 
-ggsave(plot=temp_go_plot_up, "figures/rna_seq/functional_enrichment/temperature_GO_upregulated.png", height=80, width=6, limitsize=FALSE)
+ggsave(plot=temp_go_plot_up, "figures/rna_seq/functional_enrichment/temperature_GO_upregulated.png", height=40, width=10, limitsize=FALSE)
 ```
 
 Downregulated genes 
@@ -583,16 +594,16 @@ Downregulated genes
 temp_go_plot_down <- temp_go_results %>% 
   filter(direction=="downregulated")%>%
   dplyr::arrange(over_represented_pvalue) %>%
+  mutate(percHits=(numDEInCat/numInCat)*100)%>%
   
-  ggplot(aes(x=contrast, y=GOterm, colour=over_represented_pvalue)) +
+  ggplot(aes(x=contrast, y=term, colour=over_represented_pvalue, size=perHits)) +
   facet_grid(ParentTerm ~ ., scales="free", labeller = label_wrap_gen(width = 2, multi_line = TRUE))+
-  geom_point(aes(size=numDEInCat))+
+  geom_point(aes(size=percHits))+
   scale_colour_gradientn(colours = colorspace::heat_hcl(7))+
-  scale_size(name="numDEInCat", trans="reverse", range = c(0.1, 2))+
-  #geom_segment(aes(x=0, xend=-log10(over_represented_pvalue), y=GOterm, yend=GOterm),linewidth=1) +
-  #geom_vline(xintercept = 0, linetype = "dashed") + # Add vertical line
+  scale_size(name="Hits (%)", range = c(1, 5))+
   theme_classic() +
   ylab("GO Term")+
+  scale_x_discrete(limits=c("30vs27", "33vs30", "33vs27"))+
   theme(legend.position = "right",
         axis.text.y = element_text(size=8),
         axis.title.y = element_text(size=12, face="bold"),
@@ -600,10 +611,78 @@ temp_go_plot_down <- temp_go_results %>%
         plot.title = element_text(size = 14, face = "bold"))+
   ggtitle('Enrichment: Downregulated Temperature DEGs'); temp_go_plot_down
 
-ggsave(plot=temp_go_plot_down, "figures/rna_seq/functional_enrichment/temperature_GO_downregulated.png", height=100, width=6, limitsize=FALSE)
+ggsave(plot=temp_go_plot_down, "figures/rna_seq/functional_enrichment/temperature_GO_downregulated.png", height=40, width=10, limitsize=FALSE)
 ```
 
-There are so many terms its hard to use these! Will need to return to this.  
+Plot with up and down regulated with facet by comparison. 
+
+```{r}
+temp_go_plot_parent_data <- temp_go_results %>% 
+  group_by(ParentTerm, contrast, direction)%>%
+  summarise(numberTerms=length(unique(GOterm)))%>%
+  arrange(ParentTerm)
+
+# First, let's find the unique ParentTerm values
+unique_parent_terms <- unique(temp_go_plot_parent_data$ParentTerm)
+
+# Determine the number of unique ParentTerm values
+num_unique <- length(unique_parent_terms)
+
+# Determine the midpoint for splitting into two batches
+midpoint <- ceiling(num_unique / 2)
+
+temp_go_plot_parent_data <- temp_go_plot_parent_data %>%
+  mutate(batch = ifelse(match(ParentTerm, unique_parent_terms) <= midpoint, 1, 2))
+
+temp_go_plot_parent_data$ParentTerm <- factor(temp_go_plot_parent_data$ParentTerm) 
+temp_go_plot_parent_data$ParentTerm <- factor(temp_go_plot_parent_data$ParentTerm, levels = rev(levels(temp_go_plot_parent_data$ParentTerm)))
+
+temp_go_plot_parentA<-temp_go_plot_parent_data%>%
+  filter(batch=="1")%>%
+  
+  ggplot(aes(x=contrast, y=ParentTerm, colour=direction)) +
+  facet_grid(~ direction, scales="free_y", labeller = label_wrap_gen(width = 2, multi_line = TRUE))+
+  geom_point(aes(size=numberTerms))+
+  scale_size(name="Num. GO Terms", breaks=c(2,10,20,50,80), range = c(1, 5))+
+  scale_colour_manual(values=c("blue", "red"))+
+  scale_x_discrete(limits=c("30vs27", "33vs30", "33vs27"))+
+  theme_classic() +
+  xlab("")+
+  ylab("Parent Term")+
+  ggtitle('Temperature DEGs')+
+  theme(legend.position = "none",
+        axis.text.y = element_text(size=8),
+        axis.title.y = element_text(size=12, face="bold"),
+        axis.title.x = element_text(size = 12, face = "bold"),
+        plot.title = element_text(size = 14, face = "bold"),
+        axis.text.x = element_text(size=12, angle=45, vjust=0.5))+
+      panel_border(color="black"); temp_go_plot_parentA
+
+temp_go_plot_parentB<-temp_go_plot_parent_data%>%
+  filter(batch=="2")%>%
+  
+  ggplot(aes(x=contrast, y=ParentTerm, colour=direction)) +
+  facet_grid(~ direction, scales="free_y", labeller = label_wrap_gen(width = 2, multi_line = TRUE))+
+  geom_point(aes(size=numberTerms))+
+  scale_size(name="Num. GO Terms", breaks=c(2,10,20,50,80), range = c(1, 5))+
+  scale_colour_manual(values=c("blue", "red"))+
+  scale_x_discrete(limits=c("30vs27", "33vs30", "33vs27"))+
+  theme_classic() +
+    xlab("")+
+  ylab("")+
+  theme(legend.position = "right",
+        axis.text.y = element_text(size=8),
+        axis.title.y = element_blank(),
+        axis.title.x = element_text(size = 12, face = "bold"),
+        plot.title = element_text(size = 14, face = "bold"),
+        axis.text.x = element_text(size=12, angle=45, vjust=0.5))+
+        panel_border(color="black")+
+  ggtitle(''); temp_go_plot_parentB
+
+temp_go_grid<-plot_grid(temp_go_plot_parentA, temp_go_plot_parentB, ncol=2, nrow=1, align="h", rel_widths=c(0.8,1))
+
+ggsave(plot=temp_go_grid, "figures/rna_seq/functional_enrichment/temperature_GO_parent.png", height=6, width=12, limitsize=FALSE)
+```
 
 # Parent DEGs 
 
@@ -612,7 +691,7 @@ There are so many terms its hard to use these! Will need to return to this.
 Merge in relevant annotation information to the DEG list file.  
 
 ```{r}
-parent_DEG_list<-left_join(parent_DEG_list, Mcap.annot, by="gene")
+parent_DEG_list<-left_join(parent_DEG_list, filtered_Mcap.annot, by="gene")
 ```
 
 ## Plot fold change of temperature DEGs
@@ -662,22 +741,19 @@ Make a list of contrasts to loop through.
 
 ```{r}
 levels(as.factor(parent_up_list$contrast))
-#parent_contrasts<-c("BvsWT", "NBvsWT", "NBvsB")
-parent_contrasts<-c("BvsWT", "NBvsB")
+parent_contrasts<-c("BvsWT", "NBvsWT", "NBvsB")
 ```
-Note that NB vs WT genes (27) had no GO terms - all genes had GO terms of "NA" and therefore I couldn't do enrichment.  
-
 Conduct functional enrichment for each contrast using goseq and rrvgo. Compare against all genes detected in the dataset. I am choosing to compare against genes in our dataset because we are looking at one developmental stage (larvae). Therefore, I do not want to conduct enrichment of all genes in the genome because many functions including calcification and gametogenesis do not apply to the biological function of larvae.  
 
-Conduct at biological process level. Filter for adjusted p-value <0.01 because we have a lot of DEGs.  
+Conduct at biological process level. Filter for adjusted p-value <0.05 because we have a lot of DEGs.  
 ```{r}
 for (parent in parent_contrasts) {
   
     ### Generate vector with names of all genes detected in our dataset 
-    ALL.vector <- c(Mcap.annot$gene)
+    ALL.vector <- c(filtered_Mcap.annot$gene)
     
     ### Generate length vector for all genes 
-    LENGTH.vector <- as.integer(Mcap.annot$length)
+    LENGTH.vector <- as.integer(filtered_Mcap.annot$length)
     
     ### Generate vector with names in just the contrast we are analyzing
     ID.vector <- parent_up_list%>%
@@ -685,8 +761,7 @@ for (parent in parent_contrasts) {
       pull(gene)
     
     ##Get a list of GO Terms for each constrast
-    GO.terms <- parent_up_list%>%
-      filter(contrast==parent)%>%
+    GO.terms <- filtered_Mcap.annot%>%
       dplyr::select(gene, GOs)
     
     ##Format to have one goterm per row with gene ID repeated
@@ -711,9 +786,9 @@ for (parent in parent_contrasts) {
     #adjust p-values 
     GO$bh_adjust <-  p.adjust(GO$over_represented_pvalue, method="BH") #add adjusted p-values
   
-    #Filtering for p < 0.01
+    #Filtering for p < 0.05
     GO <- GO %>%
-        dplyr::filter(bh_adjust<0.01) %>%
+        dplyr::filter(bh_adjust<0.05) %>%
         dplyr::arrange(., ontology, bh_adjust)
 
     #Write file of results 
@@ -721,6 +796,7 @@ for (parent in parent_contrasts) {
     
 }
 ```
+Only B vs NB has significant GO term enrichment.  
 
 Create an empty dataframe to populate (only do this once).  
 
@@ -730,7 +806,7 @@ parent_go_results <- data.frame()
 
 Run a loop to filter enrichment for each temperature contrast using rrvgo. 
 ```{r}
-parent_contrasts<-c("BvsWT", "NBvsB")
+parent_contrasts<-c("NBvsB")
 
 for (parent in parent_contrasts) {
 
@@ -740,7 +816,6 @@ for (parent in parent_contrasts) {
     go_results<-go_results%>%
       filter(ontology=="BP")%>%
       filter(bh_adjust != "NA") %>%
-      filter(numInCat>1)%>%
       arrange(., bh_adjust)
     
     #Reduce/collapse GO term set with the rrvgo package 
@@ -749,7 +824,7 @@ for (parent in parent_contrasts) {
                                 ont=c("BP"),
                                 method="Rel")
     #claculate similarity 
-    scores <- setNames(-log(go_results$bh_adjust), go_results$GOterm)
+    scores <- setNames(-log10(go_results$bh_adjust), go_results$GOterm)
     reducedTerms <- reduceSimMatrix(simMatrix,
                                 scores,
                                 threshold=0.7,
@@ -774,11 +849,11 @@ for (parent in parent_contrasts) {
 ```
 
 ```{r}
-dim(parent_go_results)
+length(unique(parent_go_results$GOterm))
 ```
-276 total enriched GO terms.  
+3 total enriched GO terms.  
 
-There won't be NB vs WT comparison here, there are no enriched GO terms for this comparison that are upregulated.  
+There won't be NB vs WT or B vs WT comparison here, there are no enriched GO terms for this comparison that are upregulated.  
 
 ## Conduct enrichment for down regulated genes 
 
@@ -788,15 +863,15 @@ Make a list of contrasts to loop through.
 parent_contrasts<-c("BvsWT", "NBvsWT", "NBvsB")
 ```
 
-Conduct at biological process level. Filter for adjusted p-value <0.01 because we have a lot of DEGs.  
+Conduct at biological process level. Filter for adjusted p-value <0.05. 
 ```{r}
 for (parent in parent_contrasts) {
   
     ### Generate vector with names of all genes detected in our dataset 
-    ALL.vector <- c(Mcap.annot$gene)
+    ALL.vector <- c(filtered_Mcap.annot$gene)
     
     ### Generate length vector for all genes 
-    LENGTH.vector <- as.integer(Mcap.annot$length)
+    LENGTH.vector <- as.integer(filtered_Mcap.annot$length)
     
     ### Generate vector with names in just the contrast we are analyzing
     ID.vector <- parent_down_list%>%
@@ -804,8 +879,7 @@ for (parent in parent_contrasts) {
       pull(gene)
     
     ##Get a list of GO Terms for each constrast
-    GO.terms <- parent_down_list%>%
-      filter(contrast==parent)%>%
+    GO.terms <- filtered_Mcap.annot%>%
       dplyr::select(gene, GOs)
     
     ##Format to have one goterm per row with gene ID repeated
@@ -830,9 +904,9 @@ for (parent in parent_contrasts) {
     #adjust p-values 
     GO$bh_adjust <-  p.adjust(GO$over_represented_pvalue, method="BH") #add adjusted p-values
   
-    #Filtering for p < 0.01
+    #Filtering for p < 0.05
     GO <- GO %>%
-        dplyr::filter(bh_adjust<0.01) %>%
+        dplyr::filter(bh_adjust<0.05) %>%
         dplyr::arrange(., ontology, bh_adjust)
 
     #Write file of results 
@@ -853,7 +927,6 @@ for (parent in parent_contrasts) {
     go_results<-go_results%>%
       filter(ontology=="BP")%>%
       filter(bh_adjust != "NA") %>%
-      filter(numInCat>1)%>%
       arrange(., bh_adjust)
     
     #Reduce/collapse GO term set with the rrvgo package 
@@ -862,7 +935,7 @@ for (parent in parent_contrasts) {
                                 ont=c("BP"),
                                 method="Rel")
     #claculate similarity 
-    scores <- setNames(-log(go_results$bh_adjust), go_results$GOterm)
+    scores <- setNames(-log10(go_results$bh_adjust), go_results$GOterm)
     reducedTerms <- reduceSimMatrix(simMatrix,
                                 scores,
                                 threshold=0.7,
@@ -887,9 +960,9 @@ for (parent in parent_contrasts) {
 ```
 
 ```{r}
-dim(parent_go_results)
+length(unique(parent_go_results$GOterm))
 ```
-There are now 1,375 enriched GO terms (276 were upregulated, leaving 1,099 downregulated). 
+There are now 3 enriched GO terms (3 were upregulated, same 3 down regulated). 
 
 ## Plot enrichment for up and down regulated genes for each contrast 
 
@@ -898,15 +971,14 @@ Upregulated genes
 parent_go_plot_up <- parent_go_results %>% 
   filter(direction=="upregulated")%>%
   dplyr::arrange(over_represented_pvalue) %>%
+  mutate(percHits=(numDEInCat/numInCat)*100)%>%
   
-  ggplot(aes(x=contrast, y=GOterm, colour=over_represented_pvalue)) +
-  facet_grid(ParentTerm ~ ., scales="free", labeller = label_wrap_gen(width = 2, multi_line = TRUE))+
-  geom_point(aes(size=numDEInCat))+
+  ggplot(aes(x=contrast, y=term, colour=over_represented_pvalue, size=percHits, fill=over_represented_pvalue)) +
+  facet_grid(ParentTerm ~ ., scales="free", labeller = label_wrap_gen(multi_line = TRUE))+
+  geom_point()+
   scale_colour_gradientn(colours = colorspace::heat_hcl(7))+
-  scale_size(name="numDEInCat", trans="reverse", range = c(0.1, 2))+
+  scale_size(name="Hits (%)", range = c(1, 5))+
   scale_x_discrete(limits=c("BvsWT", "NBvsWT", "NBvsB"))+
-  #geom_segment(aes(x=0, xend=-log10(over_represented_pvalue), y=GOterm, yend=GOterm),linewidth=1) +
-  #geom_vline(xintercept = 0, linetype = "dashed") + # Add vertical line
   theme_classic() +
   ylab("GO Term")+
   theme(legend.position = "right",
@@ -916,7 +988,7 @@ parent_go_plot_up <- parent_go_results %>%
         plot.title = element_text(size = 14, face = "bold"))+
   ggtitle('Enrichment: Upregulated Parent DEGs'); parent_go_plot_up
 
-ggsave(plot=parent_go_plot_up, "figures/rna_seq/functional_enrichment/parent_GO_upregulated.png", height=40, width=6, limitsize=FALSE)
+ggsave(plot=parent_go_plot_up, "figures/rna_seq/functional_enrichment/parent_GO_upregulated.png", height=8, width=8, limitsize=FALSE)
 ```
 
 Downregulated genes 
@@ -924,15 +996,15 @@ Downregulated genes
 parent_go_plot_down <- parent_go_results %>% 
   filter(direction=="downregulated")%>%
   dplyr::arrange(over_represented_pvalue) %>%
+  mutate(percHits=(numDEInCat/numInCat)*100)%>%
   
-  ggplot(aes(x=contrast, y=GOterm, colour=over_represented_pvalue)) +
-  facet_grid(ParentTerm ~ ., scales="free", labeller = label_wrap_gen(width = 2, multi_line = TRUE))+
-  geom_point(aes(size=numDEInCat))+
+  ggplot(aes(x=contrast, y=term, colour=over_represented_pvalue, size=percHits)) +
+  facet_grid(ParentTerm ~ ., scales="free", labeller = label_wrap_gen(multi_line = TRUE))+
+  geom_point()+
   scale_colour_gradientn(colours = colorspace::heat_hcl(7))+
-  scale_size(name="numDEInCat", trans="reverse", range = c(0.1, 2))+
-  #geom_segment(aes(x=0, xend=-log10(over_represented_pvalue), y=GOterm, yend=GOterm),linewidth=1) +
-  #geom_vline(xintercept = 0, linetype = "dashed") + # Add vertical line
+  scale_size(name="Hits (%)", range = c(1, 5))+
   theme_classic() +
+  scale_x_discrete(limits=c("BvsWT", "NBvsWT", "NBvsB"))+
   ylab("GO Term")+
   theme(legend.position = "right",
         axis.text.y = element_text(size=8),
@@ -941,10 +1013,36 @@ parent_go_plot_down <- parent_go_results %>%
         plot.title = element_text(size = 14, face = "bold"))+
   ggtitle('Enrichment: Downregulated Parent DEGs'); parent_go_plot_down
 
-ggsave(plot=parent_go_plot_down, "figures/rna_seq/functional_enrichment/parent_GO_downregulated.png", height=80, width=6, limitsize=FALSE)
+ggsave(plot=parent_go_plot_down, "figures/rna_seq/functional_enrichment/parent_GO_downregulated.png", height=6, width=8, limitsize=FALSE)
 ```
 
-There are so many terms its hard to use these! Will need to return to this.  
+Plot with up and down regulated with facet by comparison. 
+
+```{r}
+parent_go_plot_parentA<-parent_go_results%>%
+  mutate(percHits=(numDEInCat/numInCat)*100)%>%
+  
+  ggplot(aes(x=contrast, y=term, colour=direction)) +
+  facet_grid(~ direction, scales="free_y", labeller = label_wrap_gen(width = 2, multi_line = TRUE))+
+  geom_point(aes(size=percHits))+
+  scale_size(name="Num. GO Terms", breaks=c(2,10,20,50,80), range = c(1, 5))+
+  scale_colour_manual(values=c("blue", "red"))+
+  scale_x_discrete(limits=c("BvsWT", "NBvsWT", "NBvsB"))+
+  theme_classic() +
+  xlab("")+
+  ylab("GO Term")+
+  ggtitle('Parent DEGs')+
+  theme(legend.position = "right",
+        axis.text.y = element_text(size=8),
+        axis.title.y = element_text(size=12, face="bold"),
+        axis.title.x = element_text(size = 12, face = "bold"),
+        plot.title = element_text(size = 14, face = "bold"),
+        axis.text.x = element_text(size=12, angle=45, vjust=0.5))+
+      panel_border(color="black"); parent_go_plot_parentA
+
+
+ggsave(plot=parent_go_plot_parentA, "figures/rna_seq/functional_enrichment/parent_GO_parent.png", height=6, width=8, limitsize=FALSE)
+```
 
 # Interaction DEGs 
 
@@ -955,14 +1053,14 @@ DEGs between parent at elevated temperature.
 Merge in relevant annotation information to the DEG list file.  
 
 ```{r}
-interaction_DEG_list<-left_join(interaction_DEG_list, Mcap.annot, by="gene")
+interaction_DEG_list<-left_join(interaction_DEG_list, filtered_Mcap.annot, by="gene")
 ```
 
 ## Plot fold change of temperature DEGs
 
 ```{r}
 interaction_deg_FC <- interaction_DEG_list %>%
-  mutate(label=paste0(Description, "-", gene, "-", Preferred_name))%>%
+  mutate(label=paste0(Description, "-", gene))%>%
   dplyr::arrange(log2FoldChange) %>%
   
   ggplot(aes(x=log2FoldChange, y=reorder(label, -log2FoldChange), colour=padj)) +
@@ -972,15 +1070,16 @@ interaction_deg_FC <- interaction_DEG_list %>%
   geom_segment(aes(x=0, xend=log2FoldChange, y=label, yend=label),linewidth=1) +
   geom_vline(xintercept = 0, linetype = "dashed") + # Add vertical line
   theme_classic() +
-  ylab("Description - Gene")+
+  ylab("Gene - Description")+
   theme(legend.position = "right",
+        #axis.text.y = element_text(size=8),
         axis.text.y = element_text(size=8),
         axis.title.y = element_text(size=12, face="bold"),
         axis.title.x = element_text(size = 12, face = "bold"),
         plot.title = element_text(size = 14, face = "bold"))+
   ggtitle('Fold Change: Parent DEGs at 30-33°C'); interaction_deg_FC
 
-ggsave(plot=interaction_deg_FC, "figures/rna_seq/functional_enrichment/interaction_DEG_foldchange.png", height=12, width=18)
+ggsave(plot=interaction_deg_FC, "figures/rna_seq/functional_enrichment/interaction_DEG_foldchange.png", height=8, width=14)
 ```
 
 ## Prepare up and down regulated dataframes 
@@ -1000,8 +1099,6 @@ dim(interaction_down_list)
 ```
 56 total genes with 30 up regulated and 26 down regulated. We are keeping all contrasts in these lists and we will run a loop to conduct enrichment for each contrast.    
 
-We may not have enough genes for enrichment and may instead chose to do more manual investigation.  
-
 ## Conduct enrichment for up regulated genes 
 
 Make a list of contrasts to loop through.  
@@ -1017,19 +1114,18 @@ Conduct at biological process level. Filter for adjusted p-value <0.01 because w
 for (interaction in interaction_contrasts) {
   
     ### Generate vector with names of all genes detected in our dataset 
-    ALL.vector <- c(Mcap.annot$gene)
+    ALL.vector <- c(filtered_Mcap.annot$gene)
     
     ### Generate length vector for all genes 
-    LENGTH.vector <- as.integer(Mcap.annot$length)
+    LENGTH.vector <- as.integer(filtered_Mcap.annot$length)
     
     ### Generate vector with names in just the contrast we are analyzing
     ID.vector <- interaction_up_list%>%
       filter(contrast==interaction)%>%
       pull(gene)
     
-    ##Get a list of GO Terms for each constrast
-    GO.terms <- interaction_up_list%>%
-      filter(contrast==interaction)%>%
+    ##Get a list of GO Terms 
+    GO.terms <- filtered_Mcap.annot%>%
       dplyr::select(gene, GOs)
     
     ##Format to have one goterm per row with gene ID repeated
@@ -1056,7 +1152,7 @@ for (interaction in interaction_contrasts) {
   
     #Filtering for p < 0.01
     GO <- GO %>%
-        dplyr::filter(bh_adjust<0.01) %>%
+        dplyr::filter(bh_adjust<0.05) %>%
         dplyr::arrange(., ontology, bh_adjust)
 
     #Write file of results 
@@ -1064,6 +1160,7 @@ for (interaction in interaction_contrasts) {
     
 }
 ```
+No upregulated GO terms. 
 
 Create an empty dataframe to populate (only do this once).  
 
@@ -1092,7 +1189,7 @@ for (interaction in interaction_contrasts) {
                                 ont=c("BP"),
                                 method="Rel")
     #claculate similarity 
-    scores <- setNames(-log(go_results$bh_adjust), go_results$GOterm)
+    scores <- setNames(-log10(go_results$bh_adjust), go_results$GOterm)
     reducedTerms <- reduceSimMatrix(simMatrix,
                                 scores,
                                 threshold=0.7,
@@ -1117,9 +1214,9 @@ for (interaction in interaction_contrasts) {
 ```
 
 ```{r}
-dim(interaction_go_results)
+length(unique(interaction_go_results$GOterm))
 ```
-281 total enriched GO terms.  
+0 total enriched GO terms.  
 
 ## Conduct enrichment for down regulated genes 
 
@@ -1129,15 +1226,15 @@ Make a list of contrasts to loop through.
 interaction_contrasts<-c("NBvsB_30C", "NBvsB_33C")
 ```
 
-Conduct at biological process level. Filter for adjusted p-value <0.01 because we have a lot of DEGs.  
+Conduct at biological process level. Filter for adjusted p-value <0.05. 
 ```{r}
 for (interaction in interaction_contrasts) {
   
     ### Generate vector with names of all genes detected in our dataset 
-    ALL.vector <- c(Mcap.annot$gene)
+    ALL.vector <- c(filtered_Mcap.annot$gene)
     
     ### Generate length vector for all genes 
-    LENGTH.vector <- as.integer(Mcap.annot$length)
+    LENGTH.vector <- as.integer(filtered_Mcap.annot$length)
     
     ### Generate vector with names in just the contrast we are analyzing
     ID.vector <- interaction_down_list%>%
@@ -1145,8 +1242,7 @@ for (interaction in interaction_contrasts) {
       pull(gene)
     
     ##Get a list of GO Terms for each constrast
-    GO.terms <- interaction_down_list%>%
-      filter(contrast==interaction)%>%
+    GO.terms <- filtered_Mcap.annot%>%
       dplyr::select(gene, GOs)
     
     ##Format to have one goterm per row with gene ID repeated
@@ -1173,7 +1269,7 @@ for (interaction in interaction_contrasts) {
   
     #Filtering for p < 0.01
     GO <- GO %>%
-        dplyr::filter(bh_adjust<0.01) %>%
+        dplyr::filter(bh_adjust<0.05) %>%
         dplyr::arrange(., ontology, bh_adjust)
 
     #Write file of results 
@@ -1181,10 +1277,11 @@ for (interaction in interaction_contrasts) {
     
 }
 ```
+Only enriched go terms for NB vs B at 33°C. 
 
 Run a loop to filter enrichment for each temperature contrast using rrvgo.   
 ```{r}
-interaction_contrasts<-c("NBvsB_30C", "NBvsB_33C")
+interaction_contrasts<-c("NBvsB_33C")
 
 for (interaction in interaction_contrasts) {
 
@@ -1194,7 +1291,6 @@ for (interaction in interaction_contrasts) {
     go_results<-go_results%>%
       filter(ontology=="BP")%>%
       filter(bh_adjust != "NA") %>%
-      #filter(numInCat>1)%>%
       arrange(., bh_adjust)
     
     #Reduce/collapse GO term set with the rrvgo package 
@@ -1203,15 +1299,15 @@ for (interaction in interaction_contrasts) {
                                 ont=c("BP"),
                                 method="Rel")
     #claculate similarity 
-    scores <- setNames(-log(go_results$bh_adjust), go_results$GOterm)
+    scores <- setNames(-log10(go_results$bh_adjust), go_results$GOterm)
     reducedTerms <- reduceSimMatrix(simMatrix,
                                 scores,
                                 threshold=0.7,
                                 orgdb="org.Ce.eg.db")
     
     #keep only the goterms from the reduced list
-    go_results<-go_results%>%
-      filter(GOterm %in% reducedTerms$go)
+    go_results<-go_results #%>%
+      #filter(GOterm %in% reducedTerms$go)
     
     #add in parent terms to list of go terms 
     go_results$ParentTerm<-reducedTerms$parentTerm[match(go_results$GOterm, reducedTerms$go)]
@@ -1228,9 +1324,9 @@ for (interaction in interaction_contrasts) {
 ```
 
 ```{r}
-dim(interaction_go_results)
+length(unique(interaction_go_results$GOterm))
 ```
-There are now 793 enriched GO terms (281 were upregulated, leaving 512 downregulated). 
+There are now 3 enriched GO terms (0 were upregulated, leaving 3 downregulated). 
 
 ## Plot enrichment for up and down regulated genes for each contrast 
 
@@ -1239,15 +1335,14 @@ Upregulated genes
 interaction_go_plot_up <- interaction_go_results %>% 
   filter(direction=="upregulated")%>%
   dplyr::arrange(over_represented_pvalue) %>%
+  mutate(hitsPerc=numDEInCat*100/numInCat) %>% 
   
   ggplot(aes(x=contrast, y=GOterm, colour=over_represented_pvalue)) +
-  facet_grid(ParentTerm ~ ., scales="free", labeller = label_wrap_gen(width = 2, multi_line = TRUE))+
-  geom_point(aes(size=numDEInCat))+
+  #facet_grid(ParentTerm ~ ., scales="free", labeller = label_wrap_gen(width = 2, multi_line = TRUE))+
+  geom_point(aes(size=hitsPerc))+
   scale_colour_gradientn(colours = colorspace::heat_hcl(7))+
-  scale_size(name="numDEInCat", trans="reverse", range = c(0.1, 2))+
-  #scale_x_discrete(limits=c("BvsWT", "NBvsWT", "NBvsB"))+
-  #geom_segment(aes(x=0, xend=-log10(over_represented_pvalue), y=GOterm, yend=GOterm),linewidth=1) +
-  #geom_vline(xintercept = 0, linetype = "dashed") + # Add vertical line
+  scale_size(name="Hits (5)", range = c(0.1, 2))+
+  scale_x_discrete(limits=c("BvsWT", "NBvsWT", "NBvsB"))+
   theme_classic() +
   ylab("GO Term")+
   theme(legend.position = "right",
@@ -1257,7 +1352,7 @@ interaction_go_plot_up <- interaction_go_results %>%
         plot.title = element_text(size = 14, face = "bold"))+
   ggtitle('Enrichment: Upregulated Parent DEGs at 30-33°C'); interaction_go_plot_up
 
-ggsave(plot=interaction_go_plot_up, "figures/rna_seq/functional_enrichment/interaction_GO_upregulated.png", height=40, width=6, limitsize=FALSE)
+#ggsave(plot=interaction_go_plot_up, "figures/rna_seq/functional_enrichment/interaction_GO_upregulated.png", height=40, width=6, limitsize=FALSE)
 ```
 
 Downregulated genes 
@@ -1265,14 +1360,13 @@ Downregulated genes
 interaction_go_plot_down <- interaction_go_results %>% 
   filter(direction=="downregulated")%>%
   dplyr::arrange(over_represented_pvalue) %>%
+  mutate(hitsPerc=numDEInCat*100/numInCat) %>% 
   
-  ggplot(aes(x=contrast, y=GOterm, colour=over_represented_pvalue)) +
-  facet_grid(ParentTerm ~ ., scales="free", labeller = label_wrap_gen(width = 2, multi_line = TRUE))+
-  geom_point(aes(size=numDEInCat))+
+  ggplot(aes(x=contrast, y=term, colour=over_represented_pvalue)) +
+  #facet_grid(ParentTerm ~ ., scales="free", labeller = label_wrap_gen(width = 2, multi_line = TRUE))+
+  geom_point(aes(size=hitsPerc))+
   scale_colour_gradientn(colours = colorspace::heat_hcl(7))+
-  scale_size(name="numDEInCat", trans="reverse", range = c(0.1, 2))+
-  #geom_segment(aes(x=0, xend=-log10(over_represented_pvalue), y=GOterm, yend=GOterm),linewidth=1) +
-  #geom_vline(xintercept = 0, linetype = "dashed") + # Add vertical line
+  scale_size(name="Hits (%)",range = c(1,5))+
   theme_classic() +
   ylab("GO Term")+
   theme(legend.position = "right",
@@ -1282,16 +1376,33 @@ interaction_go_plot_down <- interaction_go_results %>%
         plot.title = element_text(size = 14, face = "bold"))+
   ggtitle('Enrichment: Downregulated Parent DEGs at 30-33°C'); interaction_go_plot_down
 
-ggsave(plot=interaction_go_plot_down, "figures/rna_seq/functional_enrichment/interaction_GO_downregulated.png", height=80, width=6, limitsize=FALSE)
+ggsave(plot=interaction_go_plot_down, "figures/rna_seq/functional_enrichment/interaction_GO_downregulated.png", height=6, width=8, limitsize=FALSE)
 ```
 
-There are so many terms its hard to use these! Will need to return to this. 
+Plot with up and down regulated with facet by comparison. 
 
+```{r}
+interaction_go_plot_parentA<-interaction_go_results%>%
+  mutate(hitsPerc=numDEInCat*100/numInCat) %>% 
+  
+  ggplot(aes(x=contrast, y=term, colour=direction)) +
+  facet_grid(~ direction, scales="free_y", labeller = label_wrap_gen(width = 2, multi_line = TRUE))+
+  geom_point(aes(size=hitsPerc))+
+  scale_size(name="Hits (%)", range = c(1, 5))+
+  scale_colour_manual(values=c("blue", "red"))+
+  theme_classic() +
+  xlab("")+
+  ylab("Parent Term")+
+  ggtitle('NBvsB at 30-33°C DEGs')+
+  theme(legend.position = "right",
+        axis.text.y = element_text(size=8),
+        axis.title.y = element_text(size=12, face="bold"),
+        axis.title.x = element_text(size = 12, face = "bold"),
+        plot.title = element_text(size = 14, face = "bold"),
+        axis.text.x = element_text(size=12, angle=45, vjust=0.5))+
+      panel_border(color="black"); interaction_go_plot_parentA
 
-We dont have many genes in this list, but lots of enriched GO terms - why? 
-
-Plot interaction gene list with description/family information 
-
-
+ggsave(plot=interaction_go_plot_parentA, "figures/rna_seq/functional_enrichment/interaction_GO_parent.png", height=6, width=6, limitsize=FALSE)
+```
 
 
