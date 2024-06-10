@@ -144,7 +144,7 @@ missing<-as.data.frame(probes[row_nas])
 print(missing)
 ```
 
-There are 9390 genes from our data set that are not in the annotation file but that are in the genome. 
+There are 9390 genes from our data set that are not in the annotation file but that are in the genome. We will need to BLAST these to obtain functional information.  
 
 ## Reduce annotation file to only contain genes detected in our dataset.  
 
