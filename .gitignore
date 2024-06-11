@@ -58,3 +58,6 @@ output/F1F2_sdr/PhotosynthesisPlots
 output/temp_pi_curves/PhotosynthesisPlots
 output/fungia/RespirationPlots
 output/pr_sdr/PhotosynthesisPlots
+
+#raw data files that are too big for Git 
+data/lipids_metabolites/lipidomics/raw-data
