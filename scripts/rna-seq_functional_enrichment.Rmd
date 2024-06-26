@@ -66,6 +66,7 @@ library("stats")
 library("ggdendro")
 library("GO.db")
 library("rrvgo")
+library("cowplot")
 ```
 
 # Read in data files 
@@ -361,10 +362,10 @@ for (temp in temp_contrasts) {
     names(gene.vector)<-ALL.vector#set names
 
     #weight gene vector by bias for length of gene 
-    pwf<-nullp(gene.vector, ID.vector, bias.data=LENGTH.vector) 
+    pwf<-nullp(gene.vector, bias.data=LENGTH.vector) 
     
     #run goseq using Wallenius method for all categories of GO terms 
-    GO.wall<-goseq(pwf, ID.vector, gene2cat=GO.terms, test.cats=c("GO:BP"), method="Wallenius", use_genes_without_cat=TRUE)
+    GO.wall<-goseq(pwf, gene2cat=GO.terms, test.cats=c("GO:BP"), method="Wallenius", use_genes_without_cat=TRUE)
 
     GO <- GO.wall[order(GO.wall$over_represented_pvalue),]
     colnames(GO)[1] <- "GOterm"
@@ -483,10 +484,10 @@ for (temp in temp_contrasts) {
     names(gene.vector)<-ALL.vector#set names
 
     #weight gene vector by bias for length of gene 
-    pwf<-nullp(gene.vector, ID.vector, bias.data=LENGTH.vector) 
+    pwf<-nullp(gene.vector, bias.data=LENGTH.vector) 
     
     #run goseq using Wallenius method for all categories of GO terms 
-    GO.wall<-goseq(pwf, ID.vector, gene2cat=GO.terms, test.cats=c("GO:BP"), method="Wallenius", use_genes_without_cat=TRUE)
+    GO.wall<-goseq(pwf, gene2cat=GO.terms, test.cats=c("GO:BP"), method="Wallenius", use_genes_without_cat=TRUE)
 
     GO <- GO.wall[order(GO.wall$over_represented_pvalue),]
     colnames(GO)[1] <- "GOterm"
@@ -494,7 +495,7 @@ for (temp in temp_contrasts) {
     #adjust p-values 
     GO$bh_adjust <-  p.adjust(GO$over_represented_pvalue, method="BH") #add adjusted p-values
   
-    #Filtering for p < 0.01
+    #Filtering for p < 0.05
     GO <- GO %>%
         dplyr::filter(bh_adjust<0.05) %>%
         dplyr::arrange(., ontology, bh_adjust)
@@ -775,10 +776,10 @@ for (parent in parent_contrasts) {
     names(gene.vector)<-ALL.vector#set names
 
     #weight gene vector by bias for length of gene 
-    pwf<-nullp(gene.vector, ID.vector, bias.data=LENGTH.vector) 
+    pwf<-nullp(gene.vector, bias.data=LENGTH.vector) 
     
     #run goseq using Wallenius method for all categories of GO terms 
-    GO.wall<-goseq(pwf, ID.vector, gene2cat=GO.terms, test.cats=c("GO:BP"), method="Wallenius", use_genes_without_cat=TRUE)
+    GO.wall<-goseq(pwf, gene2cat=GO.terms, test.cats=c("GO:BP"), method="Wallenius", use_genes_without_cat=TRUE)
 
     GO <- GO.wall[order(GO.wall$over_represented_pvalue),]
     colnames(GO)[1] <- "GOterm"
@@ -893,10 +894,10 @@ for (parent in parent_contrasts) {
     names(gene.vector)<-ALL.vector#set names
 
     #weight gene vector by bias for length of gene 
-    pwf<-nullp(gene.vector, ID.vector, bias.data=LENGTH.vector) 
+    pwf<-nullp(gene.vector, bias.data=LENGTH.vector) 
     
     #run goseq using Wallenius method for all categories of GO terms 
-    GO.wall<-goseq(pwf, ID.vector, gene2cat=GO.terms, test.cats=c("GO:BP"), method="Wallenius", use_genes_without_cat=TRUE)
+    GO.wall<-goseq(pwf, gene2cat=GO.terms, test.cats=c("GO:BP"), method="Wallenius", use_genes_without_cat=TRUE)
 
     GO <- GO.wall[order(GO.wall$over_represented_pvalue),]
     colnames(GO)[1] <- "GOterm"
@@ -915,7 +916,7 @@ for (parent in parent_contrasts) {
 }
 ```
 
-Run a loop to filter enrichment for each temperature contrast using rrvgo.   
+Run a loop to filter enrichment for each contrast using rrvgo.   
 ```{r}
 parent_contrasts<-c("BvsWT", "NBvsWT", "NBvsB")
 
@@ -962,7 +963,7 @@ for (parent in parent_contrasts) {
 ```{r}
 length(unique(parent_go_results$GOterm))
 ```
-There are now 3 enriched GO terms (3 were upregulated, same 3 down regulated). 
+There are now 3 enriched GO terms (3 were upregulated, same 3 down regulated in diff group). 
 
 ## Plot enrichment for up and down regulated genes for each contrast 
 
@@ -1139,10 +1140,10 @@ for (interaction in interaction_contrasts) {
     names(gene.vector)<-ALL.vector#set names
 
     #weight gene vector by bias for length of gene 
-    pwf<-nullp(gene.vector, ID.vector, bias.data=LENGTH.vector) 
+    pwf<-nullp(gene.vector, bias.data=LENGTH.vector) 
     
     #run goseq using Wallenius method for all categories of GO terms 
-    GO.wall<-goseq(pwf, ID.vector, gene2cat=GO.terms, test.cats=c("GO:BP"), method="Wallenius", use_genes_without_cat=TRUE)
+    GO.wall<-goseq(pwf, gene2cat=GO.terms, test.cats=c("GO:BP"), method="Wallenius", use_genes_without_cat=TRUE)
 
     GO <- GO.wall[order(GO.wall$over_represented_pvalue),]
     colnames(GO)[1] <- "GOterm"
@@ -1150,7 +1151,7 @@ for (interaction in interaction_contrasts) {
     #adjust p-values 
     GO$bh_adjust <-  p.adjust(GO$over_represented_pvalue, method="BH") #add adjusted p-values
   
-    #Filtering for p < 0.01
+    #Filtering for p < 0.05
     GO <- GO %>%
         dplyr::filter(bh_adjust<0.05) %>%
         dplyr::arrange(., ontology, bh_adjust)
@@ -1256,10 +1257,10 @@ for (interaction in interaction_contrasts) {
     names(gene.vector)<-ALL.vector#set names
 
     #weight gene vector by bias for length of gene 
-    pwf<-nullp(gene.vector, ID.vector, bias.data=LENGTH.vector) 
+    pwf<-nullp(gene.vector, bias.data=LENGTH.vector) 
     
     #run goseq using Wallenius method for all categories of GO terms 
-    GO.wall<-goseq(pwf, ID.vector, gene2cat=GO.terms, test.cats=c("GO:BP"), method="Wallenius", use_genes_without_cat=TRUE)
+    GO.wall<-goseq(pwf, gene2cat=GO.terms, test.cats=c("GO:BP"), method="Wallenius", use_genes_without_cat=TRUE)
 
     GO <- GO.wall[order(GO.wall$over_represented_pvalue),]
     colnames(GO)[1] <- "GOterm"
