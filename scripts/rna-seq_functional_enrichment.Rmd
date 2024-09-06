@@ -36,7 +36,7 @@ if ("rtracklayer" %in% rownames(installed.packages()) == 'FALSE') BiocManager::i
 if ("GenomicRanges" %in% rownames(installed.packages()) == 'FALSE') BiocManager::install("GenomicRanges")
 if ("plyranges" %in% rownames(installed.packages()) == 'FALSE') BiocManager::install("plyranges")
 if ("GSEABase" %in% rownames(installed.packages()) == 'FALSE') BiocManager::install("GSEABase")
-if ("GOSim" %in% rownames(installed.packages()) == 'FALSE') BiocManager::install("GOSim")
+#if ("GOSim" %in% rownames(installed.packages()) == 'FALSE') BiocManager::install("GOSim")
 if ("stats" %in% rownames(installed.packages()) == 'FALSE') install.packages("stats")
 if ("ggdendro" %in% rownames(installed.packages()) == 'FALSE') BiocManager::install("ggdendro")
 if ("GO.db" %in% rownames(installed.packages()) == 'FALSE') BiocManager::install("GO.db")
@@ -61,7 +61,7 @@ library("rtracklayer")
 library("GenomicRanges")
 library("plyranges")
 library("GSEABase")
-library("GOSim")
+#library("GOSim")
 library("stats")
 library("ggdendro")
 library("GO.db")
@@ -332,7 +332,7 @@ temp_contrasts<-c("30vs27", "33vs27", "33vs30")
 
 Conduct functional enrichment for each contrast using goseq and rrvgo. Compare against all genes detected in the dataset. I am choosing to compare against genes in our dataset because we are looking at one developmental stage (larvae). Therefore, I do not want to conduct enrichment of all genes in the genome because many functions including calcification and gametogenesis do not apply to the biological function of larvae.  
 
-Conduct at biological process level. Filter for adjusted p-value <0.05.  
+Conduct at biological process level. Filter for FDR adjusted p-value <0.05.  
 ```{r}
 for (temp in temp_contrasts) {
   
@@ -734,7 +734,7 @@ parent_down_list<-parent_DEG_list%>%
 
 dim(parent_down_list)
 ```
-601 total genes with 236 up regulated and 365 down regulated. We are keeping all contrasts in these lists and we will run a loop to conduct enrichment for each contrast.    
+1549 up regulated and 1816 down regulated. We are keeping all contrasts in these lists and we will run a loop to conduct enrichment for each contrast.    
 
 ## Conduct enrichment for up regulated genes 
 
@@ -746,7 +746,7 @@ parent_contrasts<-c("BvsWT", "NBvsWT", "NBvsB")
 ```
 Conduct functional enrichment for each contrast using goseq and rrvgo. Compare against all genes detected in the dataset. I am choosing to compare against genes in our dataset because we are looking at one developmental stage (larvae). Therefore, I do not want to conduct enrichment of all genes in the genome because many functions including calcification and gametogenesis do not apply to the biological function of larvae.  
 
-Conduct at biological process level. Filter for adjusted p-value <0.05 because we have a lot of DEGs.  
+Conduct at biological process level. Filter for adjusted p-value <0.05.  
 ```{r}
 for (parent in parent_contrasts) {
   
@@ -779,7 +779,7 @@ for (parent in parent_contrasts) {
     pwf<-nullp(gene.vector, bias.data=LENGTH.vector) 
     
     #run goseq using Wallenius method for all categories of GO terms 
-    GO.wall<-goseq(pwf, gene2cat=GO.terms, test.cats=c("GO:BP"), method="Wallenius", use_genes_without_cat=TRUE)
+    GO.wall<-goseq(pwf, gene2cat=GO.terms, test.cats=c("GO:BP"), method="Wallenius", use_genes_without_cat=FALSE)
 
     GO <- GO.wall[order(GO.wall$over_represented_pvalue),]
     colnames(GO)[1] <- "GOterm"
@@ -797,7 +797,6 @@ for (parent in parent_contrasts) {
     
 }
 ```
-Only B vs NB has significant GO term enrichment.  
 
 Create an empty dataframe to populate (only do this once).  
 
@@ -807,7 +806,7 @@ parent_go_results <- data.frame()
 
 Run a loop to filter enrichment for each temperature contrast using rrvgo. 
 ```{r}
-parent_contrasts<-c("NBvsB")
+parent_contrasts<-c("NBvsB", "NBvsWT", "BvsWT")
 
 for (parent in parent_contrasts) {
 
@@ -852,9 +851,7 @@ for (parent in parent_contrasts) {
 ```{r}
 length(unique(parent_go_results$GOterm))
 ```
-3 total enriched GO terms.  
-
-There won't be NB vs WT or B vs WT comparison here, there are no enriched GO terms for this comparison that are upregulated.  
+15 total enriched GO terms.  
 
 ## Conduct enrichment for down regulated genes 
 
@@ -897,7 +894,7 @@ for (parent in parent_contrasts) {
     pwf<-nullp(gene.vector, bias.data=LENGTH.vector) 
     
     #run goseq using Wallenius method for all categories of GO terms 
-    GO.wall<-goseq(pwf, gene2cat=GO.terms, test.cats=c("GO:BP"), method="Wallenius", use_genes_without_cat=TRUE)
+    GO.wall<-goseq(pwf, gene2cat=GO.terms, test.cats=c("GO:BP"), method="Wallenius", use_genes_without_cat=FALSE)
 
     GO <- GO.wall[order(GO.wall$over_represented_pvalue),]
     colnames(GO)[1] <- "GOterm"
@@ -963,7 +960,7 @@ for (parent in parent_contrasts) {
 ```{r}
 length(unique(parent_go_results$GOterm))
 ```
-There are now 3 enriched GO terms (3 were upregulated, same 3 down regulated in diff group). 
+There are now 68 enriched GO terms (3 were upregulated, same 3 down regulated in diff group). 
 
 ## Plot enrichment for up and down regulated genes for each contrast 
 
@@ -971,11 +968,11 @@ Upregulated genes
 ```{r}
 parent_go_plot_up <- parent_go_results %>% 
   filter(direction=="upregulated")%>%
-  dplyr::arrange(over_represented_pvalue) %>%
+  dplyr::arrange(bh_adjust) %>%
   mutate(percHits=(numDEInCat/numInCat)*100)%>%
   
-  ggplot(aes(x=contrast, y=term, colour=over_represented_pvalue, size=percHits, fill=over_represented_pvalue)) +
-  facet_grid(ParentTerm ~ ., scales="free", labeller = label_wrap_gen(multi_line = TRUE))+
+  ggplot(aes(x=contrast, y=term, colour=bh_adjust, size=percHits)) +
+  facet_grid(ParentTerm ~ ., scales="free", labeller = label_wrap_gen(multi_line = TRUE), space="free")+
   geom_point()+
   scale_colour_gradientn(colours = colorspace::heat_hcl(7))+
   scale_size(name="Hits (%)", range = c(1, 5))+
@@ -996,11 +993,11 @@ Downregulated genes
 ```{r}
 parent_go_plot_down <- parent_go_results %>% 
   filter(direction=="downregulated")%>%
-  dplyr::arrange(over_represented_pvalue) %>%
+  dplyr::arrange(bh_adjust) %>%
   mutate(percHits=(numDEInCat/numInCat)*100)%>%
   
-  ggplot(aes(x=contrast, y=term, colour=over_represented_pvalue, size=percHits)) +
-  facet_grid(ParentTerm ~ ., scales="free", labeller = label_wrap_gen(multi_line = TRUE))+
+  ggplot(aes(x=contrast, y=term, colour=bh_adjust, size=percHits)) +
+  facet_grid(ParentTerm ~ ., scales="free", space="free", labeller = label_wrap_gen(multi_line = TRUE))+
   geom_point()+
   scale_colour_gradientn(colours = colorspace::heat_hcl(7))+
   scale_size(name="Hits (%)", range = c(1, 5))+
@@ -1024,7 +1021,7 @@ parent_go_plot_parentA<-parent_go_results%>%
   mutate(percHits=(numDEInCat/numInCat)*100)%>%
   
   ggplot(aes(x=contrast, y=term, colour=direction)) +
-  facet_grid(~ direction, scales="free_y", labeller = label_wrap_gen(width = 2, multi_line = TRUE))+
+  #facet_grid(~ direction, scales="free_y", space="free", labeller = label_wrap_gen(width = 2, multi_line = TRUE))+
   geom_point(aes(size=percHits))+
   scale_size(name="Num. GO Terms", breaks=c(2,10,20,50,80), range = c(1, 5))+
   scale_colour_manual(values=c("blue", "red"))+
@@ -1042,7 +1039,7 @@ parent_go_plot_parentA<-parent_go_results%>%
       panel_border(color="black"); parent_go_plot_parentA
 
 
-ggsave(plot=parent_go_plot_parentA, "figures/rna_seq/functional_enrichment/parent_GO_parent.png", height=6, width=8, limitsize=FALSE)
+ggsave(plot=parent_go_plot_parentA, "figures/rna_seq/functional_enrichment/parent_GO_parent.png", height=10, width=8, limitsize=FALSE)
 ```
 
 # Interaction DEGs 
@@ -1080,7 +1077,7 @@ interaction_deg_FC <- interaction_DEG_list %>%
         plot.title = element_text(size = 14, face = "bold"))+
   ggtitle('Fold Change: Parent DEGs at 30-33°C'); interaction_deg_FC
 
-ggsave(plot=interaction_deg_FC, "figures/rna_seq/functional_enrichment/interaction_DEG_foldchange.png", height=8, width=14)
+ggsave(plot=interaction_deg_FC, "figures/rna_seq/functional_enrichment/interaction_DEG_foldchange.png", height=12, width=14)
 ```
 
 ## Prepare up and down regulated dataframes 
@@ -1098,7 +1095,7 @@ interaction_down_list<-interaction_DEG_list%>%
 
 dim(interaction_down_list)
 ```
-56 total genes with 30 up regulated and 26 down regulated. We are keeping all contrasts in these lists and we will run a loop to conduct enrichment for each contrast.    
+37 up regulated and 65 down regulated. We are keeping all contrasts in these lists and we will run a loop to conduct enrichment for each contrast.    
 
 ## Conduct enrichment for up regulated genes 
 
@@ -1110,7 +1107,7 @@ interaction_contrasts<-c("NBvsB_30C", "NBvsB_33C")
 ```
 Conduct functional enrichment for each contrast using goseq and rrvgo. Compare against all genes detected in the dataset. I am choosing to compare against genes in our dataset because we are looking at one developmental stage (larvae). Therefore, I do not want to conduct enrichment of all genes in the genome because many functions including calcification and gametogenesis do not apply to the biological function of larvae.  
 
-Conduct at biological process level. Filter for adjusted p-value <0.01 because we have a lot of DEGs.  
+Conduct at biological process level.   
 ```{r}
 for (interaction in interaction_contrasts) {
   
@@ -1143,7 +1140,7 @@ for (interaction in interaction_contrasts) {
     pwf<-nullp(gene.vector, bias.data=LENGTH.vector) 
     
     #run goseq using Wallenius method for all categories of GO terms 
-    GO.wall<-goseq(pwf, gene2cat=GO.terms, test.cats=c("GO:BP"), method="Wallenius", use_genes_without_cat=TRUE)
+    GO.wall<-goseq(pwf, gene2cat=GO.terms, test.cats=c("GO:BP"), method="Wallenius", use_genes_without_cat=FALSE)
 
     GO <- GO.wall[order(GO.wall$over_represented_pvalue),]
     colnames(GO)[1] <- "GOterm"
@@ -1260,7 +1257,7 @@ for (interaction in interaction_contrasts) {
     pwf<-nullp(gene.vector, bias.data=LENGTH.vector) 
     
     #run goseq using Wallenius method for all categories of GO terms 
-    GO.wall<-goseq(pwf, gene2cat=GO.terms, test.cats=c("GO:BP"), method="Wallenius", use_genes_without_cat=TRUE)
+    GO.wall<-goseq(pwf, gene2cat=GO.terms, test.cats=c("GO:BP"), method="Wallenius", use_genes_without_cat=FALSE)
 
     GO <- GO.wall[order(GO.wall$over_represented_pvalue),]
     colnames(GO)[1] <- "GOterm"
@@ -1268,7 +1265,7 @@ for (interaction in interaction_contrasts) {
     #adjust p-values 
     GO$bh_adjust <-  p.adjust(GO$over_represented_pvalue, method="BH") #add adjusted p-values
   
-    #Filtering for p < 0.01
+    #Filtering for p < 0.05
     GO <- GO %>%
         dplyr::filter(bh_adjust<0.05) %>%
         dplyr::arrange(., ontology, bh_adjust)
@@ -1278,11 +1275,10 @@ for (interaction in interaction_contrasts) {
     
 }
 ```
-Only enriched go terms for NB vs B at 33°C. 
 
 Run a loop to filter enrichment for each temperature contrast using rrvgo.   
 ```{r}
-interaction_contrasts<-c("NBvsB_33C")
+interaction_contrasts<-c("NBvsB_30C", "NBvsB_33C")
 
 for (interaction in interaction_contrasts) {
 
@@ -1327,7 +1323,7 @@ for (interaction in interaction_contrasts) {
 ```{r}
 length(unique(interaction_go_results$GOterm))
 ```
-There are now 3 enriched GO terms (0 were upregulated, leaving 3 downregulated). 
+There are 0 enriched GO terms.
 
 ## Plot enrichment for up and down regulated genes for each contrast 
 

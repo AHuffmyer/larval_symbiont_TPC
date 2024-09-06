@@ -19,20 +19,20 @@ options(stringsAsFactors = FALSE) #Set Strings to character
 Load required libraries.  
 
 ```{r}
-if ("tidyverse" %in% rownames(installed.packages()) == 'FALSE') install.packages('tidyverse') 
-if ("genefilter" %in% rownames(installed.packages()) == 'FALSE') install.packages('genefilter') 
-if ("DESeq2" %in% rownames(installed.packages()) == 'FALSE') install.packages('DESeq2') 
-if ("RColorBrewer" %in% rownames(installed.packages()) == 'FALSE') install.packages('RColorBrewer') 
-if ("WGCNA" %in% rownames(installed.packages()) == 'FALSE') install.packages('WGCNA') 
-if ("flashClust" %in% rownames(installed.packages()) == 'FALSE') install.packages('flashClust') 
-if ("gridExtra" %in% rownames(installed.packages()) == 'FALSE') install.packages('gridExtra') 
-if ("ComplexHeatmap" %in% rownames(installed.packages()) == 'FALSE') install.packages('ComplexHeatmap') 
-if ("goseq" %in% rownames(installed.packages()) == 'FALSE') install.packages('goseq') 
-if ("dplyr" %in% rownames(installed.packages()) == 'FALSE') install.packages('dplyr') 
-if ("clusterProfiler" %in% rownames(installed.packages()) == 'FALSE') install.packages('clusterProfiler') 
-if ("pheatmap" %in% rownames(installed.packages()) == 'FALSE') install.packages('pheatmap') 
-if ("magrittr" %in% rownames(installed.packages()) == 'FALSE') install.packages('magrittr') 
-if ("vegan" %in% rownames(installed.packages()) == 'FALSE') install.packages('vegan') 
+#if ("tidyverse" %in% rownames(installed.packages()) == 'FALSE') install.packages('tidyverse') 
+#if ("genefilter" %in% rownames(installed.packages()) == 'FALSE') install.packages('genefilter') 
+#if ("DESeq2" %in% rownames(installed.packages()) == 'FALSE') install.packages('DESeq2') 
+#if ("RColorBrewer" %in% rownames(installed.packages()) == 'FALSE') install.packages('RColorBrewer') 
+#if ("WGCNA" %in% rownames(installed.packages()) == 'FALSE') install.packages('WGCNA') 
+#if ("flashClust" %in% rownames(installed.packages()) == 'FALSE') install.packages('flashClust') 
+#if ("gridExtra" %in% rownames(installed.packages()) == 'FALSE') install.packages('gridExtra') 
+#if ("ComplexHeatmap" %in% rownames(installed.packages()) == 'FALSE') install.packages('ComplexHeatmap') 
+#if ("goseq" %in% rownames(installed.packages()) == 'FALSE') install.packages('goseq') 
+#if ("dplyr" %in% rownames(installed.packages()) == 'FALSE') install.packages('dplyr') 
+#if ("clusterProfiler" %in% rownames(installed.packages()) == 'FALSE') install.packages('clusterProfiler') 
+#if ("pheatmap" %in% rownames(installed.packages()) == 'FALSE') install.packages('pheatmap') 
+#if ("magrittr" %in% rownames(installed.packages()) == 'FALSE') install.packages('magrittr') 
+#if ("vegan" %in% rownames(installed.packages()) == 'FALSE') install.packages('vegan') 
 
 #BiocManager::install('apeglm')
 #BiocManager::install('EnhancedVolcano')
@@ -51,7 +51,7 @@ library("clusterProfiler")
 library("pheatmap")
 library("magrittr")
 library("vegan")
-library("apeglm")
+#library("apeglm")
 library("EnhancedVolcano")
 library("cowplot")
 library("viridis")
@@ -65,7 +65,7 @@ Import the data files.
 
 ```{r}
 #load metadata sheet with sample name and developmental stage information
-metadata <- read.csv("data/rna_seq/sample_rnaseq_metadata.csv", header = TRUE, sep = ",")%>%select(sample, temperature, parent, symbiont, phenotype)
+metadata <- read.csv("data/rna_seq/sample_rnaseq_metadata.csv", header = TRUE, sep = ",")%>%dplyr::select(sample, temperature, parent, symbiont, phenotype)
 metadata$code<-paste0(metadata$temperature, "_", metadata$parent)
 head(metadata)
 
@@ -82,7 +82,7 @@ dim(gcount)
 gcount<-gcount %>%
      mutate(Total = rowSums(.[, 1:54]))%>%
     filter(!Total==0)%>%
-    select(!Total)
+    dplyr::select(!Total)
 
 dim(gcount)
 ```
@@ -96,7 +96,7 @@ Conduct data filtering, this includes:
 Filter in the package "genefilter". Pre-filtering our dataset to reduce the memory size dataframe, increase the speed of the transformation and testing functions, and improve quality of statistical analysis by removing low-coverage counts. Removed counts could represent outliers in the data and removing these improves sensitivity of statistical tests.
 
 ```{r}
-filt <- filterfun(pOverA(0.1,11))
+filt <- filterfun(pOverA(0.1,10))
 
 #create filter for the counts data
 gfilt <- genefilter(gcount, filt)
@@ -115,7 +115,7 @@ nrow(gcount) #Before
 nrow(gcount_filt) #After
 ```
 
-Before filtering, we had approximately 44,690 genes. After filtering for pOverA, we have approximately 24,005 genes. This indicates that there were 24,005 genes present in 10% of samples at <10 counts per gene.  
+Before filtering, we had approximately 44,690 genes. After filtering for pOverA, we have approximately 24,464 genes. This indicates that there were 24,464 genes present in 10% of samples at <10 counts per gene. 6/54 = 0.11, so I selected 10% filter because I want to keep genes that are uniquely expressed in one treatment group (n=6 out of 54).  
 
 Prepare sample names. Keep R and any numbers following R in the colnames of gcount_filt.  
 
@@ -276,11 +276,11 @@ library(vegan)
 library(factoextra)
 
 dim(test)
-scaled_test <-prcomp(test[c(1:24005)], scale=TRUE, center=TRUE)
+scaled_test <-prcomp(test[c(1:24464)], scale=TRUE, center=TRUE)
 fviz_eig(scaled_test)
 
 # scale data
-vegan <- scale(test[c(1:24005)])
+vegan <- scale(test[c(1:24464)])
 
 # PerMANOVA 
 permanova<-adonis2(vegan ~ parent*temperature, data = test, method='eu')
@@ -294,11 +294,11 @@ Number of permutations: 999
 
 adonis2(formula = vegan ~ parent * temperature, data = test, method = "eu")
                    Df SumOfSqs      R2      F Pr(>F)    
-parent              2   154649 0.12156 4.4308  0.001 ***
-temperature         2   253981 0.19965 7.2767  0.001 ***
-parent:temperature  4    78208 0.06148 1.1204  0.182    
-Residual           45   785321 0.61731                  
-Total              53  1272159 1.00000 
+parent              2   156619 0.12079 4.3807  0.001 ***
+temperature         2   255656 0.19718 7.1508  0.001 ***
+parent:temperature  4    79895 0.06162 1.1174  0.189    
+Residual           45   804421 0.62041                  
+Total              53  1296592 1.00000   
 
 Gene expression is significantly different between temperature and parent, no interactive effect detected.  
 
@@ -319,7 +319,7 @@ allgenesfilt_PCA <- ggplot(gPCAdata, aes(PC1, PC2, color=parent, shape=temperatu
   scale_shape_manual(name="Temperature", values=c(19,17,15))+
   geom_text(x=0, y=10, label="p[Parent]=0.001", color="black")+
   geom_text(x=0, y=8.5, label="p[Temperature]=0.001", color="black")+
-  geom_text(x=0, y=7, label="p[Interaction]=0.182", color="darkgray")+
+  geom_text(x=0, y=7, label="p[Interaction]=0.189", color="darkgray")+
   theme_classic() + #Set background color
   theme(panel.border = element_blank(), # Set border
                      #panel.grid.major = element_blank(), #Set major gridlines 
@@ -558,7 +558,7 @@ adonis2(formula = vegan_DEG_temp ~ parent * temperature, data = test_DEG_temp, m
                    Df SumOfSqs      R2       F Pr(>F)    
 parent              2     3587 0.07231  5.4969  0.002 ** 
 temperature         2    29516 0.59498 45.2292  0.001 ***
-parent:temperature  4     1822 0.03672  1.3958  0.183    
+parent:temperature  4     1822 0.03672  1.3958  0.172    
 Residual           45    14683 0.29598                   
 Total              53    49608 1.00000                   
 
@@ -606,8 +606,8 @@ resultsNames(DEG_P)
 #The interaction terms temperature33.parentBleached and temperature33.parentNonbleached give the difference between the parental effect for a given temperature and the parental effect for the reference parent (Wildtype)
 
 BvsWT_deg<-results(DEG_P, contrast=c("parent","Bleached","Wildtype"))
-BvsWT_deg <- as.data.frame(subset(BvsWT_deg, padj<0.01))
-BvsWT_deg <- as.data.frame(subset(BvsWT_deg, abs(log2FoldChange)>1.5))
+BvsWT_deg <- as.data.frame(subset(BvsWT_deg, padj<0.05))
+#BvsWT_deg <- as.data.frame(subset(BvsWT_deg, abs(log2FoldChange)>1.5))
 BvsWT_deg$contrast <- c("BvsWT")
 BvsWT_deg$gene <- rownames(BvsWT_deg)
 rownames(BvsWT_deg) <- NULL
@@ -615,8 +615,8 @@ rownames(BvsWT_deg) <- NULL
 dim(BvsWT_deg)
 
 NBvsWT_deg<-results(DEG_P, contrast=c("parent","Nonbleached","Wildtype"))
-NBvsWT_deg <- as.data.frame(subset(NBvsWT_deg, padj<0.01))
-NBvsWT_deg <- as.data.frame(subset(NBvsWT_deg, abs(log2FoldChange)>1.5))
+NBvsWT_deg <- as.data.frame(subset(NBvsWT_deg, padj<0.05))
+#NBvsWT_deg <- as.data.frame(subset(NBvsWT_deg, abs(log2FoldChange)>1.5))
 NBvsWT_deg$contrast <- c("NBvsWT")
 NBvsWT_deg$gene <- rownames(NBvsWT_deg)
 rownames(NBvsWT_deg) <- NULL
@@ -624,15 +624,15 @@ rownames(NBvsWT_deg) <- NULL
 dim(NBvsWT_deg)
 
 NBvsB_deg<-results(DEG_P, contrast=c("parent","Nonbleached","Bleached"))
-NBvsB_deg <- as.data.frame(subset(NBvsB_deg, padj<0.01))
-NBvsB_deg <- as.data.frame(subset(NBvsB_deg, abs(log2FoldChange)>1.5))
+NBvsB_deg <- as.data.frame(subset(NBvsB_deg, padj<0.05))
+#NBvsB_deg <- as.data.frame(subset(NBvsB_deg, abs(log2FoldChange)>1.5))
 NBvsB_deg$contrast <- c("NBvsB")
 NBvsB_deg$gene <- rownames(NBvsB_deg)
 rownames(NBvsB_deg) <- NULL
 
 dim(NBvsB_deg)
 ```
-There are 207 genes differentially expressed between bleached and wildtype. There are 112 genes differentially expressed between nonbleached and wildtype. There are 282 genes differentially expressed between nonbleached and bleached. In these contrasts, positive fold changes indicate higher expression in the first listed contrast.  
+There are 1109 genes differentially expressed between bleached and wildtype. There are 1174 genes differentially expressed between nonbleached and wildtype. There are 1082 genes differentially expressed between nonbleached and bleached. In these contrasts, positive fold changes indicate higher expression in the first listed contrast.  
 
 Combine this list of DEGs into one dataframe. 
 
@@ -641,7 +641,7 @@ DEG_parent<-rbind(BvsWT_deg, NBvsWT_deg, NBvsB_deg)
 dim(DEG_parent)
 length(unique(DEG_parent$gene))
 ```
-There are 601 total genes and 432 unique genes, indicating that some are shared in the contrasts. 
+There are 3365 total DEGs and 2369 unique genes, indicating that some are shared in the contrasts. 
 
 Get a VST normalized gene count matrix for these DEGs. 
 ```{r}
@@ -780,11 +780,11 @@ Build PERMANOVA model for DEG's that are different between temperatures.
 ```{r}
 dim(test_DEG_parent)
 
-scaled_test_DEG_parent <-prcomp(test_DEG_parent[c(1:432)], scale=TRUE, center=TRUE)
+scaled_test_DEG_parent <-prcomp(test_DEG_parent[c(1:2369)], scale=TRUE, center=TRUE)
 fviz_eig(scaled_test_DEG_parent)
 
 # scale data
-vegan_DEG_parent <- scale(test_DEG_parent[c(1:432)])
+vegan_DEG_parent <- scale(test_DEG_parent[c(1:2369)])
 
 # PerMANOVA 
 permanova_DEG_parent<-adonis2(vegan_DEG_parent ~ parent*temperature, data = test_DEG_parent, method='eu')
@@ -799,11 +799,11 @@ Number of permutations: 999
 
 adonis2(formula = vegan_DEG_parent ~ parent * temperature, data = test_DEG_parent, method = "eu")
                    Df SumOfSqs      R2       F Pr(>F)    
-parent              2  11344.8 0.49549 35.8707  0.001 ***
-temperature         2   3117.4 0.13615  9.8567  0.001 ***
-parent:temperature  4   1317.8 0.05756  2.0834  0.010 ** 
-Residual           45   7116.0 0.31080                   
-Total              53  22896.0 1.00000                
+parent              2    45111 0.35928 23.0004  0.001 ***
+temperature         2    29910 0.23822 15.2503  0.001 ***
+parent:temperature  4     6407 0.05103  1.6333  0.011 *  
+Residual           45    44129 0.35147                   
+Total              53   125557 1.00000            
 
 Parent is significant as expected because we are analyzing parental DEGs. There are still temperature effects, which also makes sense because there was such a strong temperature effect on global expression. Interestingly, there is a parent x temperature interaction, indicating response to temperature is mediated by parental phenotype. We will look into this more next.   
 
@@ -821,7 +821,7 @@ DEG_PCA_parent <- ggplot(gPCAdata_DEG_parent, aes(PC1, PC2, color=parent, shape=
   scale_shape_manual(name="Temperature", values=c(19,17,15))+
   geom_text(x=0, y=10, label="p[Parent]=0.001", color="black")+
   geom_text(x=0, y=8, label="p[Temperature]=0.001", color="black")+
-  geom_text(x=0, y=6, label="p[Interaction]=0.010", color="black")+
+  geom_text(x=0, y=6, label="p[Interaction]=0.011", color="black")+
   theme_classic() + #Set background color
   theme(panel.border = element_blank(), # Set border
                      #panel.grid.major = element_blank(), #Set major gridlines 
@@ -856,7 +856,7 @@ resultsNames(DEG_I)
 
 NBvsB_30_deg<-results(DEG_I, contrast=list("temperature30.parentNonbleached", "temperature30.parentBleached"))
 NBvsB_30_deg <- as.data.frame(subset(NBvsB_30_deg, padj<0.05))
-NBvsB_30_deg <- as.data.frame(subset(NBvsB_30_deg, abs(log2FoldChange)>1))
+#NBvsB_30_deg <- as.data.frame(subset(NBvsB_30_deg, abs(log2FoldChange)>1))
 NBvsB_30_deg$contrast <- c("NBvsB_30C")
 NBvsB_30_deg$gene <- rownames(NBvsB_30_deg)
 rownames(NBvsB_30_deg) <- NULL
@@ -865,7 +865,7 @@ dim(NBvsB_30_deg)
 
 NBvsB_33_deg<-results(DEG_I, contrast=list("temperature33.parentNonbleached", "temperature33.parentBleached"))
 NBvsB_33_deg <- as.data.frame(subset(NBvsB_33_deg, padj<0.05))
-NBvsB_33_deg <- as.data.frame(subset(NBvsB_33_deg, abs(log2FoldChange)>1))
+#NBvsB_33_deg <- as.data.frame(subset(NBvsB_33_deg, abs(log2FoldChange)>1))
 NBvsB_33_deg$contrast <- c("NBvsB_33C")
 NBvsB_33_deg$gene <- rownames(NBvsB_33_deg)
 rownames(NBvsB_33_deg) <- NULL
@@ -873,7 +873,7 @@ rownames(NBvsB_33_deg) <- NULL
 dim(NBvsB_33_deg)
 ```
 
-There are 7 DEGs between NB and B at 30°C. There are 49 at 33°C. In these contrasts, positive fold changes indicate higher expression in the first listed contrast - in this case, Nonbleached samples.  
+There are 7 DEGs between NB and B at 30°C. There are 95 at 33°C. In these contrasts, positive fold changes indicate higher expression in the first listed contrast - in this case, Nonbleached samples.  
 
 Combine this list of DEGs into one dataframe. 
 
@@ -882,7 +882,7 @@ DEG_interaction<-rbind(NBvsB_30_deg, NBvsB_33_deg)
 dim(DEG_interaction)
 length(unique(DEG_interaction$gene))
 ```
-There are 56 total genes and 55 unique genes, indicating that only one is shared between 30°C and 33°C.   
+There are 102 total genes and 101 unique genes, indicating that only one is shared between 30°C and 33°C.   
 
 ```{r}
 #DEG_interaction_unique <- anti_join(DEG_interaction, DEG_parent, by = "gene")
@@ -893,7 +893,7 @@ dim(DEG_interaction_unique)
 str(DEG_interaction_unique)
 length(unique(DEG_interaction_unique$gene))
 ```
-There are 55 genes that are uniquely differentially expressed between NB and B at elevated temperature (30 or 33°C). 
+There are 101 genes that are uniquely differentially expressed between NB and B at elevated temperature (30 or 33°C). 
 
 Get a VST normalized gene count matrix for these DEGs. 
 ```{r}
@@ -938,7 +938,7 @@ volcano_plot_NBvsB_30C<-EnhancedVolcano(res,
     y = 'pvalue',
     title = 'Nonbleached vs Bleached at 30°C',
     pCutoff = 0.05,
-    FCcutoff = 1,
+    FCcutoff = 0,
     pointSize = 3.0,
     labSize = 0.0, 
     legendPosition = 'none');volcano_plot_NBvsB_30C
@@ -954,7 +954,7 @@ volcano_plot_NBvsB_33C<-EnhancedVolcano(res,
     y = 'pvalue',
     title = 'Nonbleached vs Bleached at 33°C',
     pCutoff = 0.05,
-    FCcutoff = 1,
+    FCcutoff = 0,
     pointSize = 3.0,
     labSize = 0.0, 
     legendPosition = 'none');volcano_plot_NBvsB_33C
@@ -989,7 +989,7 @@ ann_colors = list(
 
 Plot heatmap.  
 ```{r}
-pdf("figures/rna_seq/DEG_heatmap_interaction.pdf", width=9, height=5)
+pdf("figures/rna_seq/DEG_heatmap_interaction.pdf", width=6, height=8)
 pheatmap(assay(DEG_interaction_vst), cluster_rows=TRUE, show_rownames=FALSE, color=inferno(10), show_colnames=TRUE, fontsize_row=3, scale="row", cluster_cols=TRUE, annotation_col=df, annotation_colors = ann_colors, labels_col=legend_names_col)
 dev.off()
 ```
@@ -1013,11 +1013,11 @@ Build PERMANOVA model for DEG's that are different between NB and B at 30°C
 ```{r}
 dim(test_DEG_interaction)
 
-scaled_test_DEG_interaction <-prcomp(test_DEG_interaction[c(1:55)], scale=TRUE, center=TRUE)
+scaled_test_DEG_interaction <-prcomp(test_DEG_interaction[c(1:101)], scale=TRUE, center=TRUE)
 fviz_eig(scaled_test_DEG_interaction)
 
 # scale data
-vegan_DEG_interaction <- scale(test_DEG_interaction[c(1:55)])
+vegan_DEG_interaction <- scale(test_DEG_interaction[c(1:101)])
 
 # PerMANOVA 
 permanova_DEG_interaction<-adonis2(vegan_DEG_interaction ~ parent*temperature, data = test_DEG_interaction, method='eu')
@@ -1032,11 +1032,11 @@ Number of permutations: 999
 
 adonis2(formula = vegan_DEG_interaction ~ parent * temperature, data = test_DEG_interaction, method = "eu")
                    Df SumOfSqs      R2       F Pr(>F)    
-parent              2   586.68 0.20126 11.5799  0.001 ***
-temperature         2   731.82 0.25105 14.4448  0.001 ***
-parent:temperature  4   456.57 0.15663  4.5059  0.001 ***
-Residual           45  1139.93 0.39106                   
-Total              53  2915.00 1.00000                   
+parent              2   1191.5 0.22259 16.4227  0.001 ***
+temperature         2   1917.5 0.35821 26.4290  0.001 ***
+parent:temperature  4    611.5 0.11424  4.2143  0.001 ***
+Residual           45   1632.4 0.30496                   
+Total              53   5353.0 1.00000                   
 
 Interaction is significant as expected. Strong parent and temperature effects are also present as expected.   
 
@@ -1078,7 +1078,7 @@ DEG_temperature_vst: Count matrix of genes from DEG list
 
 ```{r}
 deg_temperature_list<-DEG_temperature%>%
-  select(gene, everything())
+  dplyr::select(gene, everything())
 write_csv(deg_temperature_list, "output/rna_seq/temperature_deg_list.csv")
 
 dim(DEG_temperature_vst)
@@ -1087,7 +1087,7 @@ deg_temperature_counts<-as.data.frame(deg_temperature_counts)
 dim(deg_temperature_counts)
 deg_temperature_counts$sample<-rownames(deg_temperature_counts)
 deg_temperature_counts<-deg_temperature_counts%>%
-  select(sample, everything())
+  dplyr::select(sample, everything())
 write_csv(deg_temperature_counts, "output/rna_seq/temperature_deg_counts.csv")
 ```
 
@@ -1098,7 +1098,7 @@ DEG_parent_vst: Count matrix of genes from DEG list
 
 ```{r}
 deg_parent_list<-DEG_parent%>%
-  select(gene, everything())
+  dplyr::select(gene, everything())
 write_csv(deg_parent_list, "output/rna_seq/parent_deg_list.csv")
 
 dim(DEG_parent_vst)
@@ -1107,7 +1107,7 @@ deg_parent_counts<-as.data.frame(deg_parent_counts)
 dim(deg_parent_counts)
 deg_parent_counts$sample<-rownames(deg_parent_counts)
 deg_parent_counts<-deg_parent_counts%>%
-  select(sample, everything())
+  dplyr::select(sample, everything())
 write_csv(deg_parent_counts, "output/rna_seq/parent_deg_counts.csv")
 ```
 
@@ -1119,7 +1119,7 @@ DEG_interaction_vst: Count matrix of genes from DEG list
 ```{r}
 dim(DEG_interaction_unique)
 deg_interaction_list<-DEG_interaction_unique%>%
-  select(gene, everything())
+  dplyr::select(gene, everything())
 write_csv(deg_interaction_list, "output/rna_seq/NBvsB_30-33_deg_list.csv")
 
 dim(DEG_interaction_vst)
@@ -1128,7 +1128,7 @@ deg_interaction_counts<-as.data.frame(deg_interaction_counts)
 dim(deg_interaction_counts)
 deg_interaction_counts$sample<-rownames(deg_interaction_counts)
 deg_interaction_counts<-deg_interaction_counts%>%
-  select(sample, everything())
+  dplyr::select(sample, everything())
 write_csv(deg_interaction_counts, "output/rna_seq/NBvsB_30-33_deg_counts.csv")
 ```
 
@@ -1143,7 +1143,7 @@ all_genes<-as.data.frame(all_genes)
 dim(all_genes)
 all_genes$sample<-rownames(all_genes)
 all_genes<-all_genes%>%
-  select(sample, everything())
+  dplyr::select(sample, everything())
 
 write_csv(file="output/rna_seq/all_genes.csv", all_genes)
 ```
