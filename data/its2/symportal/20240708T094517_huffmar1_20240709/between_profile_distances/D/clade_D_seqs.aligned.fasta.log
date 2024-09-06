@@ -1,0 +1,451 @@
+IQ-TREE multicore version 2.2.2.3 COVID-edition for Linux 64-bit built Apr  7 2023
+Developed by Bui Quang Minh, James Barbetti, Nguyen Lam Tung,
+Olga Chernomor, Heiko Schmidt, Dominik Schrempf, Michael Woodhams, Ly Trong Nhan.
+
+Host:    1e08f45738fd (AVX512, FMA3, 62 GB RAM)
+Command: iqtree -T AUTO --threads-max 2 -s /app/outputs/analyses/486/20240709T110145/between_profile_distances/D/clade_D_seqs.aligned.fasta
+Seed:    685362 (Using SPRNG - Scalable Parallel Random Number Generator)
+Time:    Tue Jul  9 06:02:09 2024
+Kernel:  AVX+FMA - auto-detect threads (36 CPU cores detected)
+
+Reading alignment file /app/outputs/analyses/486/20240709T110145/between_profile_distances/D/clade_D_seqs.aligned.fasta ... Fasta format detected
+Reading fasta file: done in 9.67979e-05 secs using 1.033% CPU
+Alignment most likely contains DNA/RNA sequences
+Constructing alignment: done in 0.000468969 secs using 43.07% CPU
+Alignment has 7 sequences with 261 columns, 11 distinct patterns
+5 parsimony-informative, 4 singleton sites, 252 constant sites
+      Gap/Ambiguity  Composition  p-value
+Analyzing sequences: done in 7.00951e-05 secs using 3079% CPU
+   1  933     0.00%    passed     99.27%
+   2  1768    0.00%    passed     98.78%
+   3  1674    0.00%    passed     99.81%
+   4  853     0.00%    passed     99.99%
+   5  854     0.00%    passed     99.88%
+   6  2582    0.00%    passed     96.55%
+   7  1660    0.00%    passed     99.13%
+****  TOTAL    0.00%  0 sequences failed composition chi2 test (p-value<5%; df=3)
+Checking for duplicate sequences: done in 6.41346e-05 secs using 3067% CPU
+
+
+Create initial parsimony tree by phylogenetic likelihood library (PLL)... 0.000 seconds
+Measuring multi-threading efficiency up to 2 CPU cores
+Increase to 10 rounds for branch lengths
+14099 trees examined
+Threads: 1 / Time: 2.000 sec / Speedup: 1.000 / Efficiency: 100% / LogL: -445
+WARNING: 2 threads for alignment length 11 will slow down analysis
+Threads: 2 / Time: 1.398 sec / Speedup: 1.430 / Efficiency: 72% / LogL: -445
+Determining AUTO threadcount: done in 3.39844 secs using 291.8% CPU
+BEST NUMBER OF THREADS: 2
+
+WARNING: 2 threads for alignment length 11 will slow down analysis
+Perform fast likelihood tree search using GTR+I+G model...
+Estimate model parameters (epsilon = 5.000)
+
+WARNING: Estimated model parameters are at boundary that can cause numerical instability!
+
+Perform nearest neighbor interchange...
+Optimizing NNI: done in 0.000198126 secs using 190.8% CPU
+Estimate model parameters (epsilon = 1.000)
+1. Initial log-likelihood: -415.549
+Optimal log-likelihood: -415.549
+Rate parameters:  A-C: 0.00010  A-G: 47.73861  A-T: 0.00010  C-G: 17.27418  C-T: 100.00000  G-T: 1.00000
+Warning! Some parameters hit the boundaries
+Base frequencies:  A: 0.178  C: 0.257  G: 0.246  T: 0.318
+Proportion of invariable sites: 0.482
+Gamma shape alpha: 0.117
+Parameters optimization took 1 rounds (0.000 sec)
+
+WARNING: Estimated model parameters are at boundary that can cause numerical instability!
+
+Time for fast ML tree search: 0.003 seconds
+
+NOTE: ModelFinder requires 0 MB RAM!
+ModelFinder will test up to 484 DNA models (sample size: 261) ...
+ No. Model         -LnL         df  AIC          AICc         BIC
+WARNING: 2 threads for alignment length 11 will slow down analysis
+  1  GTR+F         416.706      19  871.412      874.566      939.138
+WARNING: 2 threads for alignment length 11 will slow down analysis
+  2  GTR+F+I       415.546      20  871.093      874.593      942.383
+WARNING: 2 threads for alignment length 11 will slow down analysis
+  3  GTR+F+G4      415.683      20  871.366      874.866      942.657
+WARNING: 2 threads for alignment length 11 will slow down analysis
+  4  GTR+F+I+G4    415.552      21  873.104      876.971      947.959
+WARNING: 2 threads for alignment length 11 will slow down analysis
+  5  GTR+F+R2      416.369      21  874.738      878.604      949.593
+WARNING: 2 threads for alignment length 11 will slow down analysis
+  6  GTR+F+R3      416.195      23  878.391      883.049      960.375
+WARNING: 2 threads for alignment length 11 will slow down analysis
+ 14  GTR+F+I+R2    415.847      22  875.693      879.945      954.113
+WARNING: 2 threads for alignment length 11 will slow down analysis
+ 15  GTR+F+I+R3    415.766      24  879.533      884.618      965.081
+WARNING: 2 threads for alignment length 11 will slow down analysis
+ 23  SYM           422.310      16  876.619      878.849      933.651
+WARNING: 2 threads for alignment length 11 will slow down analysis
+ 24  SYM+I         421.135      17  876.269      878.788      936.866
+WARNING: 2 threads for alignment length 11 will slow down analysis
+ 25  SYM+G4        421.282      17  876.564      879.082      937.160
+WARNING: 2 threads for alignment length 11 will slow down analysis
+ 26  SYM+I+G4      421.142      18  878.284      881.111      942.446
+WARNING: 2 threads for alignment length 11 will slow down analysis
+ 45  TVM+F         417.047      18  870.093      872.920      934.255
+WARNING: 2 threads for alignment length 11 will slow down analysis
+ 46  TVM+F+I       415.934      19  869.868      873.022      937.594
+WARNING: 2 threads for alignment length 11 will slow down analysis
+ 47  TVM+F+G4      416.079      19  870.158      873.312      937.884
+WARNING: 2 threads for alignment length 11 will slow down analysis
+ 48  TVM+F+I+G4    415.942      20  871.884      875.384      943.175
+WARNING: 2 threads for alignment length 11 will slow down analysis
+ 67  TVMe          423.136      15  876.273      878.232      929.740
+WARNING: 2 threads for alignment length 11 will slow down analysis
+ 68  TVMe+I        421.968      16  875.935      878.165      932.967
+WARNING: 2 threads for alignment length 11 will slow down analysis
+ 69  TVMe+G4       422.117      16  876.233      878.463      933.266
+WARNING: 2 threads for alignment length 11 will slow down analysis
+ 70  TVMe+I+G4     421.968      17  877.936      880.455      938.533
+WARNING: 2 threads for alignment length 11 will slow down analysis
+ 89  TIM3+F        417.615      17  869.231      871.749      929.828
+WARNING: 2 threads for alignment length 11 will slow down analysis
+ 90  TIM3+F+I      416.505      18  869.010      871.836      933.171
+WARNING: 2 threads for alignment length 11 will slow down analysis
+ 91  TIM3+F+G4     416.625      18  869.251      872.077      933.412
+WARNING: 2 threads for alignment length 11 will slow down analysis
+ 92  TIM3+F+I+G4   416.513      19  871.025      874.179      938.751
+WARNING: 2 threads for alignment length 11 will slow down analysis
+111  TIM3e         423.757      14  875.514      877.222      925.418
+WARNING: 2 threads for alignment length 11 will slow down analysis
+112  TIM3e+I       422.604      15  875.207      877.166      928.675
+WARNING: 2 threads for alignment length 11 will slow down analysis
+113  TIM3e+G4      422.746      15  875.492      877.452      928.960
+WARNING: 2 threads for alignment length 11 will slow down analysis
+114  TIM3e+I+G4    422.607      16  877.215      879.444      934.247
+WARNING: 2 threads for alignment length 11 will slow down analysis
+133  TIM2+F        417.879      17  869.759      872.277      930.355
+WARNING: 2 threads for alignment length 11 will slow down analysis
+134  TIM2+F+I      416.748      18  869.496      872.322      933.657
+WARNING: 2 threads for alignment length 11 will slow down analysis
+135  TIM2+F+G4     416.879      18  869.757      872.584      933.919
+WARNING: 2 threads for alignment length 11 will slow down analysis
+136  TIM2+F+I+G4   416.754      19  871.509      874.662      939.235
+WARNING: 2 threads for alignment length 11 will slow down analysis
+155  TIM2e         423.092      14  874.185      875.892      924.088
+WARNING: 2 threads for alignment length 11 will slow down analysis
+156  TIM2e+I       421.807      15  873.613      875.572      927.081
+WARNING: 2 threads for alignment length 11 will slow down analysis
+157  TIM2e+G4      421.983      15  873.966      875.925      927.434
+WARNING: 2 threads for alignment length 11 will slow down analysis
+158  TIM2e+I+G4    421.858      16  875.716      877.945      932.748
+WARNING: 2 threads for alignment length 11 will slow down analysis
+177  TIM+F         417.385      17  868.770      871.288      929.367
+WARNING: 2 threads for alignment length 11 will slow down analysis
+178  TIM+F+I       416.247      18  868.493      871.320      932.655
+WARNING: 2 threads for alignment length 11 will slow down analysis
+179  TIM+F+G4      416.376      18  868.753      871.579      932.914
+WARNING: 2 threads for alignment length 11 will slow down analysis
+180  TIM+F+I+G4    416.255      19  870.511      873.664      938.237
+WARNING: 2 threads for alignment length 11 will slow down analysis
+199  TIMe          423.048      14  874.096      875.803      923.999
+WARNING: 2 threads for alignment length 11 will slow down analysis
+200  TIMe+I        421.890      15  873.779      875.739      927.247
+WARNING: 2 threads for alignment length 11 will slow down analysis
+201  TIMe+G4       422.029      15  874.058      876.017      927.526
+WARNING: 2 threads for alignment length 11 will slow down analysis
+202  TIMe+I+G4     421.896      16  875.793      878.022      932.825
+WARNING: 2 threads for alignment length 11 will slow down analysis
+221  TPM3u+F       417.631      16  867.262      869.492      924.295
+WARNING: 2 threads for alignment length 11 will slow down analysis
+222  TPM3u+F+I     416.526      17  867.052      869.570      927.649
+WARNING: 2 threads for alignment length 11 will slow down analysis
+223  TPM3u+F+G4    416.644      17  867.288      869.806      927.885
+WARNING: 2 threads for alignment length 11 will slow down analysis
+224  TPM3u+F+I+G4  416.534      18  869.068      871.894      933.229
+WARNING: 2 threads for alignment length 11 will slow down analysis
+243  TPM3          423.781      13  873.562      875.036      919.901
+WARNING: 2 threads for alignment length 11 will slow down analysis
+244  TPM3+I        422.631      14  873.263      874.970      923.166
+WARNING: 2 threads for alignment length 11 will slow down analysis
+245  TPM3+G4       422.772      14  873.545      875.252      923.448
+WARNING: 2 threads for alignment length 11 will slow down analysis
+246  TPM3+I+G4     422.635      15  875.271      877.230      928.739
+WARNING: 2 threads for alignment length 11 will slow down analysis
+265  TPM2u+F       417.864      16  867.728      869.958      924.760
+WARNING: 2 threads for alignment length 11 will slow down analysis
+266  TPM2u+F+I     416.734      17  867.468      869.987      928.065
+WARNING: 2 threads for alignment length 11 will slow down analysis
+267  TPM2u+F+G4    416.864      17  867.729      870.247      928.325
+WARNING: 2 threads for alignment length 11 will slow down analysis
+268  TPM2u+F+I+G4  416.740      18  869.480      872.307      933.642
+WARNING: 2 threads for alignment length 11 will slow down analysis
+287  TPM2          423.818      13  873.635      875.109      919.974
+WARNING: 2 threads for alignment length 11 will slow down analysis
+288  TPM2+I        422.637      14  873.275      874.982      923.178
+WARNING: 2 threads for alignment length 11 will slow down analysis
+289  TPM2+G4       422.791      14  873.581      875.288      923.484
+WARNING: 2 threads for alignment length 11 will slow down analysis
+290  TPM2+I+G4     422.650      15  875.299      877.258      928.767
+WARNING: 2 threads for alignment length 11 will slow down analysis
+309  K3Pu+F        417.720      16  867.440      869.669      924.472
+WARNING: 2 threads for alignment length 11 will slow down analysis
+310  K3Pu+F+I      416.625      17  867.249      869.768      927.846
+WARNING: 2 threads for alignment length 11 will slow down analysis
+311  K3Pu+F+G4     416.739      17  867.477      869.996      928.074
+WARNING: 2 threads for alignment length 11 will slow down analysis
+312  K3Pu+F+I+G4   416.632      18  869.264      872.090      933.425
+WARNING: 2 threads for alignment length 11 will slow down analysis
+331  K3P           423.841      13  873.682      875.155      920.020
+WARNING: 2 threads for alignment length 11 will slow down analysis
+332  K3P+I         422.695      14  873.389      875.097      923.293
+WARNING: 2 threads for alignment length 11 will slow down analysis
+333  K3P+G4        422.834      14  873.668      875.375      923.571
+WARNING: 2 threads for alignment length 11 will slow down analysis
+334  K3P+I+G4      422.698      15  875.396      877.356      928.864
+WARNING: 2 threads for alignment length 11 will slow down analysis
+353  TN+F          417.986      16  867.971      870.201      925.004
+WARNING: 2 threads for alignment length 11 will slow down analysis
+354  TN+F+I        416.818      17  867.636      870.155      928.233
+WARNING: 2 threads for alignment length 11 will slow down analysis
+355  TN+F+G4       416.963      17  867.926      870.445      928.523
+WARNING: 2 threads for alignment length 11 will slow down analysis
+356  TN+F+I+G4     416.825      18  869.650      872.476      933.811
+WARNING: 2 threads for alignment length 11 will slow down analysis
+375  TNe           423.616      13  873.232      874.706      919.571
+WARNING: 2 threads for alignment length 11 will slow down analysis
+376  TNe+I         422.429      14  872.858      874.566      922.762
+WARNING: 2 threads for alignment length 11 will slow down analysis
+377  TNe+G4        422.584      14  873.167      874.875      923.070
+WARNING: 2 threads for alignment length 11 will slow down analysis
+378  TNe+I+G4      422.434      15  874.868      876.828      928.336
+WARNING: 2 threads for alignment length 11 will slow down analysis
+397  HKY+F         418.338      15  866.676      868.635      920.143
+WARNING: 2 threads for alignment length 11 will slow down analysis
+398  HKY+F+I       417.222      16  866.443      868.673      923.476
+WARNING: 2 threads for alignment length 11 will slow down analysis
+399  HKY+F+G4      417.345      16  866.690      868.920      923.723
+WARNING: 2 threads for alignment length 11 will slow down analysis
+400  HKY+F+I+G4    417.227      17  868.455      870.973      929.052
+WARNING: 2 threads for alignment length 11 will slow down analysis
+419  K2P           424.441      12  872.881      874.139      915.655
+WARNING: 2 threads for alignment length 11 will slow down analysis
+420  K2P+I         423.271      13  872.542      874.016      918.881
+WARNING: 2 threads for alignment length 11 will slow down analysis
+421  K2P+G4        423.423      13  872.845      874.319      919.184
+WARNING: 2 threads for alignment length 11 will slow down analysis
+422  K2P+I+G4      423.274      14  874.548      876.255      924.451
+WARNING: 2 threads for alignment length 11 will slow down analysis
+441  F81+F         425.216      14  878.433      880.140      928.336
+WARNING: 2 threads for alignment length 11 will slow down analysis
+442  F81+F+I       424.009      15  878.017      879.976      931.485
+WARNING: 2 threads for alignment length 11 will slow down analysis
+443  F81+F+G4      424.180      15  878.359      880.319      931.827
+WARNING: 2 threads for alignment length 11 will slow down analysis
+444  F81+F+I+G4    424.010      16  880.021      882.250      937.053
+WARNING: 2 threads for alignment length 11 will slow down analysis
+463  JC            431.478      11  884.956      886.016      924.165
+WARNING: 2 threads for alignment length 11 will slow down analysis
+464  JC+I          430.275      12  884.550      885.808      927.324
+WARNING: 2 threads for alignment length 11 will slow down analysis
+465  JC+G4         430.444      12  884.887      886.145      927.661
+WARNING: 2 threads for alignment length 11 will slow down analysis
+466  JC+I+G4       430.277      13  886.554      888.028      932.893
+Akaike Information Criterion:           HKY+F+I
+Corrected Akaike Information Criterion: HKY+F
+Bayesian Information Criterion:         K2P
+Best-fit model: K2P chosen according to BIC
+
+All model information printed to /app/outputs/analyses/486/20240709T110145/between_profile_distances/D/clade_D_seqs.aligned.fasta.model.gz
+CPU time for ModelFinder: 10.559 seconds (0h:0m:10s)
+Wall-clock time for ModelFinder: 3.503 seconds (0h:0m:3s)
+WARNING: 2 threads for alignment length 11 will slow down analysis
+
+NOTE: 0 MB RAM (0 GB) is required!
+Estimate model parameters (epsilon = 0.100)
+1. Initial log-likelihood: -424.441
+Optimal log-likelihood: -424.441
+Rate parameters:  A-C: 1.00000  A-G: 17.96968  A-T: 1.00000  C-G: 1.00000  C-T: 17.96968  G-T: 1.00000
+Base frequencies:  A: 0.250  C: 0.250  G: 0.250  T: 0.250
+Parameters optimization took 1 rounds (0.000 sec)
+Wrote distance file to... 
+Computing ML distances based on estimated model parameters...
+Calculating distance matrix: done in 6.91414e-05 secs using 189.5% CPU
+Computing ML distances took 0.000086 sec (of wall-clock time) 0.000172 sec (of CPU time)
+Setting up auxiliary I and S matrices: done in 2.59876e-05 secs using 338.6% CPU
+Constructing RapidNJ tree: done in 7.20024e-05 secs
+Computing RapidNJ tree took 0.000125 sec (of wall-clock time) 0.000090 sec (of CPU time)
+Log-likelihood of RapidNJ tree: -424.443
+--------------------------------------------------------------------
+|             INITIALIZING CANDIDATE TREE SET                      |
+--------------------------------------------------------------------
+Generating 98 parsimony trees... 0.024 second
+Computing log-likelihood of 64 initial trees ... 0.006 seconds
+Current best score: -424.441
+
+Do NNI search on 20 best initial trees
+Optimizing NNI: done in 0.000182867 secs using 287.1% CPU
+Estimate model parameters (epsilon = 0.100)
+BETTER TREE FOUND at iteration 1: -424.441
+Optimizing NNI: done in 0.000207901 secs using 245.8% CPU
+BETTER TREE FOUND at iteration 2: -424.441
+Optimizing NNI: done in 0.000205994 secs using 283.5% CPU
+Optimizing NNI: done in 0.000133038 secs using 284.9% CPU
+Optimizing NNI: done in 0.000135899 secs using 288.5% CPU
+Optimizing NNI: done in 0.000132084 secs using 299.1% CPU
+Optimizing NNI: done in 0.000113964 secs using 299.2% CPU
+Optimizing NNI: done in 0.000136137 secs using 296% CPU
+Optimizing NNI: done in 0.000133038 secs using 300.7% CPU
+Optimizing NNI: done in 0.000113964 secs using 305.4% CPU
+Iteration 10 / LogL: -424.441 / Time: 0h:0m:0s
+Optimizing NNI: done in 0.000137091 secs using 299.8% CPU
+Optimizing NNI: done in 0.000132084 secs using 300.6% CPU
+Optimizing NNI: done in 0.000133038 secs using 296.9% CPU
+Optimizing NNI: done in 0.000133991 secs using 298.5% CPU
+Optimizing NNI: done in 0.000134945 secs using 302.3% CPU
+Optimizing NNI: done in 0.000136852 secs
+Optimizing NNI: done in 0.000134945 secs using 57.8% CPU
+Optimizing NNI: done in 0.000128984 secs using 288.4% CPU
+Optimizing NNI: done in 0.000130892 secs using 289.6% CPU
+BETTER TREE FOUND at iteration 19: -424.441
+Optimizing NNI: done in 0.000133038 secs using 290.9% CPU
+Iteration 20 / LogL: -424.441 / Time: 0h:0m:0s
+Finish initializing candidate tree set (7)
+Current best tree score: -424.441 / CPU time: 0.035
+Number of iterations: 20
+--------------------------------------------------------------------
+|               OPTIMIZING CANDIDATE TREE SET                      |
+--------------------------------------------------------------------
+Optimizing NNI: done in 0.000141859 secs using 302.4% CPU
+Optimizing NNI: done in 0.000111103 secs using 283.5% CPU
+Optimizing NNI: done in 0.00033021 secs using 299.2% CPU
+Optimizing NNI: done in 0.000298977 secs using 299.7% CPU
+Optimizing NNI: done in 0.000133038 secs using 299.9% CPU
+Optimizing NNI: done in 0.000314951 secs using 298.8% CPU
+Optimizing NNI: done in 0.000133991 secs using 294% CPU
+Optimizing NNI: done in 0.000421047 secs using 301.2% CPU
+Optimizing NNI: done in 0.000463009 secs using 300% CPU
+Optimizing NNI: done in 0.00011611 secs using 300.6% CPU
+Iteration 30 / LogL: -424.441 / Time: 0h:0m:0s (0h:0m:0s left)
+Optimizing NNI: done in 0.00029397 secs using 299.7% CPU
+Optimizing NNI: done in 0.00013113 secs using 302% CPU
+Optimizing NNI: done in 0.00031209 secs using 300.2% CPU
+Optimizing NNI: done in 0.000303984 secs using 298% CPU
+Optimizing NNI: done in 0.000285864 secs using 299.4% CPU
+Optimizing NNI: done in 0.000290155 secs using 299.2% CPU
+Optimizing NNI: done in 0.000135899 secs using 299.5% CPU
+Optimizing NNI: done in 0.000664949 secs using 299.7% CPU
+Optimizing NNI: done in 0.000299931 secs using 301.1% CPU
+Optimizing NNI: done in 0.000263929 secs using 297.4% CPU
+Iteration 40 / LogL: -424.441 / Time: 0h:0m:0s (0h:0m:0s left)
+Optimizing NNI: done in 0.000282049 secs using 299.2% CPU
+Optimizing NNI: done in 0.000264883 secs using 298.6% CPU
+Optimizing NNI: done in 0.00012517 secs using 303.6% CPU
+Optimizing NNI: done in 0.000105858 secs using 302.3% CPU
+Optimizing NNI: done in 0.000240088 secs using 299.5% CPU
+Optimizing NNI: done in 0.000290871 secs using 299.4% CPU
+Optimizing NNI: done in 0.000368118 secs using 301.3% CPU
+Optimizing NNI: done in 0.00012517 secs using 300.4% CPU
+Optimizing NNI: done in 0.000121117 secs using 298.9% CPU
+Optimizing NNI: done in 0.000268936 secs using 299.3% CPU
+Iteration 50 / LogL: -424.442 / Time: 0h:0m:0s (0h:0m:0s left)
+Optimizing NNI: done in 0.000105143 secs using 301.5% CPU
+Optimizing NNI: done in 0.000102997 secs using 306.8% CPU
+Optimizing NNI: done in 0.000254154 secs using 301% CPU
+Optimizing NNI: done in 0.00012207 secs using 301.5% CPU
+Optimizing NNI: done in 0.000289917 secs using 299.1% CPU
+Optimizing NNI: done in 0.000285149 secs using 299.1% CPU
+Optimizing NNI: done in 0.00027585 secs using 297.6% CPU
+Optimizing NNI: done in 0.000248194 secs using 303.4% CPU
+Optimizing NNI: done in 0.000330925 secs using 298% CPU
+Optimizing NNI: done in 0.000305176 secs using 298.5% CPU
+Iteration 60 / LogL: -424.441 / Time: 0h:0m:0s (0h:0m:0s left)
+Optimizing NNI: done in 0.000233173 secs using 300.2% CPU
+Optimizing NNI: done in 0.000780821 secs using 299.9% CPU
+Optimizing NNI: done in 0.000127077 secs using 302.2% CPU
+Optimizing NNI: done in 0.000524044 secs using 300.4% CPU
+Optimizing NNI: done in 0.000235796 secs using 300.7% CPU
+Optimizing NNI: done in 0.000302792 secs using 300.2% CPU
+Optimizing NNI: done in 0.000247002 secs using 299.6% CPU
+Optimizing NNI: done in 0.000128984 secs using 298.5% CPU
+Optimizing NNI: done in 0.00010705 secs using 298% CPU
+Optimizing NNI: done in 0.00012207 secs using 299.8% CPU
+Iteration 70 / LogL: -424.441 / Time: 0h:0m:0s (0h:0m:0s left)
+Optimizing NNI: done in 0.000266075 secs using 299.5% CPU
+Optimizing NNI: done in 0.000265837 secs using 300.2% CPU
+Optimizing NNI: done in 0.000254869 secs using 298.6% CPU
+Optimizing NNI: done in 0.000123978 secs using 305.7% CPU
+Optimizing NNI: done in 0.000405073 secs using 299.7% CPU
+Optimizing NNI: done in 0.000105858 secs using 303.2% CPU
+Optimizing NNI: done in 0.000403166 secs using 299.4% CPU
+Optimizing NNI: done in 0.000127077 secs using 295.1% CPU
+Optimizing NNI: done in 0.000124931 secs using 303.4% CPU
+Optimizing NNI: done in 0.00010705 secs using 297.1% CPU
+Iteration 80 / LogL: -424.441 / Time: 0h:0m:0s (0h:0m:0s left)
+Optimizing NNI: done in 0.000334024 secs using 302.1% CPU
+Optimizing NNI: done in 0.000123978 secs using 304.9% CPU
+Optimizing NNI: done in 0.000285149 secs using 300.5% CPU
+Optimizing NNI: done in 0.000120878 secs using 299.5% CPU
+Optimizing NNI: done in 0.000298023 secs using 299.6% CPU
+Optimizing NNI: done in 0.000282049 secs using 299.9% CPU
+Optimizing NNI: done in 0.000255108 secs using 297.5% CPU
+Optimizing NNI: done in 0.000263929 secs using 301.2% CPU
+Optimizing NNI: done in 0.000267982 secs using 301.9% CPU
+Optimizing NNI: done in 0.00012207 secs using 298.2% CPU
+Iteration 90 / LogL: -424.441 / Time: 0h:0m:0s (0h:0m:0s left)
+Optimizing NNI: done in 0.000121117 secs using 302.2% CPU
+Optimizing NNI: done in 0.00012207 secs using 299% CPU
+Optimizing NNI: done in 0.000121117 secs using 296.4% CPU
+Optimizing NNI: done in 0.000522137 secs using 300.1% CPU
+Optimizing NNI: done in 0.000124931 secs using 302.6% CPU
+Optimizing NNI: done in 0.000289917 secs using 300.8% CPU
+Optimizing NNI: done in 0.000272989 secs using 298.2% CPU
+Optimizing NNI: done in 0.000123024 secs using 298.3% CPU
+Optimizing NNI: done in 0.000104904 secs using 297.4% CPU
+Optimizing NNI: done in 0.000265121 secs using 301.7% CPU
+Iteration 100 / LogL: -424.441 / Time: 0h:0m:0s (0h:0m:0s left)
+Optimizing NNI: done in 0.000281096 secs using 299.9% CPU
+Optimizing NNI: done in 0.000104904 secs using 302.2% CPU
+Optimizing NNI: done in 0.000258923 secs using 300.1% CPU
+Optimizing NNI: done in 0.000265121 secs using 299.1% CPU
+Optimizing NNI: done in 0.000256062 secs using 84.35% CPU
+Optimizing NNI: done in 0.000119925 secs using 287.7% CPU
+Optimizing NNI: done in 0.000370979 secs using 288.4% CPU
+Optimizing NNI: done in 0.000279188 secs using 297.3% CPU
+Optimizing NNI: done in 0.000121832 secs using 299.6% CPU
+Optimizing NNI: done in 0.000120163 secs using 300.4% CPU
+Iteration 110 / LogL: -424.441 / Time: 0h:0m:0s (0h:0m:0s left)
+Optimizing NNI: done in 0.000281096 secs using 300.3% CPU
+Optimizing NNI: done in 0.000344038 secs using 299.7% CPU
+Optimizing NNI: done in 0.000282049 secs using 300.3% CPU
+Optimizing NNI: done in 0.000123024 secs using 296.7% CPU
+Optimizing NNI: done in 0.000123978 secs using 295.2% CPU
+Optimizing NNI: done in 0.000238895 secs using 298.5% CPU
+Optimizing NNI: done in 0.000280857 secs using 300.5% CPU
+Optimizing NNI: done in 0.000270128 secs using 301.3% CPU
+Optimizing NNI: done in 0.000303984 secs using 300.3% CPU
+Optimizing NNI: done in 0.000283003 secs using 299.3% CPU
+Iteration 120 / LogL: -424.441 / Time: 0h:0m:0s (0h:0m:-1s left)
+TREE SEARCH COMPLETED AFTER 120 ITERATIONS / Time: 0h:0m:0s
+
+--------------------------------------------------------------------
+|                    FINALIZING TREE SEARCH                        |
+--------------------------------------------------------------------
+Performs final model parameters optimization
+Estimate model parameters (epsilon = 0.010)
+1. Initial log-likelihood: -424.441
+Optimal log-likelihood: -424.441
+Rate parameters:  A-C: 1.00000  A-G: 17.97063  A-T: 1.00000  C-G: 1.00000  C-T: 17.97063  G-T: 1.00000
+Base frequencies:  A: 0.250  C: 0.250  G: 0.250  T: 0.250
+Parameters optimization took 1 rounds (0.000 sec)
+BEST SCORE FOUND : -424.441
+Total tree length: 0.039
+
+Total number of iterations: 120
+CPU time used for tree search: 0.206 sec (0h:0m:0s)
+Wall-clock time used for tree search: 0.070 sec (0h:0m:0s)
+Total CPU time used: 0.220 sec (0h:0m:0s)
+Total wall-clock time used: 0.078 sec (0h:0m:0s)
+
+Analysis results written to: 
+  IQ-TREE report:                /app/outputs/analyses/486/20240709T110145/between_profile_distances/D/clade_D_seqs.aligned.fasta.iqtree
+  Maximum-likelihood tree:       /app/outputs/analyses/486/20240709T110145/between_profile_distances/D/clade_D_seqs.aligned.fasta.treefile
+  Likelihood distances:          /app/outputs/analyses/486/20240709T110145/between_profile_distances/D/clade_D_seqs.aligned.fasta.mldist
+  Screen log file:               /app/outputs/analyses/486/20240709T110145/between_profile_distances/D/clade_D_seqs.aligned.fasta.log
+
+Date and Time: Tue Jul  9 06:02:13 2024
