@@ -582,6 +582,28 @@ pca_plots<-plot_grid(pca2, pca2b, ncol=2, nrow=1)
 ggsave(pca_plots, filename="figures/lipids/pca_plots.jpeg", width=12, height=4)
 ```
 
+View a PCA with treatment code information. 
+```{r}
+test_wide_data<-wide_data%>%
+  mutate(code=paste(parent, temperature))
+
+levels(as.factor(test_wide_data$code))
+
+pca3<-ggplot2::autoplot(scaled.pca, data=test_wide_data, frame.colour="code", loadings=FALSE,  colour="code", shape="code", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
+  scale_color_manual(name="Group", values=c("orange", "orange", "orange", "brown4", "brown4", "brown4", "gray", "gray", "gray"))+
+  scale_fill_manual(name="Group", values=c("orange", "orange", "orange", "brown4", "brown4", "brown4", "gray", "gray", "gray"))+
+  scale_shape_manual(name="Group", values=c(19,17,15,19,17,15,19,17,15))+
+  theme_classic()+
+   theme(legend.text = element_text(size=14), 
+         legend.position="right",
+        plot.background = element_blank(),
+        legend.title = element_text(size=14, face="bold"), 
+        axis.text = element_text(size=14), 
+        axis.title = element_text(size=14,  face="bold"));pca3
+
+ggsave(pca3, filename="figures/lipids/pca_all_groups.jpeg", width=8, height=6)
+```
+
 # Supervised PLS-DA analysis  
 
 Script modified from the following tutorial: https://mixomicsteam.github.io/Bookdown/plsda.html
