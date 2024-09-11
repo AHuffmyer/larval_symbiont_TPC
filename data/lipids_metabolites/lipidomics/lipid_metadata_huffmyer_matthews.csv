@@ -1,71 +1,71 @@
-Vial ID ,Sample ID ,Timepoint,Temperature,Symbiont,Species,Type,Code
+Vial ID ,Sample ID ,Timepoint,Temperature,Parent,Species,Type,Code
 1,L86,20230627,Moderate (+3),Wildtype,Montipora capitata,Sample,WT_3C
 2,EB-1,NA,NA,NA,NA,Blank,Blank
-3,L62,20230627,Ambient,Mixed,Montipora capitata,Sample,NB_0C
+3,L62,20230627,Ambient,Nonbleached,Montipora capitata,Sample,NB_0C
 4,L89,20230627,Moderate (+3),Wildtype,Montipora capitata,Sample,WT_3C
-5,L91,20230627,High (+6),Cladocopium,Montipora capitata,Sample,B_6C
-6,L63,20230627,Ambient,Mixed,Montipora capitata,Sample,NB_0C
+5,L91,20230627,High (+6),Bleached,Montipora capitata,Sample,B_6C
+6,L63,20230627,Ambient,Nonbleached,Montipora capitata,Sample,NB_0C
 7,L85,20230627,Moderate (+3),Wildtype,Montipora capitata,Sample,WT_3C
-8,L75,20230627,Moderate (+3),Cladocopium,Montipora capitata,Sample,B_3C
+8,L75,20230627,Moderate (+3),Bleached,Montipora capitata,Sample,B_3C
 9,L69,20230627,Ambient,Wildtype,Montipora capitata,Sample,WT_0C
-10,L77,20230627,Moderate (+3),Cladocopium,Montipora capitata,Sample,B_3C
+10,L77,20230627,Moderate (+3),Bleached,Montipora capitata,Sample,B_3C
 11,L90,20230627,Moderate (+3),Wildtype,Montipora capitata,Sample,WT_3C
-12,L60,20230627,Ambient,Cladocopium,Montipora capitata,Sample,B_0C
+12,L60,20230627,Ambient,Bleached,Montipora capitata,Sample,B_0C
 13,L106,20230627,High (+6),Wildtype,Montipora capitata,Sample,WT_6C
-14,L73,20230627,Moderate (+3),Cladocopium,Montipora capitata,Sample,B_3C
+14,L73,20230627,Moderate (+3),Bleached,Montipora capitata,Sample,B_3C
 15,EB-3,NA,NA,NA,NA,Blank,Blank
 16,EB-5,NA,NA,NA,NA,Blank,Blank
-17,L96,20230627,High (+6),Cladocopium,Montipora capitata,Sample,B_6C
-18,L95,20230627,High (+6),Cladocopium,Montipora capitata,Sample,B_6C
+17,L96,20230627,High (+6),Bleached,Montipora capitata,Sample,B_6C
+18,L95,20230627,High (+6),Bleached,Montipora capitata,Sample,B_6C
 19,EB-4,NA,NA,NA,NA,Blank,Blank
 20,EB-2,NA,NA,NA,NA,Blank,Blank
 21,L108,20230627,High (+6),Wildtype,Montipora capitata,Sample,WT_6C
-22,L80,20230627,Moderate (+3),Mixed,Montipora capitata,Sample,NB_3C
+22,L80,20230627,Moderate (+3),Nonbleached,Montipora capitata,Sample,NB_3C
 23,L107,20230627,High (+6),Wildtype,Montipora capitata,Sample,WT_6C
-24,L56,20230627,Ambient,Cladocopium,Montipora capitata,Sample,B_0C
+24,L56,20230627,Ambient,Bleached,Montipora capitata,Sample,B_0C
 25,EB-9,NA,NA,NA,NA,Blank,Blank
-26,L98,20230627,High (+6),Mixed,Montipora capitata,Sample,NB_6C
-27,L76,20230627,Moderate (+3),Cladocopium,Montipora capitata,Sample,B_3C
-28,L82,20230627,Moderate (+3),Mixed,Montipora capitata,Sample,NB_3C
+26,L98,20230627,High (+6),Nonbleached,Montipora capitata,Sample,NB_6C
+27,L76,20230627,Moderate (+3),Bleached,Montipora capitata,Sample,B_3C
+28,L82,20230627,Moderate (+3),Nonbleached,Montipora capitata,Sample,NB_3C
 29,EB-7,NA,NA,NA,NA,Blank,Blank
-30,L65,20230627,Ambient,Mixed,Montipora capitata,Sample,NB_0C
-31,L83,20230627,Moderate (+3),Mixed,Montipora capitata,Sample,NB_3C
-32,L66,20230627,Ambient,Mixed,Montipora capitata,Sample,NB_0C
-33,L81,20230627,Moderate (+3),Mixed,Montipora capitata,Sample,NB_3C
-34,L57,20230627,Ambient,Cladocopium,Montipora capitata,Sample,B_0C
+30,L65,20230627,Ambient,Nonbleached,Montipora capitata,Sample,NB_0C
+31,L83,20230627,Moderate (+3),Nonbleached,Montipora capitata,Sample,NB_3C
+32,L66,20230627,Ambient,Nonbleached,Montipora capitata,Sample,NB_0C
+33,L81,20230627,Moderate (+3),Nonbleached,Montipora capitata,Sample,NB_3C
+34,L57,20230627,Ambient,Bleached,Montipora capitata,Sample,B_0C
 35,L71,20230627,Ambient,Wildtype,Montipora capitata,Sample,WT_0C
 36,EB-8,NA,NA,NA,NA,Blank,Blank
-37,L94,20230627,High (+6),Cladocopium,Montipora capitata,Sample,B_6C
-38,L101,20230627,High (+6),Mixed,Montipora capitata,Sample,NB_6C
-39,L64,20230627,Ambient,Mixed,Montipora capitata,Sample,NB_0C
-40,L79,20230627,Moderate (+3),Mixed,Montipora capitata,Sample,NB_3C
-41,L92,20230627,High (+6),Cladocopium,Montipora capitata,Sample,B_6C
-42,L74,20230627,Moderate (+3),Cladocopium,Montipora capitata,Sample,B_3C
+37,L94,20230627,High (+6),Bleached,Montipora capitata,Sample,B_6C
+38,L101,20230627,High (+6),Nonbleached,Montipora capitata,Sample,NB_6C
+39,L64,20230627,Ambient,Nonbleached,Montipora capitata,Sample,NB_0C
+40,L79,20230627,Moderate (+3),Nonbleached,Montipora capitata,Sample,NB_3C
+41,L92,20230627,High (+6),Bleached,Montipora capitata,Sample,B_6C
+42,L74,20230627,Moderate (+3),Bleached,Montipora capitata,Sample,B_3C
 43,EB-6,NA,NA,NA,NA,Blank,Blank
-44,L58,20230627,Ambient,Cladocopium,Montipora capitata,Sample,B_0C
-45,L102,20230627,High (+6),Mixed,Montipora capitata,Sample,NB_6C
+44,L58,20230627,Ambient,Bleached,Montipora capitata,Sample,B_0C
+45,L102,20230627,High (+6),Nonbleached,Montipora capitata,Sample,NB_6C
 46,L88,20230627,Moderate (+3),Wildtype,Montipora capitata,Sample,WT_3C
 47,L67,20230627,Ambient,Wildtype,Montipora capitata,Sample,WT_0C
-48,L84,20230627,Moderate (+3),Mixed,Montipora capitata,Sample,NB_3C
+48,L84,20230627,Moderate (+3),Nonbleached,Montipora capitata,Sample,NB_3C
 49,L103,20230627,High (+6),Wildtype,Montipora capitata,Sample,WT_6C
-50,L100,20230627,High (+6),Mixed,Montipora capitata,Sample,NB_6C
-51,L93,20230627,High (+6),Cladocopium,Montipora capitata,Sample,B_6C
+50,L100,20230627,High (+6),Nonbleached,Montipora capitata,Sample,NB_6C
+51,L93,20230627,High (+6),Bleached,Montipora capitata,Sample,B_6C
 52,L105,20230627,High (+6),Wildtype,Montipora capitata,Sample,WT_6C
-53,L97,20230627,High (+6),Mixed,Montipora capitata,Sample,NB_6C
+53,L97,20230627,High (+6),Nonbleached,Montipora capitata,Sample,NB_6C
 54,L70,20230627,Ambient,Wildtype,Montipora capitata,Sample,WT_0C
-55,L55,20230627,Ambient,Cladocopium,Montipora capitata,Sample,B_0C
+55,L55,20230627,Ambient,Bleached,Montipora capitata,Sample,B_0C
 56,L87,20230627,Moderate (+3),Wildtype,Montipora capitata,Sample,WT_3C
-57,L61,20230627,Ambient,Mixed,Montipora capitata,Sample,NB_0C
-58,L99,20230627,High (+6),Mixed,Montipora capitata,Sample,NB_6C
+57,L61,20230627,Ambient,Nonbleached,Montipora capitata,Sample,NB_0C
+58,L99,20230627,High (+6),Nonbleached,Montipora capitata,Sample,NB_6C
 59,L68,20230627,Ambient,Wildtype,Montipora capitata,Sample,WT_0C
-60,L78,20230627,Moderate (+3),Cladocopium,Montipora capitata,Sample,B_3C
-61,L59,20230627,Ambient,Cladocopium,Montipora capitata,Sample,B_0C
+60,L78,20230627,Moderate (+3),Bleached,Montipora capitata,Sample,B_3C
+61,L59,20230627,Ambient,Bleached,Montipora capitata,Sample,B_0C
 62,L72,20230627,Ambient,Wildtype,Montipora capitata,Sample,WT_0C
 63,L104,20230627,High (+6),Wildtype,Montipora capitata,Sample,WT_6C
-PBQC,PBQC1,NA,NA,NA,NA,PBQC,PBQC
-PBQC,PBQC2,NA,NA,NA,NA,PBQC,PBQC
-PBQC,PBQC3,NA,NA,NA,NA,PBQC,PBQC
-PBQC,PBQC4,NA,NA,NA,NA,PBQC,PBQC
-PBQC,PBQC5,NA,NA,NA,NA,PBQC,PBQC
-PBQC,PBQC6,NA,NA,NA,NA,PBQC,PBQC
-PBQC,PBQC7,NA,NA,NA,NA,PBQC,PBQC
+PBQC1,PBQC1,NA,NA,NA,NA,PBQC,PBQC
+PBQC2,PBQC2,NA,NA,NA,NA,PBQC,PBQC
+PBQC3,PBQC3,NA,NA,NA,NA,PBQC,PBQC
+PBQC4,PBQC4,NA,NA,NA,NA,PBQC,PBQC
+PBQC5,PBQC5,NA,NA,NA,NA,PBQC,PBQC
+PBQC6,PBQC6,NA,NA,NA,NA,PBQC,PBQC
+PBQC7,PBQC7,NA,NA,NA,NA,PBQC,PBQC
