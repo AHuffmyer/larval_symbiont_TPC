@@ -200,7 +200,7 @@ We are now ready for anaylsis!
 
 # Unsupervised analysis 
 
-Conduct a PCA and PERMANOVA to examine the effects of parent and temperature on the metabolome of coral larvae. 
+Conduct a PCA and PERMANOVA to examine the effects of parent and temperature on the metabolome of coral larvae.
 
 Convert to wide format. 
 
@@ -531,6 +531,121 @@ draw(heatmap)
 dev.off()
 ```
 
+View PCA for VIPs
+
+```{r}
+vip_data_parent<-metabolites%>%
+  ungroup()%>%
+  select(!type)%>%
+  select(!protein.ug)%>%
+  select(!mean_blank)%>%
+  select(!area_corrected)%>%
+  select(!area)%>%
+  filter(Name %in% parent_vip_list)%>%
+  pivot_wider(names_from=Name, values_from=area_normalized)
+```
+
+```{r}
+vip_data_parent%>%
+    select_if(~ any(is.na(.)))
+```
+
+No columns have NA's.  
+
+```{r}
+vip_data_parent$temperature<-factor(vip_data_parent$temperature, levels=c("Ambient", "Moderate (+3)", "High (+6)"))
+
+vip_data_parent$parent<-factor(vip_data_parent$parent, levels=c("Wildtype", "Bleached", "Nonbleached"))
+```
+
+All characteristics are renamed.  
+
+Remove any column that have only 0 values. 
+
+```{r}
+vip_data_parent <- vip_data_parent[, colSums(vip_data_parent != 0) > 0]
+```
+This retained 89 VIPs.
+
+View scree plot. 
+
+```{r}
+scaled.pca<-prcomp(vip_data_parent[c(4:92)], scale=TRUE, center=TRUE) 
+
+fviz_eig(scaled.pca)
+```
+
+Prepare a PCA plot
+```{r}
+# scale data
+vegan <- scale(vip_data_parent[c(4:92)])
+
+# PerMANOVA 
+permanova<-adonis2(vegan ~ parent*temperature, data = vip_data_parent, method='eu')
+permanova
+```
+
+adonis2(formula = vegan ~ parent * temperature, data = vip_data_parent, method = "eu")
+                   Df SumOfSqs      R2      F Pr(>F)  
+parent              2    250.0 0.05508 1.3985  0.084 .
+temperature         2    130.2 0.02867 0.7280  0.905  
+parent:temperature  4    315.3 0.06946 0.8818  0.701  
+Residual           43   3843.6 0.84679                
+Total              51   4539.0 1.00000   
+
+
+```{r}
+pca_vip_parent1<-ggplot2::autoplot(scaled.pca, data=vip_data_parent, frame.colour="parent", loadings=FALSE,  colour="parent", shape="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
+  scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
+  scale_fill_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
+  scale_shape_manual(name="Temperature", values=c(19,17,15))+
+  theme_classic()+
+   theme(legend.text = element_text(size=14), 
+         legend.position="right",
+        plot.background = element_blank(),
+        legend.title = element_text(size=14, face="bold"), 
+        axis.text = element_text(size=14), 
+        axis.title = element_text(size=14,  face="bold"));pca_vip_parent1
+
+pca_vip_parent2<-ggplot2::autoplot(scaled.pca, data=vip_data_parent, frame.colour="temperature", loadings=FALSE,  colour="temperature", shape="parent", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
+  scale_color_manual(name="Temperature", values=c("blue", "orange", "red"))+
+  scale_fill_manual(name="Temperature", values=c("blue", "orange", "red"))+
+  scale_shape_manual(name="Parental Phenotype", values=c(19,17,15))+
+  theme_classic()+
+   theme(legend.text = element_text(size=14), 
+         legend.position="right",
+        plot.background = element_blank(),
+        legend.title = element_text(size=14, face="bold"), 
+        axis.text = element_text(size=14), 
+        axis.title = element_text(size=14,  face="bold"));pca_vip_parent2
+
+pca_plots_parent<-plot_grid(pca_vip_parent1, pca_vip_parent2, ncol=2, nrow=1)
+
+ggsave(pca_plots_parent, filename="figures/metabolites/pca_plots_parentVIP.jpeg", width=12, height=4)
+```
+
+View a PCA with treatment code information. 
+```{r}
+test_wide_data<-vip_data_parent%>%
+  mutate(code=paste(parent, temperature))
+
+levels(as.factor(test_wide_data$code))
+
+pca_parent3<-ggplot2::autoplot(scaled.pca, data=test_wide_data, frame.colour="code", loadings=FALSE,  colour="code", shape="code", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
+  scale_color_manual(name="Group", values=c("orange", "orange", "orange", "brown4", "brown4", "brown4", "gray", "gray", "gray"))+
+  scale_fill_manual(name="Group", values=c("orange", "orange", "orange", "brown4", "brown4", "brown4", "gray", "gray", "gray"))+
+  scale_shape_manual(name="Group", values=c(19,17,15,19,17,15,19,17,15))+
+  theme_classic()+
+   theme(legend.text = element_text(size=14), 
+         legend.position="right",
+        plot.background = element_blank(),
+        legend.title = element_text(size=14, face="bold"), 
+        axis.text = element_text(size=14), 
+        axis.title = element_text(size=14,  face="bold"));pca_parent3
+
+ggsave(pca_parent3, filename="figures/metabolites/pca_all_groups_parentVIP.jpeg", width=8, height=6)
+```
+
 ## PLS-DA for the effect of temperature 
 
 Generate a PLS-DA and plot.  
@@ -683,6 +798,121 @@ dev.off()
 pdf("figures/metabolites/VIP_heatmap_temperature.pdf", width=8, height=15)
 draw(heatmap)
 dev.off()
+```
+
+View PCA for VIPs
+
+```{r}
+vip_data_temperature<-metabolites%>%
+  ungroup()%>%
+  select(!type)%>%
+  select(!protein.ug)%>%
+  select(!mean_blank)%>%
+  select(!area_corrected)%>%
+  select(!area)%>%
+  filter(Name %in% temperature_vip_list)%>%
+  pivot_wider(names_from=Name, values_from=area_normalized)
+```
+
+```{r}
+vip_data_temperature%>%
+    select_if(~ any(is.na(.)))
+```
+
+No columns have NA's.  
+
+```{r}
+vip_data_temperature$temperature<-factor(vip_data_temperature$temperature, levels=c("Ambient", "Moderate (+3)", "High (+6)"))
+
+vip_data_temperature$parent<-factor(vip_data_temperature$parent, levels=c("Wildtype", "Bleached", "Nonbleached"))
+```
+
+All characteristics are renamed.  
+
+Remove any column that have only 0 values. 
+
+```{r}
+vip_data_temperature <- vip_data_temperature[, colSums(vip_data_temperature != 0) > 0]
+```
+This retained 92 VIPs.
+
+View scree plot. 
+
+```{r}
+scaled.pca<-prcomp(vip_data_temperature[c(4:95)], scale=TRUE, center=TRUE) 
+
+fviz_eig(scaled.pca)
+```
+
+Prepare a PCA plot
+```{r}
+# scale data
+vegan <- scale(vip_data_temperature[c(4:95)])
+
+# PerMANOVA 
+permanova<-adonis2(vegan ~ parent*temperature, data = vip_data_temperature, method='eu')
+permanova
+```
+
+adonis2(formula = vegan ~ parent * temperature, data = vip_data_temperature, method = "eu")
+                   Df SumOfSqs      R2      F Pr(>F)   
+parent              2    175.4 0.03738 0.9693  0.543   
+temperature         2    298.4 0.06359 1.6489  0.004 **
+parent:temperature  4    328.1 0.06992 0.9066  0.798   
+Residual           43   3890.2 0.82911                 
+Total              51   4692.0 1.00000   
+
+
+```{r}
+pca_vip_temperature1<-ggplot2::autoplot(scaled.pca, data=vip_data_temperature, frame.colour="parent", loadings=FALSE,  colour="parent", shape="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
+  scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
+  scale_fill_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
+  scale_shape_manual(name="Temperature", values=c(19,17,15))+
+  theme_classic()+
+   theme(legend.text = element_text(size=14), 
+         legend.position="right",
+        plot.background = element_blank(),
+        legend.title = element_text(size=14, face="bold"), 
+        axis.text = element_text(size=14), 
+        axis.title = element_text(size=14,  face="bold"));pca_vip_temperature1
+
+pca_vip_temperature2<-ggplot2::autoplot(scaled.pca, data=vip_data_temperature, frame.colour="temperature", loadings=FALSE,  colour="temperature", shape="parent", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
+  scale_color_manual(name="Temperature", values=c("blue", "orange", "red"))+
+  scale_fill_manual(name="Temperature", values=c("blue", "orange", "red"))+
+  scale_shape_manual(name="Parental Phenotype", values=c(19,17,15))+
+  theme_classic()+
+   theme(legend.text = element_text(size=14), 
+         legend.position="right",
+        plot.background = element_blank(),
+        legend.title = element_text(size=14, face="bold"), 
+        axis.text = element_text(size=14), 
+        axis.title = element_text(size=14,  face="bold"));pca_vip_temperature2
+
+pca_plots_temperature<-plot_grid(pca_vip_temperature1, pca_vip_temperature2, ncol=2, nrow=1)
+
+ggsave(pca_plots_temperature, filename="figures/metabolites/pca_plots_temperatureVIP.jpeg", width=12, height=4)
+```
+
+View a PCA with treatment code information. 
+```{r}
+test_wide_data<-vip_data_temperature%>%
+  mutate(code=paste(parent, temperature))
+
+levels(as.factor(test_wide_data$code))
+
+pca_parent3<-ggplot2::autoplot(scaled.pca, data=test_wide_data, frame.colour="code", loadings=FALSE,  colour="code", shape="code", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
+  scale_color_manual(name="Group", values=c("orange", "orange", "orange", "brown4", "brown4", "brown4", "gray", "gray", "gray"))+
+  scale_fill_manual(name="Group", values=c("orange", "orange", "orange", "brown4", "brown4", "brown4", "gray", "gray", "gray"))+
+  scale_shape_manual(name="Group", values=c(19,17,15,19,17,15,19,17,15))+
+  theme_classic()+
+   theme(legend.text = element_text(size=14), 
+         legend.position="right",
+        plot.background = element_blank(),
+        legend.title = element_text(size=14, face="bold"), 
+        axis.text = element_text(size=14), 
+        axis.title = element_text(size=14,  face="bold"));pca_parent3
+
+ggsave(pca_parent3, filename="figures/metabolites/pca_all_groups_temperatureVIP.jpeg", width=8, height=6)
 ```
 
 ## PLS-DA for the effect of parent x temperature 
@@ -842,6 +1072,120 @@ draw(heatmap)
 dev.off()
 ```
 
+View PCA for VIPs
+
+```{r}
+vip_data_interaction<-metabolites%>%
+  ungroup()%>%
+  select(!type)%>%
+  select(!protein.ug)%>%
+  select(!mean_blank)%>%
+  select(!area_corrected)%>%
+  select(!area)%>%
+  filter(Name %in% interaction_vip_list)%>%
+  pivot_wider(names_from=Name, values_from=area_normalized)
+```
+
+```{r}
+vip_data_interaction%>%
+    select_if(~ any(is.na(.)))
+```
+
+No columns have NA's.  
+
+```{r}
+vip_data_interaction$temperature<-factor(vip_data_interaction$temperature, levels=c("Ambient", "Moderate (+3)", "High (+6)"))
+
+vip_data_interaction$parent<-factor(vip_data_interaction$parent, levels=c("Wildtype", "Bleached", "Nonbleached"))
+```
+
+All characteristics are renamed.  
+
+Remove any column that have only 0 values. 
+
+```{r}
+vip_data_interaction <- vip_data_interaction[, colSums(vip_data_interaction != 0) > 0]
+```
+This retained 100 VIPs.
+
+View scree plot. 
+
+```{r}
+scaled.pca<-prcomp(vip_data_interaction[c(4:103)], scale=TRUE, center=TRUE) 
+
+fviz_eig(scaled.pca)
+```
+
+Prepare a PCA plot
+```{r}
+# scale data
+vegan <- scale(vip_data_interaction[c(4:103)])
+
+# PerMANOVA 
+permanova<-adonis2(vegan ~ parent*temperature, data = vip_data_interaction, method='eu')
+permanova
+```
+
+adonis2(formula = vegan ~ parent * temperature, data = vip_data_interaction, method = "eu")
+                   Df SumOfSqs      R2      F Pr(>F)
+parent              2    239.1 0.04687 1.2284  0.101
+temperature         2    225.5 0.04422 1.1589  0.145
+parent:temperature  4    451.3 0.08850 1.1596  0.102
+Residual           43   4184.1 0.82041              
+Total              51   5100.0 1.00000       
+
+```{r}
+pca_vip_interaction1<-ggplot2::autoplot(scaled.pca, data=vip_data_interaction, frame.colour="parent", loadings=FALSE,  colour="parent", shape="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
+  scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
+  scale_fill_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
+  scale_shape_manual(name="Temperature", values=c(19,17,15))+
+  theme_classic()+
+   theme(legend.text = element_text(size=14), 
+         legend.position="right",
+        plot.background = element_blank(),
+        legend.title = element_text(size=14, face="bold"), 
+        axis.text = element_text(size=14), 
+        axis.title = element_text(size=14,  face="bold"));pca_vip_interaction1
+
+pca_vip_interaction2<-ggplot2::autoplot(scaled.pca, data=vip_data_interaction, frame.colour="temperature", loadings=FALSE,  colour="temperature", shape="parent", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
+  scale_color_manual(name="Temperature", values=c("blue", "orange", "red"))+
+  scale_fill_manual(name="Temperature", values=c("blue", "orange", "red"))+
+  scale_shape_manual(name="Parental Phenotype", values=c(19,17,15))+
+  theme_classic()+
+   theme(legend.text = element_text(size=14), 
+         legend.position="right",
+        plot.background = element_blank(),
+        legend.title = element_text(size=14, face="bold"), 
+        axis.text = element_text(size=14), 
+        axis.title = element_text(size=14,  face="bold"));pca_vip_interaction2
+
+pca_plots_interaction<-plot_grid(pca_vip_interaction1, pca_vip_interaction2, ncol=2, nrow=1)
+
+ggsave(pca_plots_interaction, filename="figures/metabolites/pca_plots_interactionVIP.jpeg", width=12, height=4)
+```
+
+View a PCA with treatment code information. 
+```{r}
+test_wide_data<-vip_data_interaction%>%
+  mutate(code=paste(parent, temperature))
+
+levels(as.factor(test_wide_data$code))
+
+pca_interaction3<-ggplot2::autoplot(scaled.pca, data=test_wide_data, frame.colour="code", loadings=FALSE,  colour="code", shape="code", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
+  scale_color_manual(name="Group", values=c("orange", "orange", "orange", "brown4", "brown4", "brown4", "gray", "gray", "gray"))+
+  scale_fill_manual(name="Group", values=c("orange", "orange", "orange", "brown4", "brown4", "brown4", "gray", "gray", "gray"))+
+  scale_shape_manual(name="Group", values=c(19,17,15,19,17,15,19,17,15))+
+  theme_classic()+
+   theme(legend.text = element_text(size=14), 
+         legend.position="right",
+        plot.background = element_blank(),
+        legend.title = element_text(size=14, face="bold"), 
+        axis.text = element_text(size=14), 
+        axis.title = element_text(size=14,  face="bold"));pca_interaction3
+
+ggsave(pca_interaction3, filename="figures/metabolites/pca_all_groups_interactionVIP.jpeg", width=8, height=6)
+```
+
 # Output lists for Metaboanalyst 
 
 List of parental VIPS
@@ -874,6 +1218,26 @@ full_metabolite_list<-metabolites%>%
   write_csv(., file="output/lipids_metabolites/metabolites/full_metabolite_list.csv")
 ```
 
+What is the overlap in these lists? Create an upset plot. 
 
+```{r}
+# Combine lists into a data frame indicating membership (1 = present, 0 = absent)
+upset_data <- data.frame(
+  Name = unique(c(parent_vip_list, temperature_vip_list, interaction_vip_list)),
+  List1 = as.numeric(unique(c(parent_vip_list, temperature_vip_list, interaction_vip_list)) %in% parent_vip_list),
+  List2 = as.numeric(unique(c(parent_vip_list, temperature_vip_list, interaction_vip_list)) %in% temperature_vip_list),
+  List3 = as.numeric(unique(c(parent_vip_list, temperature_vip_list, interaction_vip_list)) %in% interaction_vip_list)
+)
+
+# Convert data to the format needed for the UpSetR plot
+plot_data <- upset_data[, -1]
+row.names(plot_data) <- upset_data$Name
+names(plot_data) <- c("Parent", "Temperature", "PxT Group")
+
+# Generate the UpSet plot
+pdf("figures/metabolites/upset_VIP_list_overlap.pdf", width=6, height=6)
+upset(plot_data, sets = c("Parent", "Temperature", "PxT Group"), keep.order = TRUE)
+dev.off()
+```
 
 

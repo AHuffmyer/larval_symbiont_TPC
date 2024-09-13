@@ -38,6 +38,7 @@ library(circlize)
 library(tibble)
 library(viridis)
 library(genefilter)
+library(UpSetR)
 
 conflict_prefer("select", winner = "dplyr", quiet = FALSE)
 conflict_prefer("filter", winner = "dplyr", quiet = FALSE)
@@ -359,6 +360,25 @@ length(unique(filtered_values$lipid))
 ```
 
 There are 50 lipids detected at both polarities. Perform a summarise function to add together values from both polarities for each lipid. 
+
+View ontology categories available. 
+```{r}
+levels(as.factor(lipids$ontology))
+
+ontology<-lipids%>%ungroup()%>%select(lipid, formula, ontology)%>%unique()
+```
+ [1] "AHexCAS"    "AHexCer"    "AHexCS"     "AHexSIS"    "ASM"        "BileAcid"   "BMP"       
+ [8] "BRSE"       "CAR"        "CASE"       "CE"         "Cer_ADS"    "Cer_AP"     "Cer_AS"    
+[15] "Cer_EOS"    "Cer_HDS"    "Cer_HS"     "Cer_NDS"    "Cer_NP"     "Cer_NS"     "CL"        
+[22] "CoQ"        "DCAE"       "DEGSE"      "DG"         "DGDG"       "DMPE"       "EtherDG"   
+[29] "EtherDGDG"  "EtherLPC"   "EtherLPE"   "EtherMGDG"  "EtherOxPC"  "EtherPC"    "EtherPE"   
+[36] "EtherPI"    "EtherPS"    "EtherTG"    "FA"         "FAHFA"      "HBMP"       "HexCer_AP" 
+[43] "HexCer_HS"  "HexCer_NDS" "KDCAE"      "KLCAE"      "LCAE"       "LPC"        "LPE"       
+[50] "MG"         "MGDG"       "NAE"        "NAGly"      "NAGlySer"   "NAOrn"      "NATau"     
+[57] "Others"     "OxFA"       "OxPC"       "OxPE"       "OxPI"       "OxTG"       "PA"        
+[64] "PC"         "PE"         "PEtOH"      "PG"         "PI"         "PMeOH"      "PS"        
+[71] "SHexCer"    "SISE"       "SL"         "SM"         "SSulfate"   "ST"         "TG"        
+[78] "TG_EST"     "Unknown"    "VAE"  
 
 ```{r}
 lipids<-lipids%>%
@@ -758,6 +778,118 @@ draw(heatmap)
 dev.off()
 ```
 
+View a PCA of these VIPs. 
+
+```{r}
+vip_data_parent<-lipids%>%
+  ungroup()%>%
+  select(!formula)%>%
+  select(!ontology)%>%
+  select(!type)%>%
+  filter(lipid %in% parent_vip_list)%>%
+  pivot_wider(names_from=lipid, values_from=area_normalized)
+```
+
+```{r}
+vip_data_parent%>%
+    select_if(~ any(is.na(.)))
+```
+
+No columns have NA's.  
+
+```{r}
+vip_data_parent$temperature<-factor(vip_data_parent$temperature, levels=c("Ambient", "Moderate (+3)", "High (+6)"))
+
+vip_data_parent$parent<-factor(vip_data_parent$parent, levels=c("Wildtype", "Bleached", "Nonbleached"))
+```
+
+All characteristics are renamed.  
+
+Remove any column that have only 0 values. 
+
+```{r}
+vip_data_parent <- vip_data_parent[, colSums(vip_data_parent != 0) > 0]
+```
+This retained 342 lipid VIPs.
+
+View scree plot. 
+
+```{r}
+scaled.pca<-prcomp(vip_data_parent[c(4:345)], scale=TRUE, center=TRUE) 
+
+fviz_eig(scaled.pca)
+```
+
+Prepare a PCA plot
+```{r}
+# scale data
+vegan <- scale(vip_data_parent[c(4:345)])
+
+# PerMANOVA 
+permanova<-adonis2(vegan ~ parent*temperature, data = vip_data_parent, method='eu')
+permanova
+```
+
+adonis2(formula = vegan ~ parent * temperature, data = vip_data_parent, method = "eu")
+                   Df SumOfSqs      R2      F Pr(>F)    
+parent              2   3172.3 0.17838 5.8133  0.001 ***
+temperature         2   1356.7 0.07629 2.4861  0.016 *  
+parent:temperature  4   1249.5 0.07026 1.1449  0.285    
+Residual           44  12005.5 0.67507                  
+Total              52  17784.0 1.00000     
+
+```{r}
+pca_vip_parent1<-ggplot2::autoplot(scaled.pca, data=vip_data_parent, frame.colour="parent", loadings=FALSE,  colour="parent", shape="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
+  scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
+  scale_fill_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
+  scale_shape_manual(name="Temperature", values=c(19,17,15))+
+  theme_classic()+
+   theme(legend.text = element_text(size=14), 
+         legend.position="right",
+        plot.background = element_blank(),
+        legend.title = element_text(size=14, face="bold"), 
+        axis.text = element_text(size=14), 
+        axis.title = element_text(size=14,  face="bold"));pca_vip_parent1
+
+pca_vip_parent2<-ggplot2::autoplot(scaled.pca, data=vip_data_parent, frame.colour="temperature", loadings=FALSE,  colour="temperature", shape="parent", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
+  scale_color_manual(name="Temperature", values=c("blue", "orange", "red"))+
+  scale_fill_manual(name="Temperature", values=c("blue", "orange", "red"))+
+  scale_shape_manual(name="Parental Phenotype", values=c(19,17,15))+
+  theme_classic()+
+   theme(legend.text = element_text(size=14), 
+         legend.position="right",
+        plot.background = element_blank(),
+        legend.title = element_text(size=14, face="bold"), 
+        axis.text = element_text(size=14), 
+        axis.title = element_text(size=14,  face="bold"));pca_vip_parent2
+
+pca_plots_parent<-plot_grid(pca_vip_parent1, pca_vip_parent2, ncol=2, nrow=1)
+
+ggsave(pca_plots_parent, filename="figures/lipids/pca_plots_parentVIP.jpeg", width=12, height=4)
+```
+
+View a PCA with treatment code information. 
+```{r}
+test_wide_data<-vip_data_parent%>%
+  mutate(code=paste(parent, temperature))
+
+levels(as.factor(test_wide_data$code))
+
+pca_parent3<-ggplot2::autoplot(scaled.pca, data=test_wide_data, frame.colour="code", loadings=FALSE,  colour="code", shape="code", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
+  scale_color_manual(name="Group", values=c("orange", "orange", "orange", "brown4", "brown4", "brown4", "gray", "gray", "gray"))+
+  scale_fill_manual(name="Group", values=c("orange", "orange", "orange", "brown4", "brown4", "brown4", "gray", "gray", "gray"))+
+  scale_shape_manual(name="Group", values=c(19,17,15,19,17,15,19,17,15))+
+  theme_classic()+
+   theme(legend.text = element_text(size=14), 
+         legend.position="right",
+        plot.background = element_blank(),
+        legend.title = element_text(size=14, face="bold"), 
+        axis.text = element_text(size=14), 
+        axis.title = element_text(size=14,  face="bold"));pca_parent3
+
+ggsave(pca_parent3, filename="figures/lipids/pca_all_groups_parentVIP.jpeg", width=8, height=6)
+```
+
 ## PLS-DA for the effect of temperature 
 
 Generate a PLS-DA and plot.  
@@ -910,6 +1042,118 @@ dev.off()
 pdf("figures/lipids/VIP_heatmap_temperature.pdf", width=4, height=6)
 draw(heatmap)
 dev.off()
+```
+
+View a PCA of these VIPs. 
+
+```{r}
+vip_data_temperature<-lipids%>%
+  ungroup()%>%
+  select(!formula)%>%
+  select(!ontology)%>%
+  select(!type)%>%
+  filter(lipid %in% temperature_vip_list)%>%
+  pivot_wider(names_from=lipid, values_from=area_normalized)
+```
+
+```{r}
+vip_data_temperature%>%
+    select_if(~ any(is.na(.)))
+```
+
+No columns have NA's.  
+
+```{r}
+vip_data_temperature$temperature<-factor(vip_data_temperature$temperature, levels=c("Ambient", "Moderate (+3)", "High (+6)"))
+
+vip_data_temperature$parent<-factor(vip_data_temperature$parent, levels=c("Wildtype", "Bleached", "Nonbleached"))
+```
+
+All characteristics are renamed.  
+
+Remove any column that have only 0 values. 
+
+```{r}
+vip_data_temperature <- vip_data_temperature[, colSums(vip_data_temperature != 0) > 0]
+```
+This retained 405 lipid VIPs.
+
+View scree plot. 
+
+```{r}
+scaled.pca<-prcomp(vip_data_temperature[c(4:408)], scale=TRUE, center=TRUE) 
+
+fviz_eig(scaled.pca)
+```
+
+Prepare a PCA plot
+```{r}
+# scale data
+vegan <- scale(vip_data_temperature[c(4:408)])
+
+# PerMANOVA 
+permanova<-adonis2(vegan ~ parent*temperature, data = vip_data_temperature, method='eu')
+permanova
+```
+
+adonis2(formula = vegan ~ parent * temperature, data = vip_data_temperature, method = "eu")
+                   Df SumOfSqs      R2      F Pr(>F)   
+parent              2   1447.8 0.06875 2.0692  0.043 * 
+temperature         2   2215.3 0.10519 3.1661  0.007 **
+parent:temperature  4   2003.3 0.09512 1.4315  0.120   
+Residual           44  15393.6 0.73094                 
+Total              52  21060.0 1.00000     
+
+```{r}
+pca_vip_temperature1<-ggplot2::autoplot(scaled.pca, data=vip_data_temperature, frame.colour="parent", loadings=FALSE,  colour="parent", shape="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
+  scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
+  scale_fill_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
+  scale_shape_manual(name="Temperature", values=c(19,17,15))+
+  theme_classic()+
+   theme(legend.text = element_text(size=14), 
+         legend.position="right",
+        plot.background = element_blank(),
+        legend.title = element_text(size=14, face="bold"), 
+        axis.text = element_text(size=14), 
+        axis.title = element_text(size=14,  face="bold"));pca_vip_temperature1
+
+pca_vip_temperature2<-ggplot2::autoplot(scaled.pca, data=vip_data_temperature, frame.colour="temperature", loadings=FALSE,  colour="temperature", shape="parent", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
+  scale_color_manual(name="Temperature", values=c("blue", "orange", "red"))+
+  scale_fill_manual(name="Temperature", values=c("blue", "orange", "red"))+
+  scale_shape_manual(name="Parental Phenotype", values=c(19,17,15))+
+  theme_classic()+
+   theme(legend.text = element_text(size=14), 
+         legend.position="right",
+        plot.background = element_blank(),
+        legend.title = element_text(size=14, face="bold"), 
+        axis.text = element_text(size=14), 
+        axis.title = element_text(size=14,  face="bold"));pca_vip_temperature2
+
+pca_plots_temperature<-plot_grid(pca_vip_temperature1, pca_vip_temperature2, ncol=2, nrow=1)
+
+ggsave(pca_plots_temperature, filename="figures/lipids/pca_plots_temperatureVIP.jpeg", width=12, height=4)
+```
+
+View a PCA with treatment code information. 
+```{r}
+test_wide_data<-vip_data_temperature%>%
+  mutate(code=paste(parent, temperature))
+
+levels(as.factor(test_wide_data$code))
+
+pca_temperature3<-ggplot2::autoplot(scaled.pca, data=test_wide_data, frame.colour="code", loadings=FALSE,  colour="code", shape="code", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
+  scale_color_manual(name="Group", values=c("orange", "orange", "orange", "brown4", "brown4", "brown4", "gray", "gray", "gray"))+
+  scale_fill_manual(name="Group", values=c("orange", "orange", "orange", "brown4", "brown4", "brown4", "gray", "gray", "gray"))+
+  scale_shape_manual(name="Group", values=c(19,17,15,19,17,15,19,17,15))+
+  theme_classic()+
+   theme(legend.text = element_text(size=14), 
+         legend.position="right",
+        plot.background = element_blank(),
+        legend.title = element_text(size=14, face="bold"), 
+        axis.text = element_text(size=14), 
+        axis.title = element_text(size=14,  face="bold"));pca_temperature3
+
+ggsave(pca_temperature3, filename="figures/lipids/pca_all_groups_temperatureVIP.jpeg", width=8, height=6)
 ```
 
 ## PLS-DA for the effect of parent x temperature 
@@ -1069,6 +1313,118 @@ draw(heatmap)
 dev.off()
 ```
 
+View a PCA of these VIPs. 
+
+```{r}
+vip_data_interaction<-lipids%>%
+  ungroup()%>%
+  select(!formula)%>%
+  select(!ontology)%>%
+  select(!type)%>%
+  filter(lipid %in% interaction_vip_list)%>%
+  pivot_wider(names_from=lipid, values_from=area_normalized)
+```
+
+```{r}
+vip_data_interaction%>%
+    select_if(~ any(is.na(.)))
+```
+
+No columns have NA's.  
+
+```{r}
+vip_data_interaction$temperature<-factor(vip_data_interaction$temperature, levels=c("Ambient", "Moderate (+3)", "High (+6)"))
+
+vip_data_interaction$parent<-factor(vip_data_interaction$parent, levels=c("Wildtype", "Bleached", "Nonbleached"))
+```
+
+All characteristics are renamed.  
+
+Remove any column that have only 0 values. 
+
+```{r}
+vip_data_interaction <- vip_data_interaction[, colSums(vip_data_interaction != 0) > 0]
+```
+This retained 463 lipid VIPs.
+
+View scree plot. 
+
+```{r}
+scaled.pca<-prcomp(vip_data_interaction[c(4:466)], scale=TRUE, center=TRUE) 
+
+fviz_eig(scaled.pca)
+```
+
+Prepare a PCA plot
+```{r}
+# scale data
+vegan <- scale(vip_data_interaction[c(4:466)])
+
+# PerMANOVA 
+permanova<-adonis2(vegan ~ parent*temperature, data = vip_data_interaction, method='eu')
+permanova
+```
+
+adonis2(formula = vegan ~ parent * temperature, data = vip_data_interaction, method = "eu")
+                   Df SumOfSqs      R2      F Pr(>F)    
+parent              2   3452.4 0.14340 4.6297  0.001 ***
+temperature         2   2135.0 0.08868 2.8631  0.003 ** 
+parent:temperature  4   2082.9 0.08651 1.3966  0.091 .  
+Residual           44  16405.7 0.68141                  
+Total              52  24076.0 1.00000   
+
+```{r}
+pca_vip_interaction1<-ggplot2::autoplot(scaled.pca, data=vip_data_interaction, frame.colour="parent", loadings=FALSE,  colour="parent", shape="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
+  scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
+  scale_fill_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
+  scale_shape_manual(name="Temperature", values=c(19,17,15))+
+  theme_classic()+
+   theme(legend.text = element_text(size=14), 
+         legend.position="right",
+        plot.background = element_blank(),
+        legend.title = element_text(size=14, face="bold"), 
+        axis.text = element_text(size=14), 
+        axis.title = element_text(size=14,  face="bold"));pca_vip_interaction1
+
+pca_vip_interaction2<-ggplot2::autoplot(scaled.pca, data=vip_data_interaction, frame.colour="temperature", loadings=FALSE,  colour="temperature", shape="parent", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
+  scale_color_manual(name="Temperature", values=c("blue", "orange", "red"))+
+  scale_fill_manual(name="Temperature", values=c("blue", "orange", "red"))+
+  scale_shape_manual(name="Parental Phenotype", values=c(19,17,15))+
+  theme_classic()+
+   theme(legend.text = element_text(size=14), 
+         legend.position="right",
+        plot.background = element_blank(),
+        legend.title = element_text(size=14, face="bold"), 
+        axis.text = element_text(size=14), 
+        axis.title = element_text(size=14,  face="bold"));pca_vip_interaction2
+
+pca_plots_interaction<-plot_grid(pca_vip_interaction1, pca_vip_interaction2, ncol=2, nrow=1)
+
+ggsave(pca_plots_interaction, filename="figures/lipids/pca_plots_interactionVIP.jpeg", width=12, height=4)
+```
+
+View a PCA with treatment code information. 
+```{r}
+test_wide_data<-vip_data_interaction%>%
+  mutate(code=paste(parent, temperature))
+
+levels(as.factor(test_wide_data$code))
+
+pca_interaction3<-ggplot2::autoplot(scaled.pca, data=test_wide_data, frame.colour="code", loadings=FALSE,  colour="code", shape="code", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
+  scale_color_manual(name="Group", values=c("orange", "orange", "orange", "brown4", "brown4", "brown4", "gray", "gray", "gray"))+
+  scale_fill_manual(name="Group", values=c("orange", "orange", "orange", "brown4", "brown4", "brown4", "gray", "gray", "gray"))+
+  scale_shape_manual(name="Group", values=c(19,17,15,19,17,15,19,17,15))+
+  theme_classic()+
+   theme(legend.text = element_text(size=14), 
+         legend.position="right",
+        plot.background = element_blank(),
+        legend.title = element_text(size=14, face="bold"), 
+        axis.text = element_text(size=14), 
+        axis.title = element_text(size=14,  face="bold"));pca_interaction3
+
+ggsave(pca_interaction3, filename="figures/lipids/pca_all_groups_interactionVIP.jpeg", width=8, height=6)
+```
+
 # Output lists for LION 
 
 List of parental VIPS
@@ -1078,6 +1434,8 @@ parent_vip_list%>%
   write_csv(., file="output/lipids_metabolites/lipids/parent_VIP_list.csv")
 ```
 
+No significant enrichment of any terms on LION. 
+
 List of temperature VIPS
 ```{r}
 temperature_vip_list%>%
@@ -1085,12 +1443,16 @@ temperature_vip_list%>%
   write_csv(., file="output/lipids_metabolites/lipids/temperature_VIP_list.csv")
 ```
 
+No significant enrichment of any terms on LION. 
+
 List of interaction VIPS
 ```{r}
 interaction_vip_list%>%
   as.data.frame()%>%
   write_csv(., file="output/lipids_metabolites/lipids/interaction_VIP_list.csv")
 ```
+
+Significant enrichment of monounsaturated fatty acids, fatty acids, fatty acids and conjugates, diacylglycerols, fatty acid with less than 2 double bonds, and lipid-mediated signalling.  
 
 Full list of lipids
 ```{r}
@@ -1100,6 +1462,216 @@ full_lipid_list<-lipids%>%
   as.data.frame()%>%
   write_csv(., file="output/lipids_metabolites/lipids/full_lipid_list.csv")
 ```
+
+What is the overlap in these lists? Create an upset plot. 
+
+```{r}
+# Combine lists into a data frame indicating membership (1 = present, 0 = absent)
+upset_data <- data.frame(
+  Lipid = unique(c(parent_vip_list, temperature_vip_list, interaction_vip_list)),
+  List1 = as.numeric(unique(c(parent_vip_list, temperature_vip_list, interaction_vip_list)) %in% parent_vip_list),
+  List2 = as.numeric(unique(c(parent_vip_list, temperature_vip_list, interaction_vip_list)) %in% temperature_vip_list),
+  List3 = as.numeric(unique(c(parent_vip_list, temperature_vip_list, interaction_vip_list)) %in% interaction_vip_list)
+)
+
+# Convert data to the format needed for the UpSetR plot
+plot_data <- upset_data[, -1]
+row.names(plot_data) <- upset_data$Lipid
+names(plot_data) <- c("Parent", "Temperature", "PxT Group")
+
+# Generate the UpSet plot
+pdf("figures/lipids/upset_VIP_list_overlap.pdf", width=6, height=6)
+upset(plot_data, sets = c("Parent", "Temperature", "PxT Group"), keep.order = TRUE)
+dev.off()
+```
+
+# Plot enriched lipids in the group VIP data set 
+
+View lipids related to the enriched categories in the interaction/group specific VIP data set from the LION results.  
+
+Monounsaturated fatty acids, fatty acids, fatty acids and conjugates, Fatty acid with less than 2 double bonds = ontology FA
+
+Diacylglycerols = ontology DG
+
+Lipid-mediated signalling = could include ontology PC, PS, PG, PA, PE (glycerophospholipids), contains Cer (ceramides)
+
+Add in lipid ontology values. 
+
+```{r}
+lipids$ontology<-ontology$ontology[match(lipids$lipid, ontology$lipid)]
+```
+
+Plot a heatmap of the target ontologies in the group VIP list (parent x temperature). 
+
+Fatty acids
+```{r}
+# Filter data for VIP metabolites
+FA_data <- lipids %>% 
+  filter(lipid %in% interaction_vip_list) %>% 
+  filter(ontology=="FA") %>% 
+  droplevels()
+
+length(unique(FA_data$lipid))
+#32 fatty acids in this data set 
+
+# Convert counts to Z-scores
+FA_data <- FA_data %>% 
+  group_by(lipid) %>% 
+  mutate(z_score = scale(area_normalized)) %>% 
+  group_by(parent, temperature, lipid)%>%
+  summarise(z_score = mean(z_score, na.rm=TRUE))%>%
+  ungroup()
+
+# Pivot data to have metabolites as rows and lifestage as columns
+heatmap_data <- FA_data %>% 
+  mutate(code=paste(parent, temperature))%>%
+  mutate(code=factor(code, levels=c("Bleached Ambient", "Bleached Moderate (+3)", "Bleached High (+6)", "Nonbleached Ambient", "Nonbleached Moderate (+3)", "Nonbleached High (+6)", "Wildtype Ambient", "Wildtype Moderate (+3)", "Wildtype High (+6)")))%>%
+  dplyr::select(lipid, code, z_score) %>%
+  spread(key = code, value = z_score)
+
+# Convert to matrix and set rownames
+heatmap_matrix <- as.matrix(column_to_rownames(heatmap_data, var = "lipid"))
+
+# Create the heatmap
+heatmap <- Heatmap(
+  heatmap_matrix,
+  name = "Z-score",
+  col = inferno(10),
+  cluster_rows = TRUE,
+  cluster_columns = FALSE,
+  show_row_names = TRUE,
+  show_column_names = TRUE,
+  #row_split=split,
+  column_split=heatmap_data$code,
+  row_title = "Fatty Acids", 
+  column_names_gp =  gpar(fontsize = 12, border=FALSE),
+  column_names_rot = 45,
+  row_gap = unit(1, "mm"), 
+  border = TRUE,
+  row_names_gp = gpar(fontsize = 12, alpha = 0.75, border = FALSE)
+)
+
+# Draw the heatmap
+draw(heatmap)
+
+dev.off()
+pdf("figures/lipids/fatty_acids_VIP.pdf", width=6, height=8)
+draw(heatmap)
+dev.off()
+```
+
+Diacylglycerols
+```{r}
+# Filter data for VIP metabolites
+DG_data <- lipids %>% 
+  filter(lipid %in% interaction_vip_list) %>% 
+  filter(ontology=="DG") %>% 
+  droplevels()
+
+length(unique(DG_data$lipid))
+#91 DGs in this data set 
+
+# Convert counts to Z-scores
+DG_data <- DG_data %>% 
+  group_by(lipid) %>% 
+  mutate(z_score = scale(area_normalized)) %>% 
+  group_by(parent, temperature, lipid)%>%
+  summarise(z_score = mean(z_score, na.rm=TRUE))%>%
+  ungroup()
+
+# Pivot data to have metabolites as rows and lifestage as columns
+heatmap_data <- DG_data %>% 
+  mutate(code=paste(parent, temperature))%>%
+  mutate(code=factor(code, levels=c("Bleached Ambient", "Bleached Moderate (+3)", "Bleached High (+6)", "Nonbleached Ambient", "Nonbleached Moderate (+3)", "Nonbleached High (+6)", "Wildtype Ambient", "Wildtype Moderate (+3)", "Wildtype High (+6)")))%>%
+  dplyr::select(lipid, code, z_score) %>%
+  spread(key = code, value = z_score)
+
+# Convert to matrix and set rownames
+heatmap_matrix <- as.matrix(column_to_rownames(heatmap_data, var = "lipid"))
+
+# Create the heatmap
+heatmap <- Heatmap(
+  heatmap_matrix,
+  name = "Z-score",
+  col = inferno(10),
+  cluster_rows = TRUE,
+  cluster_columns = FALSE,
+  show_row_names = TRUE,
+  show_column_names = TRUE,
+  row_split=7,
+  row_title = "Diacylglycerols", 
+  column_names_gp =  gpar(fontsize = 12, border=FALSE),
+  column_names_rot = 45,
+  row_gap = unit(1, "mm"), 
+  border = TRUE,
+  row_names_gp = gpar(fontsize = 12, alpha = 0.75, border = FALSE)
+)
+
+# Draw the heatmap
+draw(heatmap)
+
+dev.off()
+pdf("figures/lipids/diacylglycerols_VIP.pdf", width=6, height=14)
+draw(heatmap)
+dev.off()
+```
+
+Lipid mediated signaling
+```{r}
+# Filter data for VIP metabolites
+signal_data <- lipids %>% 
+  filter(lipid %in% interaction_vip_list) %>% 
+  filter(ontology %in% c("PC", "PS", "PG", "PA", "PE") | grepl("Cer", ontology))%>%
+  droplevels()
+
+length(unique(signal_data$lipid))
+#93 fatty acids in this data set 
+
+# Convert counts to Z-scores
+signal_data <- signal_data %>% 
+  group_by(lipid) %>% 
+  mutate(z_score = scale(area_normalized)) %>% 
+  group_by(parent, temperature, lipid)%>%
+  summarise(z_score = mean(z_score, na.rm=TRUE))%>%
+  ungroup()
+
+# Pivot data to have metabolites as rows and lifestage as columns
+heatmap_data <- signal_data %>% 
+  mutate(code=paste(parent, temperature))%>%
+  mutate(code=factor(code, levels=c("Bleached Ambient", "Bleached Moderate (+3)", "Bleached High (+6)", "Nonbleached Ambient", "Nonbleached Moderate (+3)", "Nonbleached High (+6)", "Wildtype Ambient", "Wildtype Moderate (+3)", "Wildtype High (+6)")))%>%
+  dplyr::select(lipid, code, z_score) %>%
+  spread(key = code, value = z_score)
+
+# Convert to matrix and set rownames
+heatmap_matrix <- as.matrix(column_to_rownames(heatmap_data, var = "lipid"))
+
+# Create the heatmap
+heatmap <- Heatmap(
+  heatmap_matrix,
+  name = "Z-score",
+  col = inferno(10),
+  cluster_rows = TRUE,
+  cluster_columns = FALSE,
+  show_row_names = TRUE,
+  show_column_names = TRUE,
+  row_split=7,
+  row_title = "Lipid Signaling", 
+  column_names_gp =  gpar(fontsize = 12, border=FALSE),
+  column_names_rot = 45,
+  row_gap = unit(1, "mm"), 
+  border = TRUE,
+  row_names_gp = gpar(fontsize = 12, alpha = 0.75, border = FALSE)
+)
+
+# Draw the heatmap
+draw(heatmap)
+
+dev.off()
+pdf("figures/lipids/lipid_signaling_VIP.pdf", width=6, height=14)
+draw(heatmap)
+dev.off()
+```
+
 
 
 
