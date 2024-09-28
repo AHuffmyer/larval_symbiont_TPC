@@ -12,8 +12,6 @@ editor_options:
   chunk_output_type: console
 ---
 
-ADJUST RSD FILTERING STEPS 
-
 # Set Up    
 
 ```{r setup, include=FALSE}
@@ -176,6 +174,69 @@ filtered_data<-filtered_data%>%
 
 We are now ready for anaylsis! 
 
+Plot to detect outliers. 
+
+Convert to wide format. 
+
+```{r}
+wide_data<-filtered_data%>%
+  ungroup()%>%
+  select(!type)%>%
+  select(!protein.ug)%>%
+  select(!area_sorbitol)%>%
+  select(!area_corrected)%>%
+  select(!area)%>%
+  pivot_wider(names_from=Name, values_from=area_normalized)
+```
+
+```{r}
+wide_data%>%
+    select_if(~ any(is.na(.)))
+```
+
+No columns have NA's.  
+
+```{r}
+wide_data$temperature<-factor(wide_data$temperature, levels=c("Ambient", "Moderate (+3)", "High (+6)"))
+
+wide_data$parent<-factor(wide_data$parent, levels=c("Wildtype", "Bleached", "Nonbleached"))
+```
+
+All characteristics are renamed.  
+
+View scree plot. 
+
+```{r}
+scaled.pca<-prcomp(wide_data[c(4:58)], scale=TRUE, center=TRUE) 
+```
+
+```{r}
+pca1<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="parent", loadings=FALSE,  colour="parent", shape="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=FALSE, loadings.label.size=5, loadings.label.vjust=-1, size=5) + 
+  scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
+  scale_fill_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
+  scale_shape_manual(name="Temperature", values=c(19,17,15))+
+  geom_text(aes(x = PC1, y = PC2, label = tube), vjust = -0.5)+
+  theme_classic()+
+   theme(legend.text = element_text(size=18), 
+         legend.position="none",
+        plot.background = element_blank(),
+        legend.title = element_text(size=18, face="bold"), 
+        axis.text = element_text(size=18), 
+        axis.title = element_text(size=18,  face="bold"));pca1
+```
+
+Sample L107 is a clear outlier. Remove. 
+
+Sample L107 is a clear outlier. Remove this sample and plot again. 
+
+```{r}
+filtered_data<-filtered_data%>%
+  filter(!tube=="L107")
+
+wide_data<-wide_data%>%
+  filter(!tube=="L107")
+```
+
 # Conduct filtering for relative standard deviation 
 
 Make a dataframe that calculates the standard deviation of the metabolite area within treatment relative to the mean (i.e., how "large" is the SD).  
@@ -191,10 +252,12 @@ test<-filtered_data%>%
   summarise(RSD=(sd(area_normalized)*100)/mean(area_normalized))
 
 length(unique(test$Name))
+
+hist(test$RSD)
 ```
 55 metabolites before 
 
-Remove metabolites that have RSD < 100 in all treatments (RSD is quite high).  
+Remove metabolites that have RSD < 100 in all treatments (RSD values are high, come back to this).  
 ```{r}
 test <- test %>%
   group_by(Name) %>%
@@ -204,7 +267,7 @@ length(unique(test$Name))
 
 keep_list<-c(unique(test$Name))
 ```
-21 metabolites after 
+36 metabolites after 
 
 Filter the filtered dataset to include the selected metabolites after RSD filtering.  
 ```{r}
@@ -247,7 +310,7 @@ All characteristics are renamed.
 View scree plot. 
 
 ```{r}
-scaled.pca<-prcomp(wide_data[c(4:24)], scale=TRUE, center=TRUE) 
+scaled.pca<-prcomp(wide_data[c(4:39)], scale=TRUE, center=TRUE) 
 
 fviz_eig(scaled.pca)
 ```
@@ -255,7 +318,7 @@ fviz_eig(scaled.pca)
 Prepare a PCA plot
 ```{r}
 # scale data
-vegan <- scale(wide_data[c(4:24)])
+vegan <- scale(wide_data[c(4:39)])
 
 # PerMANOVA 
 permanova<-adonis2(vegan ~ parent*temperature, data = wide_data, method='eu')
@@ -264,11 +327,11 @@ permanova
 
 adonis2(formula = vegan ~ parent * temperature, data = wide_data, method = "eu")
                    Df SumOfSqs      R2      F Pr(>F)  
-parent              2    68.28 0.06135 1.7344  0.147  
-temperature         2    15.00 0.01347 0.3810  0.869  
-parent:temperature  4   143.93 0.12931 1.8279  0.069 .
-Residual           45   885.79 0.79586                
-Total              53  1113.00 1.00000      
+parent              2    53.70 0.02868 0.7731  0.561  
+temperature         2    54.56 0.02914 0.7855  0.552  
+parent:temperature  4   235.77 0.12594 1.6973  0.080 .
+Residual           44  1527.98 0.81623                
+Total              52  1872.00 1.00000       
 
 ```{r}
 pca1<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="parent", loadings=FALSE,  colour="parent", shape="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=FALSE, loadings.label.size=5, loadings.label.vjust=-1, size=5) + 
@@ -284,42 +347,6 @@ pca1<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="parent", loadi
         axis.text = element_text(size=18), 
         axis.title = element_text(size=18,  face="bold"));pca1
 ```
-
-Sample L107 is a clear outlier. Remove this sample and plot again. 
-
-```{r}
-filtered_data<-filtered_data%>%
-  filter(!tube=="L107")
-
-wide_data<-wide_data%>%
-  filter(!tube=="L107")
-```
-
-View scree plot. 
-
-```{r}
-scaled.pca<-prcomp(wide_data[c(4:24)], scale=TRUE, center=TRUE) 
-
-fviz_eig(scaled.pca)
-```
-
-Prepare a PCA plot
-```{r}
-# scale data
-vegan <- scale(wide_data[c(4:24)])
-
-# PerMANOVA 
-permanova<-adonis2(vegan ~ parent*temperature, data = wide_data, method='eu')
-permanova
-```
-
-adonis2(formula = vegan ~ parent * temperature, data = wide_data, method = "eu")
-                   Df SumOfSqs      R2      F Pr(>F)  
-parent              2    46.18 0.04229 1.1509  0.339  
-temperature         2    25.89 0.02371 0.6453  0.644  
-parent:temperature  4   137.16 0.12560 1.7091  0.076 .
-Residual           44   882.77 0.80840                
-Total              52  1092.00 1.00000       
 
 ```{r}
 pca2<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="parent", loadings=FALSE,  colour="parent", shape="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
@@ -390,7 +417,7 @@ levels(as.factor(X$temperature))
 Y <- as.factor(X$parent) #select treatment names
 Y
 
-X<-X[4:24] #pull only data columns
+X<-X[4:39] #pull only data columns
 
 # run PLSDA 
 MyResult.plsda <- plsda(X,Y, ncomp=2) # 1 Run the method with ncomp = groups -1
@@ -476,7 +503,7 @@ Make a list of vips.
 parent_vip_list<-parent_VIP_1%>%
   pull(Metabolite)
 ```
-There are 7 VIPs. 
+There are 15 VIPs. 
 
 Plot heatmap of z score of lipids across life stages.  
 
@@ -509,7 +536,7 @@ heatmap <- Heatmap(
   cluster_columns = FALSE,
   show_row_names = TRUE,
   show_column_names = TRUE,
-  row_split=3,
+  #row_split=3,
   row_title = "Metabolite", 
   column_names_gp =  gpar(fontsize = 12, border=FALSE),
   column_names_rot = 45,
@@ -559,7 +586,7 @@ All characteristics are renamed.
 View scree plot. 
 
 ```{r}
-scaled.pca<-prcomp(vip_data_parent[c(4:10)], scale=TRUE, center=TRUE) 
+scaled.pca<-prcomp(vip_data_parent[c(4:18)], scale=TRUE, center=TRUE) 
 
 fviz_eig(scaled.pca)
 ```
@@ -567,7 +594,7 @@ fviz_eig(scaled.pca)
 Prepare a PCA plot
 ```{r}
 # scale data
-vegan <- scale(vip_data_parent[c(4:10)])
+vegan <- scale(vip_data_parent[c(4:18)])
 
 # PerMANOVA 
 permanova<-adonis2(vegan ~ parent*temperature, data = vip_data_parent, method='eu')
@@ -575,12 +602,12 @@ permanova
 ```
 
 adonis2(formula = vegan ~ parent * temperature, data = vip_data_parent, method = "eu")
-                   Df SumOfSqs      R2      F Pr(>F)  
-parent              2    22.82 0.06269 1.7593  0.132  
-temperature         2    11.16 0.03065 0.8600  0.463  
-parent:temperature  4    44.66 0.12269 1.7215  0.098 .
-Residual           44   285.36 0.78397                
-Total              52   364.00 1.00000     
+                   Df SumOfSqs      R2      F Pr(>F)
+parent              2    44.50 0.05705 1.5591  0.182
+temperature         2    22.15 0.02839 0.7760  0.548
+parent:temperature  4    85.45 0.10955 1.4969  0.159
+Residual           44   627.91 0.80501              
+Total              52   780.00 1.00000      
 
 
 ```{r}
@@ -650,7 +677,7 @@ Y
 
 levels(Y)
 
-X<-X[4:24] #pull only data columns
+X<-X[4:39] #pull only data columns
 
 # run PLSDA 
 MyResult.plsda <- plsda(X,Y, ncomp=2) # 1 Run the method with ncomp = groups -1
@@ -736,7 +763,7 @@ Make a list of vips.
 temperature_vip_list<-temperature_VIP_1%>%
   pull(Metabolite)
 ```
-There are 9 VIPs. 
+There are 10 VIPs. 
 
 Plot heatmap of z score of metabolites across temperature.  
 
@@ -771,7 +798,7 @@ heatmap <- Heatmap(
   cluster_columns = FALSE,
   show_row_names = TRUE,
   show_column_names = TRUE,
-  row_split=3,
+  #row_split=3,
   row_title = "Metabolite", 
   column_names_gp =  gpar(fontsize = 12, border=FALSE),
   column_names_rot = 45,
@@ -821,7 +848,7 @@ All characteristics are renamed.
 View scree plot. 
 
 ```{r}
-scaled.pca<-prcomp(vip_data_temperature[c(4:12)], scale=TRUE, center=TRUE) 
+scaled.pca<-prcomp(vip_data_temperature[c(4:13)], scale=TRUE, center=TRUE) 
 
 fviz_eig(scaled.pca)
 ```
@@ -829,7 +856,7 @@ fviz_eig(scaled.pca)
 Prepare a PCA plot
 ```{r}
 # scale data
-vegan <- scale(vip_data_temperature[c(4:12)])
+vegan <- scale(vip_data_temperature[c(4:13)])
 
 # PerMANOVA 
 permanova<-adonis2(vegan ~ parent*temperature, data = vip_data_temperature, method='eu')
@@ -838,11 +865,11 @@ permanova
 
 adonis2(formula = vegan ~ parent * temperature, data = vip_data_temperature, method = "eu")
                    Df SumOfSqs      R2      F Pr(>F)
-parent              2    33.26 0.07106 1.9736  0.116
-temperature         2    15.01 0.03208 0.8909  0.466
-parent:temperature  4    49.00 0.10470 1.4538  0.167
-Residual           44   370.73 0.79216              
-Total              52   468.00 1.00000   
+parent              2    28.82 0.05543 1.5314  0.208
+temperature         2    23.68 0.04553 1.2579  0.263
+parent:temperature  4    53.42 0.10273 1.4192  0.203
+Residual           44   414.08 0.79630              
+Total              52   520.00 1.00000   
 
 
 ```{r}
@@ -916,7 +943,7 @@ Y
 
 levels(Y)
 
-X<-X[4:24] #pull only data columns
+X<-X[4:39] #pull only data columns
 
 # run PLSDA 
 MyResult.plsda <- plsda(X,Y, ncomp=5) # 1 Run the method with ncomp = groups -1
@@ -1002,7 +1029,7 @@ Make a list of vips.
 interaction_vip_list<-interaction_VIP_1%>%
   pull(Metabolite)
 ```
-There are 9 VIPs. 
+There are 13 VIPs. 
 
 Plot heatmap of z score of lipids across groups.   
 
@@ -1088,7 +1115,7 @@ All characteristics are renamed.
 View scree plot. 
 
 ```{r}
-scaled.pca<-prcomp(vip_data_interaction[c(4:12)], scale=TRUE, center=TRUE) 
+scaled.pca<-prcomp(vip_data_interaction[c(4:16)], scale=TRUE, center=TRUE) 
 
 fviz_eig(scaled.pca)
 ```
@@ -1096,7 +1123,7 @@ fviz_eig(scaled.pca)
 Prepare a PCA plot
 ```{r}
 # scale data
-vegan <- scale(vip_data_interaction[c(4:12)])
+vegan <- scale(vip_data_interaction[c(4:16)])
 
 # PerMANOVA 
 permanova<-adonis2(vegan ~ parent*temperature, data = vip_data_interaction, method='eu')
@@ -1105,11 +1132,11 @@ permanova
 
 adonis2(formula = vegan ~ parent * temperature, data = vip_data_interaction, method = "eu")
                    Df SumOfSqs      R2      F Pr(>F)  
-parent              2    20.38 0.04354 1.2073  0.260  
-temperature         2    15.07 0.03219 0.8926  0.487  
-parent:temperature  4    61.19 0.13075 1.8125  0.055 .
-Residual           44   371.36 0.79351                
-Total              52   468.00 1.00000                
+parent              2    28.06 0.04151 1.1445  0.332  
+temperature         2    27.70 0.04098 1.1299  0.315  
+parent:temperature  4    80.85 0.11960 1.6489  0.099 .
+Residual           44   539.39 0.79791                
+Total              52   676.00 1.00000               
 
 ```{r}
 pca_vip_interaction1<-ggplot2::autoplot(scaled.pca, data=vip_data_interaction, frame.colour="parent", loadings=FALSE,  colour="parent", shape="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
@@ -1251,4 +1278,5 @@ dev.off()
 
 ```
 
+No signature of changes in metabolome by parent or temperature treatment. 
 
