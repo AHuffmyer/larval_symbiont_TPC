@@ -1,5 +1,5 @@
 ---
-title: "Metabolomics analysis"
+title: "Lipidomics analysis"
 author: "Ariana S Huffmyer"
 date: "2024"
 output: 
@@ -12,7 +12,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-ADJUST RSD FILTERING STEPS 
+HEIGHT PEAK
 
 # Set Up    
 
@@ -41,6 +41,7 @@ library(circlize)
 library(tibble)
 library(viridis)
 library(genefilter)
+library(UpSetR)
 
 conflict_prefer("select", winner = "dplyr", quiet = FALSE)
 conflict_prefer("filter", winner = "dplyr", quiet = FALSE)
@@ -52,9 +53,16 @@ conflict_prefer("rename", winner = "dplyr", quiet = FALSE)
 ## Read in all files 
 
 ```{r}
-metadata<-read_csv("data/lipids_metabolites/metabolomics/Metabolite_Metadata_Huffmyer_Matthews.csv")%>%rename(tube=`Sample ID`, type=Type, temperature=Temperature, parent=Symbiont)
+metadata<-read_csv("data/lipids_metabolites/lipidomics/lipid_metadata_huffmyer_matthews.csv")%>%
+  rename(sample=`Vial ID`, tube=`Sample ID`, temperature=Temperature, parent=Parent, type=Type, code=Code)
 
-metabolites<-read_xlsx("data/lipids_metabolites/metabolomics/metabolite_data.xlsx")
+neg_values<-read_csv("data/lipids_metabolites/lipidomics/processed-data/negative/PeakValues_2_2024_09_19_13_01_19.csv")
+
+neg_peaks<-read_csv("data/lipids_metabolites/lipidomics/processed-data/negative/PeakMaster_2_2024_09_19_13_01_19.csv")
+
+pos_values<-read_csv("data/lipids_metabolites/lipidomics/processed-data/positive/PeakValues_3_2024_09_19_14_24_22.csv")
+
+pos_peaks<-read_csv("data/lipids_metabolites/lipidomics/processed-data/positive/PeakMaster_3_2024_09_19_14_24_22.csv")
 
 protein<-read_csv("data/lipids_metabolites/protein/protein_calculated.csv")
 ```
@@ -65,168 +73,375 @@ Add protein data to the metadata.
 metadata$protein.ug<-protein$`Total Protein ug`[match(metadata$tube, protein$Sample)]
 ```
 
-## Format data and conduct protein normalization 
+## Negative polarity 
 
-Format the metabolite data frame in long format to obtain sample names and normalize to total protein. 
+How many peaks do we have?  
 
 ```{r}
-metabolites<-metabolites%>%
-  pivot_longer(names_to = "file", values_to = "area", cols=c(2:74))%>%
-  mutate(tube = str_extract(file, "(?<=_)[^_]+(?=_)"))%>%
-  mutate(tube = str_remove_all(tube, "M"))
-
-levels(as.factor(metabolites$tube))
-levels(as.factor(metadata$tube))
+length(neg_peaks$`Metabolite name`)
 ```
 
-Merge in metadata. 
-```{r}
-metadata<-metadata%>%
-  select(tube, type, temperature, parent, protein.ug)
+162 peaks. 
 
-metabolites<-left_join(metabolites, metadata)%>%select(!file)
+Reformat data set to be useful.  
+
+```{r}
+neg_peaks<-neg_peaks%>% 
+  rename(peak=`Alignment ID`, lipid=`Metabolite name`, formula=Formula, ontology=Ontology)%>%
+  select(peak, lipid, formula, ontology)%>%
+  mutate(polarity=c("negative"))
+
+neg_values<-neg_values%>%
+  rename(peak=ID, file=File, group=Class, height=Height)%>%
+  select(peak, file, group, height)%>%
+  mutate(polarity=c("negative"))
 ```
 
-Replace NA's with 0's in the metabolite data frame. 
+The data frames now contain `peak` for a unique ID for each lipid detected. This number links the two files. Area represents the normalized area after internal standard normalization. We will further normalize this value below.  
+
+Format the file names to correspond to sample IDs in the metadata sheet. 
 
 ```{r}
-metabolites %>%
-  filter(is.na(area)) %>%
-  nrow()
-# there are many NA's, which need to be replaced with 0
-
-metabolites <- metabolites %>%
-  mutate(area = replace_na(area, 0))
-
-metabolites %>%
-  filter(is.na(area)) %>%
-  nrow()
+#first remove the test PBQCs ran at 5 and 10 uL loadings and keep the standard 20 uL loading 
+neg_values<-neg_values%>%
+  filter(!file=="20240423_Mcap_neg_PBQC1_5")%>%
+  filter(!file=="20240423_Mcap_neg_PBQC1_10")%>%
+  mutate(file = str_replace(file, "20240423_Mcap_neg_PBQC1_20", "20240423_Mcap_neg_PBQC1"))%>%
+  mutate(sample = str_extract(file, "[^_]+$"))
 ```
 
-Filter out PBQC samples and blank samples, these were used for peak identification and are not needed now. 
+Merge together all data from the metadata, values, and peak information to one data frame.
+
 ```{r}
-metabolites<-metabolites%>%
+negative<-left_join(metadata, neg_values)
+
+negative<-negative%>%
+  select(sample, temperature, parent, type, peak, height, polarity, protein.ug)
+
+negative<-left_join(negative, neg_peaks)
+```
+
+Next, add together the values for all peaks identified as the same metabolite for each sample.   
+
+How many lipids have multiple peaks detected separately? 
+```{r}
+length(unique(neg_peaks$lipid))
+```
+
+There are 162 unique lipids and 162 peaks. 
+
+Show an example of entries that have the same metabolite with multiple peak IDs. 
+```{r}
+filtered_values <- negative %>%
+  group_by(lipid) %>%
+  filter(n_distinct(peak) > 1) %>%
+  ungroup()%>%
+  arrange(lipid, sample, peak)
+
+print(filtered_values)
+```
+No duplicates. 
+
+Add together the values for each sample for each identified lipid. 
+```{r}
+negative<-negative%>%
+  group_by(sample, lipid, temperature, parent, type, polarity, formula, ontology, protein.ug)%>%
+  summarise(height=sum(height, na.rm=TRUE))
+```
+
+Remove PBQC's and Blanks. These were used for peak identification in MSDIAL and are not used downstream at this point. 
+```{r}
+negative<-negative%>%
   filter(!type=="PBQC")%>%
   filter(!type=="Blank")
 ```
 
-Now perform internal standard normalization to C13 sorbitol average for each sample corrections. 
+Conduct internal standard normalization. 
 
+Peak 16879 (PG) will be used as our internal standard for negative polarity. It was consistent across samples (low fold change), high signal:noise, and is mid-retention. 
 ```{r}
-#make a dataframe of sorbitol values for each sample
-sorbitol<-metabolites%>%
-  filter(Name=="13C6-Sorbitol")%>%
-  group_by(tube)%>%
-  summarise(area_sorbitol=mean(area, na.rm=TRUE))
+#pull out the name of the standard being used 
+standard_neg<-neg_peaks%>%
+  filter(peak=="16879")%>%
+  pull(lipid)
+
+#make a dataframe of standard values for each sample
+standard_neg_value<-negative%>%
+  filter(lipid %in% standard_neg)%>%
+  group_by(sample)%>%
+  summarise(height_standard=mean(height, na.rm=TRUE))
 
 #add this value back into the master data frame for corrections. 
-metabolites<-metabolites%>%
-  left_join(.,sorbitol)
+negative<-negative%>%
+  left_join(.,standard_neg_value)
 ```
 
-Normalize area by dividing area by sorbitol internal standard  value for each sample's peak value for each metabolite. 
+Remove sample 1, it did not have a signal for the internal standard. 
+
 ```{r}
-metabolites<-metabolites%>%
-  mutate(area_corrected=area/area_sorbitol)
+negative<-negative%>%
+  filter(!sample=="1")
 ```
 
-Filter to only keep metabolites that have a detectable value in every sample. 
-
+Normalize to the standard. 
 ```{r}
-# Find metabolites that have a value > 0 for every tube
-filtered_data <- metabolites %>%
-  group_by(Name) %>%
-  filter(all(area_corrected > 0))
-
-# Find metabolites that were removed (i.e., have any value <= 0)
-removed_metabolites <- metabolites %>%
-  filter(!(Name %in% filtered_data$Name)) %>%
-  distinct(Name)
-
-kept_metabolites <- metabolites %>%
-  filter((Name %in% filtered_data$Name)) %>%
-  distinct(Name)
+negative<-negative%>%
+   mutate(height_corrected=height/height_standard)
 ```
 
-57 metabolites are kept after this filtering, 569 were removed. This makes sense, the data frame kept all metabolites in the library.  
-
-Normalize corrected area to sample protein. This will generate units of normalized peak area / ug protein. 
+Finally, normalize corrected height to sample protein. This will generate units of height / ug protein. 
 
 ```{r}
-filtered_data<-filtered_data%>%
-  mutate(area_normalized=area_corrected/protein.ug)
+negative<-negative%>%
+  mutate(height_normalized=height_corrected/protein.ug)
 ```
 
-```{r}
-hist(filtered_data$area_normalized)
+Repeat for positive polarity.  
 
-quantile(filtered_data$area_normalized)
+## Positive polarity 
+
+How many peaks do we have?  
+
+```{r}
+length(pos_peaks$`Metabolite name`)
 ```
 
+896 peaks 
+
+Reformat data set to be useful.  
+
 ```{r}
-length(unique(filtered_data$Name))
+pos_peaks<-pos_peaks%>% 
+  rename(peak=`Alignment ID`, lipid=`Metabolite name`, formula=Formula, ontology=Ontology)%>%
+  select(peak, lipid, formula, ontology)%>%
+  mutate(polarity=c("positive"))
+
+pos_values<-pos_values%>%
+  rename(peak=ID, file=File, group=Class, height=Height)%>%
+  select(peak, file, group, height)%>%
+  mutate(polarity=c("positive"))
 ```
 
-Filter out internal standards if present still. 
+The data frames now contain `peak` for a unique ID for each lipid detected. This number links the two files. Area represents the normalized height after internal standard normalization. We will further normalize this value below.  
+
+Format the file names to correspond to sample IDs in the metadata sheet. 
+
 ```{r}
-filtered_data<-filtered_data%>%
-  filter(!Name=="13C5,15N1-Valine")%>%
-  filter(!Name=="13C6-Sorbitol")
+pos_values<-pos_values%>%
+  mutate(sample = str_extract(file, "[^_]+$"))
 ```
 
-We are now ready for anaylsis! 
+Merge together all data from the metadata, values, and peak information to one data frame. 
 
-# Conduct filtering for relative standard deviation 
-
-Make a dataframe that calculates the standard deviation of the metabolite area within treatment relative to the mean (i.e., how "large" is the SD).  
-
-The formula will be:  
-
-(sd*100)/mean 
-
-Calculate for each metabolite in each treatment group. 
 ```{r}
-test<-filtered_data%>%
-  group_by(Name, parent, temperature)%>%
-  summarise(RSD=(sd(area_normalized)*100)/mean(area_normalized))
+positive<-left_join(metadata, pos_values)
 
-length(unique(test$Name))
-```
-55 metabolites before 
+positive<-positive%>%
+  select(sample, temperature, parent, type, peak, height, polarity, protein.ug)
 
-Remove metabolites that have RSD < 100 in all treatments (RSD is quite high).  
-```{r}
-test <- test %>%
-  group_by(Name) %>%
-  filter(all(RSD < 100))
-
-length(unique(test$Name))
-
-keep_list<-c(unique(test$Name))
-```
-21 metabolites after 
-
-Filter the filtered dataset to include the selected metabolites after RSD filtering.  
-```{r}
-filtered_data<-filtered_data%>%
-  filter(Name %in% keep_list)
+positive<-left_join(positive, pos_peaks)
 ```
 
-# Unsupervised analysis 
+Next, add together the values for all peaks identified as the same metabolite for each sample.   
 
-Conduct a PCA and PERMANOVA to examine the effects of parent and temperature on the metabolome of coral larvae.
-
-Convert to wide format. 
-
+How many lipids have multiple peaks detected separately? 
 ```{r}
-wide_data<-filtered_data%>%
+length(unique(pos_peaks$lipid))
+```
+
+There are 896 unique lipids and 896 total peaks. 
+
+Show an example of entries that have the same metabolite with multiple peak IDs. 
+```{r}
+filtered_values <- positive %>%
+  group_by(lipid) %>%
+  filter(n_distinct(peak) > 1) %>%
   ungroup()%>%
+  arrange(lipid, sample, peak)
+
+print(filtered_values)
+
+levels(factor(filtered_values$lipid))
+```
+
+No duplicates
+
+Remove PBQC's and blanks. These were used for peak identification in MSDIAL and are not used downstream at this point. 
+```{r}
+positive<-positive%>%
+  filter(!type=="PBQC")%>%
+  filter(!type=="Blank")
+```
+
+Conduct internal standard normalization. 
+
+Peak 19029 (LPC) will be used as our internal standard for positive polarity. It was consistent across samples (low fold change), high signal:noise, and was the best representative from standards. 
+```{r}
+#pull out the name of the standard being used 
+standard_pos<-pos_peaks%>%
+  filter(peak=="19029")%>%
+  pull(lipid)
+
+#make a dataframe of standard values for each sample
+standard_pos_value<-positive%>%
+  filter(lipid %in% standard_pos)%>%
+  group_by(sample)%>%
+  summarise(height_standard=mean(height, na.rm=TRUE))
+
+#add this value back into the master data frame for corrections. 
+positive<-positive%>%
+  left_join(.,standard_pos_value)
+```
+
+Remove sample 1, it did not have a signal for the internal standard for negative and therefore is being removed from the data analysis. 
+
+```{r}
+positive<-positive%>%
+  filter(!sample=="1")
+```
+
+Normalize to the standard. 
+```{r}
+positive<-positive%>%
+   mutate(height_corrected=height/height_standard)
+```
+
+Finally, normalize corrected height to sample protein. This will generate units of height / ug protein. 
+
+```{r}
+positive<-positive%>%
+  mutate(height_normalized=height_corrected/protein.ug)
+```
+
+## Join polarities together 
+
+Join positive and negative datasets.  
+
+```{r}
+length(negative$lipid)
+length(positive$lipid)
+
+lipids<-rbind(negative, positive)
+
+length(lipids$lipid)
+```
+
+Select polarity for peaks in both polarity files. How many lipids are detected at both polarities? 
+
+```{r}
+filtered_values <- lipids %>%
+  group_by(lipid) %>%
+  filter(n_distinct(polarity) > 1) %>%
+  ungroup()%>%
+  arrange(lipid, sample, polarity)
+
+print(filtered_values)
+
+length(unique(filtered_values$lipid))
+```
+
+There are 40 lipids detected at both polarities. Select the polarity with the highest Area value for each lipid. 
+```{r}
+# Identify lipids with both polarities
+lipids_with_both_polarities <- lipids %>%
+  group_by(lipid) %>%
+  filter(n_distinct(polarity) == 2)
+
+# Filter lipids with both polarities to keep only the one with the highest height
+filtered_lipids <- lipids_with_both_polarities %>%
+  group_by(lipid) %>%
+  filter(height == max(height)) %>%
+  ungroup()
+
+# Identify lipids that only have one entry (i.e., do not have both polarities)
+single_entry_lipids <- lipids %>%
+  group_by(lipid) %>%
+  filter(n_distinct(polarity) == 1) %>%
+  ungroup()
+
+# Combine filtered lipids and single entry lipids
+lipids_filtered <- bind_rows(filtered_lipids, single_entry_lipids)
+```
+
+How many lipids are detected at both polarities? 
+
+```{r}
+filtered_values <- lipids_filtered %>%
+  group_by(lipid) %>%
+  filter(n_distinct(polarity) > 1) %>%
+  ungroup()%>%
+  arrange(lipid, sample, polarity)
+
+print(filtered_values)
+
+length(unique(filtered_values$lipid))
+```
+
+Duplicates are now taken care of.  
+
+View ontology categories available. 
+```{r}
+levels(as.factor(lipids_filtered$ontology))
+
+ontology<-lipids_filtered%>%ungroup()%>%select(lipid, formula, ontology)%>%unique()
+```
+ [1] "AHexCAS"    "AHexCer"    "AHexCS"     "AHexSIS"    "ASM"        "BileAcid"   "BMP"       
+ [8] "BRSE"       "CAR"        "CASE"       "CE"         "Cer_ADS"    "Cer_AP"     "Cer_AS"    
+[15] "Cer_EOS"    "Cer_HDS"    "Cer_HS"     "Cer_NDS"    "Cer_NP"     "Cer_NS"     "CL"        
+[22] "CoQ"        "DCAE"       "DEGSE"      "DG"         "DGDG"       "DMPE"       "EtherDG"   
+[29] "EtherDGDG"  "EtherLPC"   "EtherLPE"   "EtherMGDG"  "EtherOxPC"  "EtherPC"    "EtherPE"   
+[36] "EtherPI"    "EtherPS"    "EtherTG"    "FA"         "FAHFA"      "HBMP"       "HexCer_AP" 
+[43] "HexCer_HS"  "HexCer_NDS" "KDCAE"      "KLCAE"      "LCAE"       "LPC"        "LPE"       
+[50] "MG"         "MGDG"       "NAE"        "NAGly"      "NAGlySer"   "NAOrn"      "NATau"     
+[57] "Others"     "OxFA"       "OxPC"       "OxPE"       "OxPI"       "OxTG"       "PA"        
+[64] "PC"         "PE"         "PEtOH"      "PG"         "PI"         "PMeOH"      "PS"        
+[71] "SHexCer"    "SISE"       "SL"         "SM"         "SSulfate"   "ST"         "TG"        
+[78] "TG_EST"     "Unknown"    "VAE"  
+
+```{r}
+lipids_filtered<-lipids_filtered%>%
+  select(sample, lipid, temperature, parent, type, polarity, formula, ontology, height_normalized)%>%
+  group_by(sample, lipid, temperature, parent, type, formula, ontology)%>%
+  summarize(height_normalized=sum(height_normalized, na.rm=TRUE))
+```
+
+Remove standard lipids - those with (d7) or (d9) in the lipid name.  
+
+```{r}
+lipid_d7 <- lipids_filtered %>%
+  filter(str_detect(lipid, "\\(d7\\)"))%>%
+  pull(lipid)%>%
+  unique()
+
+lipid_d9 <- lipids_filtered %>%
+  filter(str_detect(lipid, "\\(d9\\)"))%>%
+  pull(lipid)%>%
+  unique()
+
+lipids_filtered<-lipids_filtered%>%
+  filter(!lipid %in% lipid_d7)%>%
+  filter(!lipid %in% lipid_d9)
+```
+
+```{r}
+length(unique(lipids_filtered$lipid))
+```
+
+We have 1009 lipids in our dataset.  
+
+```{r}
+hist(lipids_filtered$height_normalized)
+```
+
+Plot and remove outliers. 
+
+```{r}
+wide_data<-lipids_filtered%>%
+  ungroup()%>%
+  select(!formula)%>%
+  select(!ontology)%>%
   select(!type)%>%
-  select(!protein.ug)%>%
-  select(!area_sorbitol)%>%
-  select(!area_corrected)%>%
-  select(!area)%>%
-  pivot_wider(names_from=Name, values_from=area_normalized)
+  pivot_wider(names_from=lipid, values_from=height_normalized)
 ```
 
 ```{r}
@@ -234,9 +449,18 @@ wide_data%>%
     select_if(~ any(is.na(.)))
 ```
 
-No columns have NA's.  
+Replace NA's with 0's. 
 
 ```{r}
+wide_data[is.na(wide_data)] <- 0
+
+wide_data%>%
+    select_if(~ any(is.na(.)))
+```
+
+```{r}
+str(wide_data)
+
 wide_data$temperature<-factor(wide_data$temperature, levels=c("Ambient", "Moderate (+3)", "High (+6)"))
 
 wide_data$parent<-factor(wide_data$parent, levels=c("Wildtype", "Bleached", "Nonbleached"))
@@ -247,35 +471,15 @@ All characteristics are renamed.
 View scree plot. 
 
 ```{r}
-scaled.pca<-prcomp(wide_data[c(4:24)], scale=TRUE, center=TRUE) 
-
-fviz_eig(scaled.pca)
+scaled.pca<-prcomp(wide_data[c(4:1012)], scale=TRUE, center=TRUE) 
 ```
-
-Prepare a PCA plot
-```{r}
-# scale data
-vegan <- scale(wide_data[c(4:24)])
-
-# PerMANOVA 
-permanova<-adonis2(vegan ~ parent*temperature, data = wide_data, method='eu')
-permanova
-```
-
-adonis2(formula = vegan ~ parent * temperature, data = wide_data, method = "eu")
-                   Df SumOfSqs      R2      F Pr(>F)  
-parent              2    68.28 0.06135 1.7344  0.147  
-temperature         2    15.00 0.01347 0.3810  0.869  
-parent:temperature  4   143.93 0.12931 1.8279  0.069 .
-Residual           45   885.79 0.79586                
-Total              53  1113.00 1.00000      
 
 ```{r}
 pca1<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="parent", loadings=FALSE,  colour="parent", shape="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=FALSE, loadings.label.size=5, loadings.label.vjust=-1, size=5) + 
   scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
   scale_fill_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
   scale_shape_manual(name="Temperature", values=c(19,17,15))+
-  geom_text(aes(x = PC1, y = PC2, label = tube), vjust = -0.5)+
+  geom_text(aes(x = PC1, y = PC2, label = sample), vjust = -0.5)+
   theme_classic()+
    theme(legend.text = element_text(size=18), 
          legend.position="none",
@@ -285,20 +489,102 @@ pca1<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="parent", loadi
         axis.title = element_text(size=18,  face="bold"));pca1
 ```
 
-Sample L107 is a clear outlier. Remove this sample and plot again. 
+Sample 23 and 48 are outliers, remove. 
 
 ```{r}
-filtered_data<-filtered_data%>%
-  filter(!tube=="L107")
-
 wide_data<-wide_data%>%
-  filter(!tube=="L107")
+  filter(!sample=="23")%>%
+  filter(!sample=="48")
+
+lipids_filtered<-lipids_filtered%>%
+  filter(!sample=="23")%>%
+  filter(!sample=="48")
 ```
+
+# Conduct filtering for relative standard deviation 
+
+Make a dataframe that calculates the standard deviation of the lipid area within treatment relative to the mean (i.e., how "large" is the SD).  
+
+The formula will be:  
+
+(sd*100)/mean 
+
+Calculate for each lipid in each treatment group. 
+```{r}
+test<-lipids_filtered%>%
+  group_by(lipid, parent, temperature)%>%
+  summarise(RSD=(sd(height_normalized)*100)/mean(height_normalized))
+
+length(unique(test$lipid))
+
+hist(test$RSD)
+```
+1009 lipids before 
+
+Keep lipids with RSD <40 in all treatments (RSD high right now, come back to this).  
+```{r}
+test <- test %>%
+  group_by(lipid, parent, temperature) %>%
+  filter(all(RSD < 40))
+
+length(unique(test$lipid))
+
+keep_list<-c(unique(test$lipid))
+
+hist(test$RSD)
+```
+868 metabolites after 
+
+Filter the filtered dataset to include the selected metabolites after RSD filtering.  
+```{r}
+lipids_filtered<-lipids_filtered%>%
+  filter(lipid %in% keep_list)
+```
+
+We are now ready to conduct analysis! 
+
+Export the processed dataset. 
+
+```{r}
+write_csv(lipids_filtered, file="output/lipids_metabolites/lipids/processed_lipids_height.csv")
+```
+
+# Unsupervised analysis 
+
+Conduct a PCA and PERMANOVA to examine the effects of parent and temperature on the lipidome of coral larvae. 
+
+Convert to wide format. 
+
+```{r}
+wide_data<-lipids_filtered%>%
+  ungroup()%>%
+  select(!formula)%>%
+  select(!ontology)%>%
+  select(!type)%>%
+  pivot_wider(names_from=lipid, values_from=height_normalized)
+```
+
+```{r}
+wide_data%>%
+    select_if(~ any(is.na(.)))
+```
+
+No columns have NA's.  
+
+```{r}
+str(wide_data)
+
+wide_data$temperature<-factor(wide_data$temperature, levels=c("Ambient", "Moderate (+3)", "High (+6)"))
+
+wide_data$parent<-factor(wide_data$parent, levels=c("Wildtype", "Bleached", "Nonbleached"))
+```
+
+All characteristics are renamed.  
 
 View scree plot. 
 
 ```{r}
-scaled.pca<-prcomp(wide_data[c(4:24)], scale=TRUE, center=TRUE) 
+scaled.pca<-prcomp(wide_data[c(4:871)], scale=TRUE, center=TRUE) 
 
 fviz_eig(scaled.pca)
 ```
@@ -306,7 +592,7 @@ fviz_eig(scaled.pca)
 Prepare a PCA plot
 ```{r}
 # scale data
-vegan <- scale(wide_data[c(4:24)])
+vegan <- scale(wide_data[c(4:871)])
 
 # PerMANOVA 
 permanova<-adonis2(vegan ~ parent*temperature, data = wide_data, method='eu')
@@ -315,11 +601,26 @@ permanova
 
 adonis2(formula = vegan ~ parent * temperature, data = wide_data, method = "eu")
                    Df SumOfSqs      R2      F Pr(>F)  
-parent              2    46.18 0.04229 1.1509  0.339  
-temperature         2    25.89 0.02371 0.6453  0.644  
-parent:temperature  4   137.16 0.12560 1.7091  0.076 .
-Residual           44   882.77 0.80840                
-Total              52  1092.00 1.00000       
+parent              2     4019 0.09260 2.5316  0.035 *
+temperature         2     3601 0.08298 2.2686  0.055 .
+parent:temperature  4     2441 0.05624 0.7687  0.645  
+Residual           42    33339 0.76817                
+Total              50    43400 1.00000  
+
+```{r}
+pca1<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="parent", loadings=FALSE,  colour="parent", shape="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=FALSE, loadings.label.size=5, loadings.label.vjust=-1, size=5) + 
+  scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
+  scale_fill_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
+  scale_shape_manual(name="Temperature", values=c(19,17,15))+
+  geom_text(aes(x = PC1, y = PC2, label = sample), vjust = -0.5)+
+  theme_classic()+
+   theme(legend.text = element_text(size=18), 
+         legend.position="none",
+        plot.background = element_blank(),
+        legend.title = element_text(size=18, face="bold"), 
+        axis.text = element_text(size=18), 
+        axis.title = element_text(size=18,  face="bold"));pca1
+```
 
 ```{r}
 pca2<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="parent", loadings=FALSE,  colour="parent", shape="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
@@ -348,7 +649,7 @@ pca2b<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="temperature",
 
 pca_plots<-plot_grid(pca2, pca2b, ncol=2, nrow=1)
 
-ggsave(pca_plots, filename="figures/metabolites/pca_plots.jpeg", width=12, height=4)
+ggsave(pca_plots, filename="figures/lipids/pca_plots_height.jpeg", width=12, height=4)
 ```
 
 View a PCA with treatment code information. 
@@ -370,7 +671,7 @@ pca3<-ggplot2::autoplot(scaled.pca, data=test_wide_data, frame.colour="code", lo
         axis.text = element_text(size=14), 
         axis.title = element_text(size=14,  face="bold"));pca3
 
-ggsave(pca3, filename="figures/metabolites/pca_all_groups.jpeg", width=8, height=6)
+ggsave(pca3, filename="figures/lipids/pca_all_groups_height.jpeg", width=8, height=6)
 ```
 
 # Supervised PLS-DA analysis  
@@ -390,7 +691,7 @@ levels(as.factor(X$temperature))
 Y <- as.factor(X$parent) #select treatment names
 Y
 
-X<-X[4:24] #pull only data columns
+X<-X[4:871] #pull only data columns
 
 # run PLSDA 
 MyResult.plsda <- plsda(X,Y, ncomp=2) # 1 Run the method with ncomp = groups -1
@@ -398,7 +699,7 @@ plotIndiv(MyResult.plsda)    # 2 Plot the samples
 
 cols<-c("gray", "orange", "brown4") 
 
-pdf("figures/metabolites/PLSDA_Parent.pdf", width=9, height=6)
+pdf("figures/lipids/PLSDA_Parent_height.pdf", width=9, height=6)
 plotIndiv(MyResult.plsda, col=cols, ind.names = FALSE, legend=TRUE, legend.title = "Parent", ellipse = FALSE, title="", style = "graphics", centroid=FALSE, point.lwd = 2, cex=2)
 dev.off() 
 
@@ -436,32 +737,32 @@ parent_VIP_DF <- as.data.frame(parent_VIP[["tab"]])
 parent_VIP_DF
 
 # Converting row names to column
-parent_VIP_table <- rownames_to_column(parent_VIP_DF, var = "Metabolite")
+parent_VIP_table <- rownames_to_column(parent_VIP_DF, var = "Lipid")
 
 #filter for VIP > 1
 parent_VIP_1 <- parent_VIP_table %>% 
   filter(VIP >= 1)
 
-write_csv(parent_VIP_1, "output/lipids_metabolites/metabolites/Overall_Parent_VIPs.csv")
+write_csv(parent_VIP_1, "output/lipids_metabolites/lipids/Overall_Parent_VIPs_height.csv")
 
 #plot
 parent_VIP_1 %>%
   arrange(VIP) %>%
-  ggplot( aes(x = VIP, y = reorder(Metabolite,VIP,sum))) +
+  ggplot( aes(x = VIP, y = reorder(Lipid,VIP,sum))) +
   geom_point() +
-  ylab("Metabolite") +
+  ylab("Lipid") +
   xlab("VIP Score") +
   ggtitle("Parent VIP") +
   theme_bw() + theme(panel.border = element_rect(linetype = "solid", color = "black"), panel.grid.major = element_blank(), #Makes background theme white
                      panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
 
 
-pdf("figures/metabolites/Parent_VIP.pdf", width=4, height=4)
+pdf("figures/lipids/Parent_VIP_height.pdf", width=10, height=35)
 parent_VIP_1 %>%
   arrange(VIP) %>%
-  ggplot( aes(x = VIP, y = reorder(Metabolite,VIP,sum))) +
+  ggplot( aes(x = VIP, y = reorder(Lipid,VIP,sum))) +
   geom_point() +
-  ylab("Metabolite") +
+  ylab("Lipid") +
   xlab("VIP Score") +
   ggtitle("Parent VIP > 1") +
   theme_bw() + theme(panel.border = element_rect(linetype = "solid", color = "black"), panel.grid.major = element_blank(), #Makes background theme white
@@ -474,31 +775,31 @@ These lists represent VIPs that drive separation between parent groups.
 Make a list of vips. 
 ```{r}
 parent_vip_list<-parent_VIP_1%>%
-  pull(Metabolite)
+  pull(Lipid)
 ```
-There are 7 VIPs. 
+There are 249 VIPs. 
 
 Plot heatmap of z score of lipids across life stages.  
 
 ```{r}
 # Filter data for VIP metabolites
-parent_vip_data <- filtered_data %>% filter(Name %in% parent_vip_list)
+parent_vip_data <- lipids_filtered %>% filter(lipid %in% parent_vip_list)
 
 # Convert counts to Z-scores
 parent_vip_data <- parent_vip_data %>% 
-  group_by(Name) %>% 
-  mutate(z_score = scale(area_normalized)) %>% 
-  group_by(parent, Name)%>%
+  group_by(lipid) %>% 
+  mutate(z_score = scale(height_normalized)) %>% 
+  group_by(parent, lipid)%>%
   summarise(z_score = mean(z_score, na.rm=TRUE))%>%
   ungroup()
 
 # Pivot data to have metabolites as rows and lifestage as columns
 heatmap_data <- parent_vip_data %>% 
-  dplyr::select(Name, parent, z_score) %>%
+  dplyr::select(lipid, parent, z_score) %>%
   spread(key = parent, value = z_score)
 
 # Convert to matrix and set rownames
-heatmap_matrix <- as.matrix(column_to_rownames(heatmap_data, var = "Name"))
+heatmap_matrix <- as.matrix(column_to_rownames(heatmap_data, var = "lipid"))
 
 # Create the heatmap
 heatmap <- Heatmap(
@@ -507,10 +808,10 @@ heatmap <- Heatmap(
   col = inferno(10),
   cluster_rows = TRUE,
   cluster_columns = FALSE,
-  show_row_names = TRUE,
+  show_row_names = FALSE,
   show_column_names = TRUE,
-  row_split=3,
-  row_title = "Metabolite", 
+  #row_split=4,
+  row_title = "Lipid", 
   column_names_gp =  gpar(fontsize = 12, border=FALSE),
   column_names_rot = 45,
   row_gap = unit(1, "mm"), 
@@ -522,23 +823,21 @@ heatmap <- Heatmap(
 draw(heatmap)
 
 dev.off()
-pdf("figures/metabolites/VIP_heatmap_parent.pdf", width=5, height=6)
+pdf("figures/lipids/VIP_heatmap_parent_height.pdf", width=4, height=6)
 draw(heatmap)
 dev.off()
 ```
 
-View PCA for VIPs
+View a PCA of these VIPs. 
 
 ```{r}
-vip_data_parent<-filtered_data%>%
+vip_data_parent<-lipids_filtered%>%
   ungroup()%>%
+  select(!formula)%>%
+  select(!ontology)%>%
   select(!type)%>%
-  select(!protein.ug)%>%
-  select(!area_sorbitol)%>%
-  select(!area_corrected)%>%
-  select(!area)%>%
-  filter(Name %in% parent_vip_list)%>%
-  pivot_wider(names_from=Name, values_from=area_normalized)
+  filter(lipid %in% parent_vip_list)%>%
+  pivot_wider(names_from=lipid, values_from=height_normalized)
 ```
 
 ```{r}
@@ -559,7 +858,7 @@ All characteristics are renamed.
 View scree plot. 
 
 ```{r}
-scaled.pca<-prcomp(vip_data_parent[c(4:10)], scale=TRUE, center=TRUE) 
+scaled.pca<-prcomp(vip_data_parent[c(4:252)], scale=TRUE, center=TRUE) 
 
 fviz_eig(scaled.pca)
 ```
@@ -567,7 +866,7 @@ fviz_eig(scaled.pca)
 Prepare a PCA plot
 ```{r}
 # scale data
-vegan <- scale(vip_data_parent[c(4:10)])
+vegan <- scale(vip_data_parent[c(4:252)])
 
 # PerMANOVA 
 permanova<-adonis2(vegan ~ parent*temperature, data = vip_data_parent, method='eu')
@@ -575,13 +874,12 @@ permanova
 ```
 
 adonis2(formula = vegan ~ parent * temperature, data = vip_data_parent, method = "eu")
-                   Df SumOfSqs      R2      F Pr(>F)  
-parent              2    22.82 0.06269 1.7593  0.132  
-temperature         2    11.16 0.03065 0.8600  0.463  
-parent:temperature  4    44.66 0.12269 1.7215  0.098 .
-Residual           44   285.36 0.78397                
-Total              52   364.00 1.00000     
-
+                   Df SumOfSqs      R2      F Pr(>F)    
+parent              2   2771.7 0.22262 7.1593  0.001 ***
+temperature         2    972.3 0.07810 2.5115  0.032 *  
+parent:temperature  4    576.1 0.04628 0.7441  0.702    
+Residual           42   8129.9 0.65300                  
+Total              50  12450.0 1.00000           
 
 ```{r}
 pca_vip_parent1<-ggplot2::autoplot(scaled.pca, data=vip_data_parent, frame.colour="parent", loadings=FALSE,  colour="parent", shape="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
@@ -610,7 +908,7 @@ pca_vip_parent2<-ggplot2::autoplot(scaled.pca, data=vip_data_parent, frame.colou
 
 pca_plots_parent<-plot_grid(pca_vip_parent1, pca_vip_parent2, ncol=2, nrow=1)
 
-ggsave(pca_plots_parent, filename="figures/metabolites/pca_plots_parentVIP.jpeg", width=12, height=4)
+ggsave(pca_plots_parent, filename="figures/lipids/pca_plots_parentVIP_height.jpeg", width=12, height=4)
 ```
 
 View a PCA with treatment code information. 
@@ -632,7 +930,7 @@ pca_parent3<-ggplot2::autoplot(scaled.pca, data=test_wide_data, frame.colour="co
         axis.text = element_text(size=14), 
         axis.title = element_text(size=14,  face="bold"));pca_parent3
 
-ggsave(pca_parent3, filename="figures/metabolites/pca_all_groups_parentVIP.jpeg", width=8, height=6)
+ggsave(pca_parent3, filename="figures/lipids/pca_all_groups_parentVIP_height.jpeg", width=8, height=6)
 ```
 
 ## PLS-DA for the effect of temperature 
@@ -650,7 +948,7 @@ Y
 
 levels(Y)
 
-X<-X[4:24] #pull only data columns
+X<-X[4:871] #pull only data columns
 
 # run PLSDA 
 MyResult.plsda <- plsda(X,Y, ncomp=2) # 1 Run the method with ncomp = groups -1
@@ -658,7 +956,7 @@ plotIndiv(MyResult.plsda)    # 2 Plot the samples
 
 cols<-c("blue", "orange", "red") 
 
-pdf("figures/metabolites/PLSDA_Temperature.pdf", width=9, height=6)
+pdf("figures/lipids/PLSDA_Temperature_height.pdf", width=9, height=6)
 plotIndiv(MyResult.plsda, col=cols, ind.names = FALSE, legend=TRUE, legend.title = "Temperature", ellipse = FALSE, title="", style = "graphics", centroid=FALSE, point.lwd = 2, cex=2)
 dev.off() 
 
@@ -696,32 +994,32 @@ temperature_VIP_DF <- as.data.frame(temperature_VIP[["tab"]])
 temperature_VIP_DF
 
 # Converting row names to column
-temperature_VIP_table <- rownames_to_column(temperature_VIP_DF, var = "Metabolite")
+temperature_VIP_table <- rownames_to_column(temperature_VIP_DF, var = "Lipid")
 
 #filter for VIP > 1
 temperature_VIP_1 <- temperature_VIP_table %>% 
   filter(VIP >= 1)
 
-write_csv(temperature_VIP_1, "output/lipids_metabolites/metabolites/Overall_Temperature_VIPs.csv")
+write_csv(temperature_VIP_1, "output/lipids_metabolites/lipids/Overall_Temperature_VIPs_height.csv")
 
 #plot
 temperature_VIP_1 %>%
   arrange(VIP) %>%
-  ggplot( aes(x = VIP, y = reorder(Metabolite,VIP,sum))) +
+  ggplot( aes(x = VIP, y = reorder(Lipid,VIP,sum))) +
   geom_point() +
-  ylab("Metabolite") +
+  ylab("Lipid") +
   xlab("VIP Score") +
   ggtitle("Temperature VIP") +
   theme_bw() + theme(panel.border = element_rect(linetype = "solid", color = "black"), panel.grid.major = element_blank(), #Makes background theme white
                      panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
 
 
-pdf("figures/metabolites/Temperature_VIP.pdf", width=4, height=4)
+pdf("figures/lipids/Temperature_VIP_height.pdf", width=10, height=35)
 temperature_VIP_1 %>%
   arrange(VIP) %>%
-  ggplot( aes(x = VIP, y = reorder(Metabolite,VIP,sum))) +
+  ggplot( aes(x = VIP, y = reorder(Lipid,VIP,sum))) +
   geom_point() +
-  ylab("Metabolite") +
+  ylab("Lipid") +
   xlab("VIP Score") +
   ggtitle("Temperature VIP > 1") +
   theme_bw() + theme(panel.border = element_rect(linetype = "solid", color = "black"), panel.grid.major = element_blank(), #Makes background theme white
@@ -734,21 +1032,21 @@ These lists represent VIPs that drive separation between temperature groups.
 Make a list of vips. 
 ```{r}
 temperature_vip_list<-temperature_VIP_1%>%
-  pull(Metabolite)
+  pull(Lipid)
 ```
-There are 9 VIPs. 
+There are 251 VIPs. 
 
-Plot heatmap of z score of metabolites across temperature.  
+Plot heatmap of z score of lipids across temperature.  
 
 ```{r}
 # Filter data for VIP metabolites
-temperature_vip_data <- filtered_data %>% filter(Name %in% temperature_vip_list)
+temperature_vip_data <- lipids_filtered %>% filter(lipid %in% temperature_vip_list)
 
 # Convert counts to Z-scores
 temperature_vip_data <- temperature_vip_data %>% 
-  group_by(Name) %>% 
-  mutate(z_score = scale(area_normalized)) %>% 
-  group_by(temperature, Name)%>%
+  group_by(lipid) %>% 
+  mutate(z_score = scale(height_normalized)) %>% 
+  group_by(temperature, lipid)%>%
   summarise(z_score = mean(z_score, na.rm=TRUE))%>%
   ungroup()
 
@@ -756,11 +1054,11 @@ temperature_vip_data$temperature<-factor(temperature_vip_data$temperature, level
 
 # Pivot data to have metabolites as rows and lifestage as columns
 heatmap_data <- temperature_vip_data %>% 
-  dplyr::select(Name, temperature, z_score) %>%
+  dplyr::select(lipid, temperature, z_score) %>%
   spread(key = temperature, value = z_score)
 
 # Convert to matrix and set rownames
-heatmap_matrix <- as.matrix(column_to_rownames(heatmap_data, var = "Name"))
+heatmap_matrix <- as.matrix(column_to_rownames(heatmap_data, var = "lipid"))
 
 # Create the heatmap
 heatmap <- Heatmap(
@@ -769,10 +1067,10 @@ heatmap <- Heatmap(
   col = inferno(10),
   cluster_rows = TRUE,
   cluster_columns = FALSE,
-  show_row_names = TRUE,
+  show_row_names = FALSE,
   show_column_names = TRUE,
-  row_split=3,
-  row_title = "Metabolite", 
+  #row_split=6,
+  row_title = "Lipid", 
   column_names_gp =  gpar(fontsize = 12, border=FALSE),
   column_names_rot = 45,
   row_gap = unit(1, "mm"), 
@@ -784,23 +1082,21 @@ heatmap <- Heatmap(
 draw(heatmap)
 
 dev.off()
-pdf("figures/metabolites/VIP_heatmap_temperature.pdf", width=6, height=7)
+pdf("figures/lipids/VIP_heatmap_temperature_height.pdf", width=4, height=6)
 draw(heatmap)
 dev.off()
 ```
 
-View PCA for VIPs
+View a PCA of these VIPs. 
 
 ```{r}
-vip_data_temperature<-filtered_data%>%
+vip_data_temperature<-lipids_filtered%>%
   ungroup()%>%
+  select(!formula)%>%
+  select(!ontology)%>%
   select(!type)%>%
-  select(!protein.ug)%>%
-  select(!area_sorbitol)%>%
-  select(!area_corrected)%>%
-  select(!area)%>%
-  filter(Name %in% temperature_vip_list)%>%
-  pivot_wider(names_from=Name, values_from=area_normalized)
+  filter(lipid %in% temperature_vip_list)%>%
+  pivot_wider(names_from=lipid, values_from=height_normalized)
 ```
 
 ```{r}
@@ -821,7 +1117,7 @@ All characteristics are renamed.
 View scree plot. 
 
 ```{r}
-scaled.pca<-prcomp(vip_data_temperature[c(4:12)], scale=TRUE, center=TRUE) 
+scaled.pca<-prcomp(vip_data_temperature[c(4:254)], scale=TRUE, center=TRUE) 
 
 fviz_eig(scaled.pca)
 ```
@@ -829,7 +1125,7 @@ fviz_eig(scaled.pca)
 Prepare a PCA plot
 ```{r}
 # scale data
-vegan <- scale(vip_data_temperature[c(4:12)])
+vegan <- scale(vip_data_temperature[c(4:254)])
 
 # PerMANOVA 
 permanova<-adonis2(vegan ~ parent*temperature, data = vip_data_temperature, method='eu')
@@ -837,13 +1133,12 @@ permanova
 ```
 
 adonis2(formula = vegan ~ parent * temperature, data = vip_data_temperature, method = "eu")
-                   Df SumOfSqs      R2      F Pr(>F)
-parent              2    33.26 0.07106 1.9736  0.116
-temperature         2    15.01 0.03208 0.8909  0.466
-parent:temperature  4    49.00 0.10470 1.4538  0.167
-Residual           44   370.73 0.79216              
-Total              52   468.00 1.00000   
-
+                   Df SumOfSqs      R2      F Pr(>F)  
+parent              2   1278.5 0.10187 2.9061  0.016 *
+temperature         2   1312.5 0.10458 2.9833  0.011 *
+parent:temperature  4    720.1 0.05738 0.8184  0.612  
+Residual           42   9238.9 0.73616                
+Total              50  12550.0 1.00000            
 
 ```{r}
 pca_vip_temperature1<-ggplot2::autoplot(scaled.pca, data=vip_data_temperature, frame.colour="parent", loadings=FALSE,  colour="parent", shape="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
@@ -872,7 +1167,7 @@ pca_vip_temperature2<-ggplot2::autoplot(scaled.pca, data=vip_data_temperature, f
 
 pca_plots_temperature<-plot_grid(pca_vip_temperature1, pca_vip_temperature2, ncol=2, nrow=1)
 
-ggsave(pca_plots_temperature, filename="figures/metabolites/pca_plots_temperatureVIP.jpeg", width=12, height=4)
+ggsave(pca_plots_temperature, filename="figures/lipids/pca_plots_temperatureVIP_height.jpeg", width=12, height=4)
 ```
 
 View a PCA with treatment code information. 
@@ -882,7 +1177,7 @@ test_wide_data<-vip_data_temperature%>%
 
 levels(as.factor(test_wide_data$code))
 
-pca_parent3<-ggplot2::autoplot(scaled.pca, data=test_wide_data, frame.colour="code", loadings=FALSE,  colour="code", shape="code", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
+pca_temperature3<-ggplot2::autoplot(scaled.pca, data=test_wide_data, frame.colour="code", loadings=FALSE,  colour="code", shape="code", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
   scale_color_manual(name="Group", values=c("orange", "orange", "orange", "brown4", "brown4", "brown4", "gray", "gray", "gray"))+
   scale_fill_manual(name="Group", values=c("orange", "orange", "orange", "brown4", "brown4", "brown4", "gray", "gray", "gray"))+
   scale_shape_manual(name="Group", values=c(19,17,15,19,17,15,19,17,15))+
@@ -892,9 +1187,9 @@ pca_parent3<-ggplot2::autoplot(scaled.pca, data=test_wide_data, frame.colour="co
         plot.background = element_blank(),
         legend.title = element_text(size=14, face="bold"), 
         axis.text = element_text(size=14), 
-        axis.title = element_text(size=14,  face="bold"));pca_parent3
+        axis.title = element_text(size=14,  face="bold"));pca_temperature3
 
-ggsave(pca_parent3, filename="figures/metabolites/pca_all_groups_temperatureVIP.jpeg", width=8, height=6)
+ggsave(pca_temperature3, filename="figures/lipids/pca_all_groups_temperatureVIP_height.jpeg", width=8, height=6)
 ```
 
 ## PLS-DA for the effect of parent x temperature 
@@ -916,7 +1211,7 @@ Y
 
 levels(Y)
 
-X<-X[4:24] #pull only data columns
+X<-X[4:871] #pull only data columns
 
 # run PLSDA 
 MyResult.plsda <- plsda(X,Y, ncomp=5) # 1 Run the method with ncomp = groups -1
@@ -924,7 +1219,7 @@ plotIndiv(MyResult.plsda)    # 2 Plot the samples
 
 cols<-c("orange", "orange3", "orange4", "brown", "brown2", "brown4", "gray", "lightgray", "darkgray") 
 
-pdf("figures/metabolites/PLSDA_interaction.pdf", width=9, height=6)
+pdf("figures/lipids/PLSDA_interaction_height.pdf", width=9, height=6)
 plotIndiv(MyResult.plsda, col=cols, ind.names = FALSE, legend=TRUE, legend.title = "Temperature", ellipse = FALSE, title="", style = "graphics", centroid=FALSE, point.lwd = 2, cex=2)
 dev.off() 
 
@@ -952,7 +1247,7 @@ plotIndiv(MyResult.plsda_interaction, col=cols, ind.names = FALSE, legend=TRUE, 
 
 Extract VIP scores 
 
-View the metabolites that are most highly differentiating metabolites     
+View the lipids that are most highly differentiating lipids     
 
 ```{r}
 #extract
@@ -962,32 +1257,32 @@ interaction_VIP_DF <- as.data.frame(interaction_VIP[["tab"]])
 interaction_VIP_DF
 
 # Converting row names to column
-interaction_VIP_table <- rownames_to_column(interaction_VIP_DF, var = "Metabolite")
+interaction_VIP_table <- rownames_to_column(interaction_VIP_DF, var = "Lipid")
 
 #filter for VIP > 1
 interaction_VIP_1 <- interaction_VIP_table %>% 
   filter(VIP >= 1)
 
-write_csv(interaction_VIP_1, "output/lipids_metabolites/metabolites/Overall_Interaction_VIPs.csv")
+write_csv(interaction_VIP_1, "output/lipids_metabolites/lipids/Overall_Interaction_VIPs_height.csv")
 
 #plot
 interaction_VIP_1 %>%
   arrange(VIP) %>%
-  ggplot( aes(x = VIP, y = reorder(Metabolite,VIP,sum))) +
+  ggplot( aes(x = VIP, y = reorder(Lipid,VIP,sum))) +
   geom_point() +
-  ylab("Metabolite") +
+  ylab("Lipid") +
   xlab("VIP Score") +
   ggtitle("Parent x Temperature VIP") +
   theme_bw() + theme(panel.border = element_rect(linetype = "solid", color = "black"), panel.grid.major = element_blank(), #Makes background theme white
                      panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
 
 
-pdf("figures/metabolites/Interaction_VIP.pdf", width=4, height=4)
+pdf("figures/lipids/Interaction_VIP_height.pdf", width=10, height=35)
 interaction_VIP_1 %>%
   arrange(VIP) %>%
-  ggplot( aes(x = VIP, y = reorder(Metabolite,VIP,sum))) +
+  ggplot( aes(x = VIP, y = reorder(Lipid,VIP,sum))) +
   geom_point() +
-  ylab("Metabolite") +
+  ylab("Lipid") +
   xlab("VIP Score") +
   ggtitle("Interaction VIP > 1") +
   theme_bw() + theme(panel.border = element_rect(linetype = "solid", color = "black"), panel.grid.major = element_blank(), #Makes background theme white
@@ -1000,34 +1295,35 @@ These lists represent VIPs that drive separation between parent x temperature gr
 Make a list of vips. 
 ```{r}
 interaction_vip_list<-interaction_VIP_1%>%
-  pull(Metabolite)
+  pull(Lipid)
 ```
-There are 9 VIPs. 
+There are 305 VIPs. 
 
 Plot heatmap of z score of lipids across groups.   
 
 ```{r}
 # Filter data for VIP metabolites
-interaction_vip_data <- filtered_data %>% filter(Name %in% interaction_vip_list)
+interaction_vip_data <- lipids_filtered %>% filter(lipid %in% interaction_vip_list)
 
 # Convert counts to Z-scores
 interaction_vip_data <- interaction_vip_data %>% 
   mutate(code=paste(parent, temperature))%>%
-  group_by(Name) %>% 
-  mutate(z_score = scale(area_normalized)) %>% 
-  group_by(code, Name)%>%
+  group_by(lipid) %>% 
+  mutate(z_score = scale(height_normalized)) %>% 
+  group_by(code, lipid)%>%
   summarise(z_score = mean(z_score, na.rm=TRUE))%>%
   ungroup()
+
 
 interaction_vip_data$code<-factor(interaction_vip_data$code, levels=c("Bleached Ambient", "Bleached Moderate (+3)", "Bleached High (+6)", "Nonbleached Ambient", "Nonbleached Moderate (+3)", "Nonbleached High (+6)", "Wildtype Ambient", "Wildtype Moderate (+3)", "Wildtype High (+6)"))
 
 # Pivot data to have metabolites as rows and lifestage as columns
 heatmap_data <- interaction_vip_data %>% 
-  dplyr::select(Name, code, z_score) %>%
+  dplyr::select(lipid, code, z_score) %>%
   spread(key = code, value = z_score)
 
 # Convert to matrix and set rownames
-heatmap_matrix <- as.matrix(column_to_rownames(heatmap_data, var = "Name"))
+heatmap_matrix <- as.matrix(column_to_rownames(heatmap_data, var = "lipid"))
 
 # Create the heatmap
 heatmap <- Heatmap(
@@ -1036,10 +1332,10 @@ heatmap <- Heatmap(
   col = inferno(10),
   cluster_rows = TRUE,
   cluster_columns = FALSE,
-  show_row_names = TRUE,
+  show_row_names = FALSE,
   show_column_names = TRUE,
   #row_split=4,
-  row_title = "Metabolite", 
+  row_title = "Lipid", 
   column_names_gp =  gpar(fontsize = 12, border=FALSE),
   column_names_rot = 45,
   row_gap = unit(1, "mm"), 
@@ -1051,23 +1347,21 @@ heatmap <- Heatmap(
 draw(heatmap)
 
 dev.off()
-pdf("figures/metabolites/VIP_heatmap_parentxtemperature.pdf", width=8, height=8)
+pdf("figures/lipids/VIP_heatmap_parentxtemperature_height.pdf", width=6, height=8)
 draw(heatmap)
 dev.off()
 ```
 
-View PCA for VIPs
+View a PCA of these VIPs. 
 
 ```{r}
-vip_data_interaction<-filtered_data%>%
+vip_data_interaction<-lipids_filtered%>%
   ungroup()%>%
+  select(!formula)%>%
+  select(!ontology)%>%
   select(!type)%>%
-  select(!protein.ug)%>%
-  select(!area_sorbitol)%>%
-  select(!area_corrected)%>%
-  select(!area)%>%
-  filter(Name %in% interaction_vip_list)%>%
-  pivot_wider(names_from=Name, values_from=area_normalized)
+  filter(lipid %in% interaction_vip_list)%>%
+  pivot_wider(names_from=lipid, values_from=height_normalized)
 ```
 
 ```{r}
@@ -1088,7 +1382,7 @@ All characteristics are renamed.
 View scree plot. 
 
 ```{r}
-scaled.pca<-prcomp(vip_data_interaction[c(4:12)], scale=TRUE, center=TRUE) 
+scaled.pca<-prcomp(vip_data_interaction[c(4:308)], scale=TRUE, center=TRUE) 
 
 fviz_eig(scaled.pca)
 ```
@@ -1096,7 +1390,7 @@ fviz_eig(scaled.pca)
 Prepare a PCA plot
 ```{r}
 # scale data
-vegan <- scale(vip_data_interaction[c(4:12)])
+vegan <- scale(vip_data_interaction[c(4:308)])
 
 # PerMANOVA 
 permanova<-adonis2(vegan ~ parent*temperature, data = vip_data_interaction, method='eu')
@@ -1104,12 +1398,12 @@ permanova
 ```
 
 adonis2(formula = vegan ~ parent * temperature, data = vip_data_interaction, method = "eu")
-                   Df SumOfSqs      R2      F Pr(>F)  
-parent              2    20.38 0.04354 1.2073  0.260  
-temperature         2    15.07 0.03219 0.8926  0.487  
-parent:temperature  4    61.19 0.13075 1.8125  0.055 .
-Residual           44   371.36 0.79351                
-Total              52   468.00 1.00000                
+                   Df SumOfSqs      R2      F Pr(>F)    
+parent              2   2835.8 0.18595 6.0445  0.001 ***
+temperature         2   1523.6 0.09991 3.2476  0.006 ** 
+parent:temperature  4   1038.6 0.06810 1.1069  0.331    
+Residual           42   9852.0 0.64604                  
+Total              50  15250.0 1.00000                
 
 ```{r}
 pca_vip_interaction1<-ggplot2::autoplot(scaled.pca, data=vip_data_interaction, frame.colour="parent", loadings=FALSE,  colour="parent", shape="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
@@ -1138,7 +1432,7 @@ pca_vip_interaction2<-ggplot2::autoplot(scaled.pca, data=vip_data_interaction, f
 
 pca_plots_interaction<-plot_grid(pca_vip_interaction1, pca_vip_interaction2, ncol=2, nrow=1)
 
-ggsave(pca_plots_interaction, filename="figures/metabolites/pca_plots_interactionVIP.jpeg", width=12, height=4)
+ggsave(pca_plots_interaction, filename="figures/lipids/pca_plots_interactionVIP_height.jpeg", width=12, height=4)
 ```
 
 View a PCA with treatment code information. 
@@ -1160,72 +1454,43 @@ pca_interaction3<-ggplot2::autoplot(scaled.pca, data=test_wide_data, frame.colou
         axis.text = element_text(size=14), 
         axis.title = element_text(size=14,  face="bold"));pca_interaction3
 
-ggsave(pca_interaction3, filename="figures/metabolites/pca_all_groups_interactionVIP.jpeg", width=8, height=6)
+ggsave(pca_interaction3, filename="figures/lipids/pca_all_groups_interactionVIP_height.jpeg", width=8, height=6)
 ```
 
-# Plot mean values of VIPs 
-
-Plot "interaction" or parent x temperature VIPs as a mean. 
-
-```{r}
-interaction_means<-filtered_data%>%
-  ungroup()%>%
-  select(!type)%>%
-  select(!protein.ug)%>%
-  select(!area_sorbitol)%>%
-  select(!area_corrected)%>%
-  select(!area)%>%
-  filter(Name %in% interaction_vip_list)%>%
-  
-  group_by(Name, parent, temperature)%>%
-  summarise(mean=mean(area_normalized, na.rm=TRUE), se=sd(area_normalized, na.rm=TRUE)/sqrt(length(area_normalized)))%>%
-  mutate(temperature=factor(temperature, levels=c("Ambient", "Moderate (+3)", "High (+6)")))%>%
-  
-  ggplot(aes(x = temperature, y = mean, color = parent)) +
-  facet_wrap(~Name, scales="free")+
-  geom_line(aes(group=parent), position=position_dodge(0.3))+
-  geom_point(position=position_dodge(0.3))+
-  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0, position=position_dodge(0.3))+
-  scale_color_manual(values=c("orange", "brown4", "gray"))+
-  labs(x = "",y = "Mean Normalized Area") +
-  theme_classic()+
-  theme(
-    axis.text.x=element_text(angle=45, vjust=1, hjust=1)
-  );interaction_means
-
-ggsave(interaction_means, filename="figures/metabolites/interaction_VIP_means.jpeg", width=8, height=6)
-```
-
-# Output lists for Metaboanalyst 
+# Output lists for LION 
 
 List of parental VIPS
 ```{r}
 parent_vip_list%>%
   as.data.frame()%>%
-  write_csv(., file="output/lipids_metabolites/metabolites/parent_VIP_list.csv")
+  write_csv(., file="output/lipids_metabolites/lipids/parent_VIP_list_height.csv")
 ```
+
+No significant enrichment of any terms on LION. 
 
 List of temperature VIPS
 ```{r}
 temperature_vip_list%>%
   as.data.frame()%>%
-  write_csv(., file="output/lipids_metabolites/metabolites/temperature_VIP_list.csv")
+  write_csv(., file="output/lipids_metabolites/lipids/temperature_VIP_list_height.csv")
 ```
+
+No significant enrichment of any terms on LION. 
 
 List of interaction VIPS
 ```{r}
 interaction_vip_list%>%
   as.data.frame()%>%
-  write_csv(., file="output/lipids_metabolites/metabolites/interaction_VIP_list.csv")
+  write_csv(., file="output/lipids_metabolites/lipids/interaction_VIP_list_height.csv")
 ```
 
 Full list of lipids
 ```{r}
-full_metabolite_list<-metabolites%>%
-  pull(Name)%>%
+full_lipid_list<-lipids_filtered%>%
+  pull(lipid)%>%
   unique()%>%
   as.data.frame()%>%
-  write_csv(., file="output/lipids_metabolites/metabolites/full_metabolite_list.csv")
+  write_csv(., file="output/lipids_metabolites/lipids/full_lipid_list_height.csv")
 ```
 
 What is the overlap in these lists? Create an upset plot. 
@@ -1233,7 +1498,7 @@ What is the overlap in these lists? Create an upset plot.
 ```{r}
 # Combine lists into a data frame indicating membership (1 = present, 0 = absent)
 upset_data <- data.frame(
-  Name = unique(c(parent_vip_list, temperature_vip_list, interaction_vip_list)),
+  Lipid = unique(c(parent_vip_list, temperature_vip_list, interaction_vip_list)),
   List1 = as.numeric(unique(c(parent_vip_list, temperature_vip_list, interaction_vip_list)) %in% parent_vip_list),
   List2 = as.numeric(unique(c(parent_vip_list, temperature_vip_list, interaction_vip_list)) %in% temperature_vip_list),
   List3 = as.numeric(unique(c(parent_vip_list, temperature_vip_list, interaction_vip_list)) %in% interaction_vip_list)
@@ -1241,14 +1506,204 @@ upset_data <- data.frame(
 
 # Convert data to the format needed for the UpSetR plot
 plot_data <- upset_data[, -1]
-row.names(plot_data) <- upset_data$Name
+row.names(plot_data) <- upset_data$Lipid
 names(plot_data) <- c("Parent", "Temperature", "PxT Group")
 
 # Generate the UpSet plot
-pdf("figures/metabolites/upset_VIP_list_overlap.pdf", width=6, height=6)
+pdf("figures/lipids/upset_VIP_list_overlap_height.pdf", width=6, height=6)
 upset(plot_data, sets = c("Parent", "Temperature", "PxT Group"), keep.order = TRUE)
 dev.off()
-
 ```
 
+# Plot enriched lipids in the group VIP data set 
 
+Enrichment results from LION: 
+
+- No enrichment in parent list 
+- polyunsaturated fatty acid enriched in temperature list (LION:0002967)
+- diacylglycerols [GL0201], diradylglycerols [GL02], and lipid-mediated signalling enriched in group-specific list 
+
+View lipids related to the enriched categories in the interaction/group specific VIP data set from the LION results.  
+
+Monounsaturated fatty acids, fatty acids, fatty acids and conjugates, Fatty acid with less than 2 double bonds = ontology FA
+
+Diacylglycerols = ontology DG
+
+Lipid-mediated signalling = could include ontology PC, PS, PG, PA, PE (glycerophospholipids), contains Cer (ceramides)
+
+Add in lipid ontology values. 
+
+```{r}
+lipids$ontology<-ontology$ontology[match(lipids$lipid, ontology$lipid)]
+```
+
+Plot a heatmap of the target ontologies in the group VIP list (parent x temperature). 
+
+Fatty acids
+```{r}
+# Filter data for VIP metabolites
+FA_data <- lipids %>% 
+  filter(lipid %in% interaction_vip_list) %>% 
+  filter(ontology=="FA") %>% 
+  droplevels()
+
+length(unique(FA_data$lipid))
+#14 fatty acids in this data set 
+
+# Convert counts to Z-scores
+FA_data <- FA_data %>% 
+  group_by(lipid) %>% 
+  mutate(z_score = scale(height_normalized)) %>% 
+  group_by(parent, temperature, lipid)%>%
+  summarise(z_score = mean(z_score, na.rm=TRUE))%>%
+  ungroup()
+
+# Pivot data to have metabolites as rows and lifestage as columns
+heatmap_data <- FA_data %>% 
+  mutate(code=paste(parent, temperature))%>%
+  mutate(code=factor(code, levels=c("Bleached Ambient", "Bleached Moderate (+3)", "Bleached High (+6)", "Nonbleached Ambient", "Nonbleached Moderate (+3)", "Nonbleached High (+6)", "Wildtype Ambient", "Wildtype Moderate (+3)", "Wildtype High (+6)")))%>%
+  dplyr::select(lipid, code, z_score) %>%
+  spread(key = code, value = z_score)
+
+# Convert to matrix and set rownames
+heatmap_matrix <- as.matrix(column_to_rownames(heatmap_data, var = "lipid"))
+
+# Create the heatmap
+heatmap <- Heatmap(
+  heatmap_matrix,
+  name = "Z-score",
+  col = inferno(10),
+  cluster_rows = TRUE,
+  cluster_columns = FALSE,
+  show_row_names = TRUE,
+  show_column_names = TRUE,
+  #row_split=split,
+  #column_split=heatmap_data$code,
+  row_title = "Fatty Acids", 
+  column_names_gp =  gpar(fontsize = 12, border=FALSE),
+  column_names_rot = 45,
+  row_gap = unit(1, "mm"), 
+  border = TRUE,
+  row_names_gp = gpar(fontsize = 12, alpha = 0.75, border = FALSE)
+)
+
+# Draw the heatmap
+draw(heatmap)
+
+dev.off()
+pdf("figures/lipids/fatty_acids_VIP_height.pdf", width=6, height=8)
+draw(heatmap)
+dev.off()
+```
+
+Diacylglycerols
+```{r}
+# Filter data for VIP metabolites
+DG_data <- lipids %>% 
+  filter(lipid %in% interaction_vip_list) %>% 
+  filter(ontology=="DG") %>% 
+  droplevels()
+
+length(unique(DG_data$lipid))
+#61 DGs in this data set 
+
+# Convert counts to Z-scores
+DG_data <- DG_data %>% 
+  group_by(lipid) %>% 
+  mutate(z_score = scale(height_normalized)) %>% 
+  group_by(parent, temperature, lipid)%>%
+  summarise(z_score = mean(z_score, na.rm=TRUE))%>%
+  ungroup()
+
+# Pivot data to have metabolites as rows and lifestage as columns
+heatmap_data <- DG_data %>% 
+  mutate(code=paste(parent, temperature))%>%
+  mutate(code=factor(code, levels=c("Bleached Ambient", "Bleached Moderate (+3)", "Bleached High (+6)", "Nonbleached Ambient", "Nonbleached Moderate (+3)", "Nonbleached High (+6)", "Wildtype Ambient", "Wildtype Moderate (+3)", "Wildtype High (+6)")))%>%
+  dplyr::select(lipid, code, z_score) %>%
+  spread(key = code, value = z_score)
+
+# Convert to matrix and set rownames
+heatmap_matrix <- as.matrix(column_to_rownames(heatmap_data, var = "lipid"))
+
+# Create the heatmap
+heatmap <- Heatmap(
+  heatmap_matrix,
+  name = "Z-score",
+  col = inferno(10),
+  cluster_rows = TRUE,
+  cluster_columns = FALSE,
+  show_row_names = TRUE,
+  show_column_names = TRUE,
+  #row_split=7,
+  row_title = "DGs", 
+  column_names_gp =  gpar(fontsize = 12, border=FALSE),
+  column_names_rot = 45,
+  row_gap = unit(1, "mm"), 
+  border = TRUE,
+  row_names_gp = gpar(fontsize = 12, alpha = 0.75, border = FALSE)
+)
+
+# Draw the heatmap
+draw(heatmap)
+
+dev.off()
+pdf("figures/lipids/diacylglycerols_VIP_height.pdf", width=6, height=14)
+draw(heatmap)
+dev.off()
+```
+
+Lipid mediated signaling
+```{r}
+# Filter data for VIP metabolites
+signal_data <- lipids %>% 
+  filter(lipid %in% interaction_vip_list) %>% 
+  filter(ontology %in% c("PC", "PS", "PG", "PA", "PE") | grepl("Cer", ontology))%>%
+  droplevels()
+
+length(unique(signal_data$lipid))
+#64 lipids in this data set 
+
+# Convert counts to Z-scores
+signal_data <- signal_data %>% 
+  group_by(lipid) %>% 
+  mutate(z_score = scale(height_normalized)) %>% 
+  group_by(parent, temperature, lipid)%>%
+  summarise(z_score = mean(z_score, na.rm=TRUE))%>%
+  ungroup()
+
+# Pivot data to have metabolites as rows and lifestage as columns
+heatmap_data <- signal_data %>% 
+  mutate(code=paste(parent, temperature))%>%
+  mutate(code=factor(code, levels=c("Bleached Ambient", "Bleached Moderate (+3)", "Bleached High (+6)", "Nonbleached Ambient", "Nonbleached Moderate (+3)", "Nonbleached High (+6)", "Wildtype Ambient", "Wildtype Moderate (+3)", "Wildtype High (+6)")))%>%
+  dplyr::select(lipid, code, z_score) %>%
+  spread(key = code, value = z_score)
+
+# Convert to matrix and set rownames
+heatmap_matrix <- as.matrix(column_to_rownames(heatmap_data, var = "lipid"))
+
+# Create the heatmap
+heatmap <- Heatmap(
+  heatmap_matrix,
+  name = "Z-score",
+  col = inferno(10),
+  cluster_rows = TRUE,
+  cluster_columns = FALSE,
+  show_row_names = TRUE,
+  show_column_names = TRUE,
+  #row_split=7,
+  row_title = "Lipid Signaling", 
+  column_names_gp =  gpar(fontsize = 12, border=FALSE),
+  column_names_rot = 45,
+  row_gap = unit(1, "mm"), 
+  border = TRUE,
+  row_names_gp = gpar(fontsize = 12, alpha = 0.75, border = FALSE)
+)
+
+# Draw the heatmap
+draw(heatmap)
+
+dev.off()
+pdf("figures/lipids/lipid_signaling_VIP_height.pdf", width=6, height=14)
+draw(heatmap)
+dev.off()
+```
