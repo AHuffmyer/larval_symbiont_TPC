@@ -131,11 +131,65 @@ metabolites<-metabolites%>%
 
 Filter to only keep metabolites that have a detectable value in every sample. 
 
+Check for outliers at this point. 
+
+```{r}
+wide_data<-metabolites%>%
+  ungroup()%>%
+  select(!type)%>%
+  select(!protein.ug)%>%
+  select(!area_sorbitol)%>%
+  select(!area)%>%
+  pivot_wider(names_from=Name, values_from=area_corrected)
+```
+
+```{r}
+wide_data%>%
+    select_if(~ any(is.na(.)))
+```
+
+No columns have NA's.  
+
+```{r}
+#remove any column with all 0's 
+wide_data <- wide_data[, colSums(wide_data != 0) > 0]
+
+wide_data<-wide_data%>%
+  select(!`13C6-Sorbitol`)
+
+scaled.pca<-prcomp(wide_data[c(4:374)], scale=TRUE, center=TRUE) 
+```
+
+```{r}
+pca1<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="parent", loadings=FALSE,  colour="parent", shape="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=FALSE, loadings.label.size=5, loadings.label.vjust=-1, size=5) + 
+  scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
+  scale_fill_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
+  scale_shape_manual(name="Temperature", values=c(19,17,15))+
+  geom_text(aes(x = PC1, y = PC2, label = tube), vjust = -0.5)+
+  theme_classic()+
+   theme(legend.text = element_text(size=18), 
+         legend.position="none",
+        plot.background = element_blank(),
+        legend.title = element_text(size=18, face="bold"), 
+        axis.text = element_text(size=18), 
+        axis.title = element_text(size=18,  face="bold"));pca1
+```
+
+No outliers before removing metabolites for presence/absence filtering. 
+
+Keep only metabolites detected in all samples. 
 ```{r}
 # Find metabolites that have a value > 0 for every tube
 filtered_data <- metabolites %>%
   group_by(Name) %>%
   filter(all(area_corrected > 0))
+
+# do this instead by keeping those present at >0 value in at least 90% of samples 
+#threshold <- 0.9  # 90% threshold
+
+#filtered_data <- metabolites %>%
+#  group_by(Name) %>%
+#  filter(mean(area_corrected > 0) >= threshold)
 
 # Find metabolites that were removed (i.e., have any value <= 0)
 removed_metabolites <- metabolites %>%
@@ -147,7 +201,9 @@ kept_metabolites <- metabolites %>%
   distinct(Name)
 ```
 
-57 metabolites are kept after this filtering, 569 were removed. This makes sense, the data frame kept all metabolites in the library.  
+57 metabolites are kept after all samples >0 filtering, 569 were removed. This makes sense, the data frame kept all metabolites in the library so we expect far fewer to be retained.   
+
+66 are kept with filtering for >0 value in 90% of samples. Keeping more stringent filtering. 
 
 Normalize corrected area to sample protein. This will generate units of normalized peak area / ug protein. 
 
@@ -256,17 +312,17 @@ hist(test$RSD)
 ```
 55 metabolites before 
 
-Remove metabolites that have RSD < 200 in all treatments (RSD values are high, come back to this).  
+Remove metabolites that have RSD < threshold in all treatments (RSD values are high, come back to this).  
 ```{r}
 test <- test %>%
   group_by(Name) %>%
-  filter(all(RSD < 200))
+  filter(all(RSD < 150))
 
 length(unique(test$Name))
 
 keep_list<-c(unique(test$Name))
 ```
-52 metabolites after 
+48 metabolites after 
 
 Filter the filtered dataset to include the selected metabolites after RSD filtering.  
 ```{r}
@@ -309,7 +365,7 @@ All characteristics are renamed.
 View scree plot. 
 
 ```{r}
-scaled.pca<-prcomp(wide_data[c(4:55)], scale=TRUE, center=TRUE) 
+scaled.pca<-prcomp(wide_data[c(4:51)], scale=TRUE, center=TRUE) 
 
 fviz_eig(scaled.pca)
 ```
@@ -317,7 +373,7 @@ fviz_eig(scaled.pca)
 Prepare a PCA plot
 ```{r}
 # scale data
-vegan <- scale(wide_data[c(4:55)])
+vegan <- scale(wide_data[c(4:51)])
 
 # PerMANOVA 
 permanova<-adonis2(vegan ~ parent*temperature, data = wide_data, method='eu')
@@ -326,11 +382,11 @@ permanova
 
 adonis2(formula = vegan ~ parent * temperature, data = wide_data, method = "eu")
                    Df SumOfSqs      R2      F Pr(>F)  
-parent              2    82.93 0.03067 0.8205  0.551  
-temperature         2    77.96 0.02883 0.7713  0.592  
-parent:temperature  4   319.44 0.11814 1.5802  0.095 .
-Residual           44  2223.66 0.82236                
-Total              52  2704.00 1.00000      
+parent              2    79.95 0.03203 0.8623  0.483  
+temperature         2    74.27 0.02975 0.8009  0.542  
+parent:temperature  4   301.81 0.12092 1.6274  0.087 .
+Residual           44  2039.97 0.81730                
+Total              52  2496.00 1.00000          
 
 ```{r}
 pca1<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="parent", loadings=FALSE,  colour="parent", shape="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=FALSE, loadings.label.size=5, loadings.label.vjust=-1, size=5) + 
@@ -416,7 +472,7 @@ levels(as.factor(X$temperature))
 Y <- as.factor(X$parent) #select treatment names
 Y
 
-X<-X[4:55] #pull only data columns
+X<-X[4:51] #pull only data columns
 
 # run PLSDA 
 MyResult.plsda <- plsda(X,Y, ncomp=2) # 1 Run the method with ncomp = groups -1
@@ -676,7 +732,7 @@ Y
 
 levels(Y)
 
-X<-X[4:55] #pull only data columns
+X<-X[4:51] #pull only data columns
 
 # run PLSDA 
 MyResult.plsda <- plsda(X,Y, ncomp=2) # 1 Run the method with ncomp = groups -1
@@ -942,7 +998,7 @@ Y
 
 levels(Y)
 
-X<-X[4:55] #pull only data columns
+X<-X[4:51] #pull only data columns
 
 # run PLSDA 
 MyResult.plsda <- plsda(X,Y, ncomp=5) # 1 Run the method with ncomp = groups -1
