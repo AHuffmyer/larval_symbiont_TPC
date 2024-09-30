@@ -39,6 +39,7 @@ library(circlize)
 library(tibble)
 library(viridis)
 library(genefilter)
+library(UpSetR)
 
 conflict_prefer("select", winner = "dplyr", quiet = FALSE)
 conflict_prefer("filter", winner = "dplyr", quiet = FALSE)
@@ -227,8 +228,6 @@ pca1<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="parent", loadi
 
 Sample L107 is a clear outlier. Remove. 
 
-Sample L107 is a clear outlier. Remove this sample and plot again. 
-
 ```{r}
 filtered_data<-filtered_data%>%
   filter(!tube=="L107")
@@ -257,17 +256,17 @@ hist(test$RSD)
 ```
 55 metabolites before 
 
-Remove metabolites that have RSD < 100 in all treatments (RSD values are high, come back to this).  
+Remove metabolites that have RSD < 200 in all treatments (RSD values are high, come back to this).  
 ```{r}
 test <- test %>%
   group_by(Name) %>%
-  filter(all(RSD < 100))
+  filter(all(RSD < 200))
 
 length(unique(test$Name))
 
 keep_list<-c(unique(test$Name))
 ```
-36 metabolites after 
+52 metabolites after 
 
 Filter the filtered dataset to include the selected metabolites after RSD filtering.  
 ```{r}
@@ -310,7 +309,7 @@ All characteristics are renamed.
 View scree plot. 
 
 ```{r}
-scaled.pca<-prcomp(wide_data[c(4:39)], scale=TRUE, center=TRUE) 
+scaled.pca<-prcomp(wide_data[c(4:55)], scale=TRUE, center=TRUE) 
 
 fviz_eig(scaled.pca)
 ```
@@ -318,7 +317,7 @@ fviz_eig(scaled.pca)
 Prepare a PCA plot
 ```{r}
 # scale data
-vegan <- scale(wide_data[c(4:39)])
+vegan <- scale(wide_data[c(4:55)])
 
 # PerMANOVA 
 permanova<-adonis2(vegan ~ parent*temperature, data = wide_data, method='eu')
@@ -327,11 +326,11 @@ permanova
 
 adonis2(formula = vegan ~ parent * temperature, data = wide_data, method = "eu")
                    Df SumOfSqs      R2      F Pr(>F)  
-parent              2    53.70 0.02868 0.7731  0.561  
-temperature         2    54.56 0.02914 0.7855  0.552  
-parent:temperature  4   235.77 0.12594 1.6973  0.080 .
-Residual           44  1527.98 0.81623                
-Total              52  1872.00 1.00000       
+parent              2    82.93 0.03067 0.8205  0.551  
+temperature         2    77.96 0.02883 0.7713  0.592  
+parent:temperature  4   319.44 0.11814 1.5802  0.095 .
+Residual           44  2223.66 0.82236                
+Total              52  2704.00 1.00000      
 
 ```{r}
 pca1<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="parent", loadings=FALSE,  colour="parent", shape="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=FALSE, loadings.label.size=5, loadings.label.vjust=-1, size=5) + 
@@ -417,7 +416,7 @@ levels(as.factor(X$temperature))
 Y <- as.factor(X$parent) #select treatment names
 Y
 
-X<-X[4:39] #pull only data columns
+X<-X[4:55] #pull only data columns
 
 # run PLSDA 
 MyResult.plsda <- plsda(X,Y, ncomp=2) # 1 Run the method with ncomp = groups -1
@@ -677,7 +676,7 @@ Y
 
 levels(Y)
 
-X<-X[4:39] #pull only data columns
+X<-X[4:55] #pull only data columns
 
 # run PLSDA 
 MyResult.plsda <- plsda(X,Y, ncomp=2) # 1 Run the method with ncomp = groups -1
@@ -943,7 +942,7 @@ Y
 
 levels(Y)
 
-X<-X[4:39] #pull only data columns
+X<-X[4:55] #pull only data columns
 
 # run PLSDA 
 MyResult.plsda <- plsda(X,Y, ncomp=5) # 1 Run the method with ncomp = groups -1
@@ -1220,7 +1219,7 @@ interaction_means<-filtered_data%>%
     axis.text.x=element_text(angle=45, vjust=1, hjust=1)
   );interaction_means
 
-ggsave(interaction_means, filename="figures/metabolites/interaction_VIP_means.jpeg", width=8, height=6)
+ggsave(interaction_means, filename="figures/metabolites/interaction_VIP_means.jpeg", width=12, height=12)
 ```
 
 # Output lists for Metaboanalyst 
