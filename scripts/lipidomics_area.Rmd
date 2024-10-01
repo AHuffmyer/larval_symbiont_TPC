@@ -671,6 +671,23 @@ pca3<-ggplot2::autoplot(scaled.pca, data=test_wide_data, frame.colour="code", lo
 ggsave(pca3, filename="figures/lipids/pca_all_groups.jpeg", width=8, height=6)
 ```
 
+Plot by each temperature colored by parent temperature. 
+
+```{r}
+pca4<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="parent", loadings=FALSE,  colour="parent", shape="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=FALSE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
+  facet_wrap(~temperature)+
+  scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
+  scale_fill_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
+  scale_shape_manual(name="Temperature", values=c(19,17,15))+
+  theme_classic()+
+   theme(legend.text = element_text(size=14), 
+         legend.position="right",
+        plot.background = element_blank(),
+        legend.title = element_text(size=14, face="bold"), 
+        axis.text = element_text(size=14), 
+        axis.title = element_text(size=14,  face="bold"));pca4
+```
+
 # Supervised PLS-DA analysis  
 
 Script modified from the following tutorial: https://mixomicsteam.github.io/Bookdown/plsda.html
