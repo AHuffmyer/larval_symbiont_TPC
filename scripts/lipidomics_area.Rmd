@@ -12,6 +12,8 @@ editor_options:
   chunk_output_type: console
 ---
 
+NEED TO PROCEED WITH SAM MODELS 
+
 # Set Up    
 
 ```{r setup, include=FALSE}
@@ -40,6 +42,8 @@ library(tibble)
 library(viridis)
 library(genefilter)
 library(UpSetR)
+library(emmeans)
+library(car)
 
 conflict_prefer("select", winner = "dplyr", quiet = FALSE)
 conflict_prefer("filter", winner = "dplyr", quiet = FALSE)
@@ -468,7 +472,7 @@ All characteristics are renamed.
 View scree plot. 
 
 ```{r}
-scaled.pca<-prcomp(wide_data[c(4:1012)], scale=TRUE, center=TRUE) 
+scaled.pca<-prcomp(wide_data%>%select(where(is.numeric)), scale=TRUE, center=TRUE) 
 ```
 
 ```{r}
@@ -581,7 +585,7 @@ All characteristics are renamed.
 View scree plot. 
 
 ```{r}
-scaled.pca<-prcomp(wide_data[c(4:846)], scale=TRUE, center=TRUE) 
+scaled.pca<-prcomp(wide_data%>%select(where(is.numeric)), scale=TRUE, center=TRUE) 
 
 fviz_eig(scaled.pca)
 ```
@@ -589,7 +593,7 @@ fviz_eig(scaled.pca)
 Prepare a PCA plot
 ```{r}
 # scale data
-vegan <- scale(wide_data[c(4:846)])
+vegan <- scale(wide_data%>%select(where(is.numeric)))
 
 # PerMANOVA 
 permanova<-adonis2(vegan ~ parent*temperature, data = wide_data, method='eu')
@@ -705,7 +709,7 @@ levels(as.factor(X$temperature))
 Y <- as.factor(X$parent) #select treatment names
 Y
 
-X<-X[4:846] #pull only data columns
+X<-X%>%select(where(is.numeric)) #pull only data columns
 
 # run PLSDA 
 MyResult.plsda <- plsda(X,Y, ncomp=2) # 1 Run the method with ncomp = groups -1
@@ -872,7 +876,7 @@ All characteristics are renamed.
 View scree plot. 
 
 ```{r}
-scaled.pca<-prcomp(vip_data_parent[c(4:240)], scale=TRUE, center=TRUE) 
+scaled.pca<-prcomp(vip_data_parent%>%select(where(is.numeric)), scale=TRUE, center=TRUE) 
 
 fviz_eig(scaled.pca)
 ```
@@ -880,7 +884,7 @@ fviz_eig(scaled.pca)
 Prepare a PCA plot
 ```{r}
 # scale data
-vegan <- scale(vip_data_parent[c(4:240)])
+vegan <- scale(vip_data_parent%>%select(where(is.numeric)))
 
 # PerMANOVA 
 permanova<-adonis2(vegan ~ parent*temperature, data = vip_data_parent, method='eu')
@@ -962,7 +966,7 @@ Y
 
 levels(Y)
 
-X<-X[4:846] #pull only data columns
+X<-X%>%select(where(is.numeric)) #pull only data columns
 
 # run PLSDA 
 MyResult.plsda <- plsda(X,Y, ncomp=2) # 1 Run the method with ncomp = groups -1
@@ -1131,7 +1135,7 @@ All characteristics are renamed.
 View scree plot. 
 
 ```{r}
-scaled.pca<-prcomp(vip_data_temperature[c(4:254)], scale=TRUE, center=TRUE) 
+scaled.pca<-prcomp(vip_data_temperature%>%select(where(is.numeric)), scale=TRUE, center=TRUE) 
 
 fviz_eig(scaled.pca)
 ```
@@ -1139,7 +1143,7 @@ fviz_eig(scaled.pca)
 Prepare a PCA plot
 ```{r}
 # scale data
-vegan <- scale(vip_data_temperature[c(4:254)])
+vegan <- scale(vip_data_temperature%>%select(where(is.numeric)))
 
 # PerMANOVA 
 permanova<-adonis2(vegan ~ parent*temperature, data = vip_data_temperature, method='eu')
@@ -1225,7 +1229,7 @@ Y
 
 levels(Y)
 
-X<-X[4:846] #pull only data columns
+X<-X%>%select(where(is.numeric)) #pull only data columns
 
 # run PLSDA 
 MyResult.plsda <- plsda(X,Y, ncomp=5) # 1 Run the method with ncomp = groups -1
@@ -1396,7 +1400,7 @@ All characteristics are renamed.
 View scree plot. 
 
 ```{r}
-scaled.pca<-prcomp(vip_data_interaction[c(4:305)], scale=TRUE, center=TRUE) 
+scaled.pca<-prcomp(vip_data_interaction%>%select(where(is.numeric)), scale=TRUE, center=TRUE) 
 
 fviz_eig(scaled.pca)
 ```
@@ -1404,7 +1408,7 @@ fviz_eig(scaled.pca)
 Prepare a PCA plot
 ```{r}
 # scale data
-vegan <- scale(vip_data_interaction[c(4:305)])
+vegan <- scale(vip_data_interaction%>%select(where(is.numeric)))
 
 # PerMANOVA 
 permanova<-adonis2(vegan ~ parent*temperature, data = vip_data_interaction, method='eu')
@@ -1674,3 +1678,134 @@ pdf("figures/lipids/fatty_acids_VIP.pdf", width=6, height=8)
 draw(heatmap)
 dev.off()
 ```
+
+# Perform ANOVAs of metabolite concentration between groups 
+
+Perform an ANOVA with FDR corrections for lipids to detect which lipids are different between groups. 
+
+Run model for each lipid and apply FDR p value correction. 
+```{r}
+name_list<-c(unique(lipids_filtered$lipid))
+
+#Create an empty data frame to store the results
+results_table <- data.frame(Lipid = character(),
+                            Effect = character(),
+                            DF = numeric(),
+                            SumSq = numeric(),
+                            F_value = numeric(),
+                            p_value = numeric())
+
+#Loop over each compound in compound_list
+for(compound in name_list){
+  
+  #Fit the linear mixed effect model for each compound
+  model <- lipids_filtered%>%
+    filter(lipid==compound)%>%
+    
+    aov(area_normalized ~ temperature * parent, data = .)
+
+  #Extract the relevant coefficients for interaction of treatment x position
+  anova_output <- anova(model)
+  coef_summary <- tidy(anova_output)
+  coef_summary <- as.data.frame(coef_summary)
+  
+  #Store the results in the results_table data frame
+  results_table <- rbind(results_table, data.frame(Lipid = compound,
+                                                   Effect = coef_summary["term"],
+                                                   DF = coef_summary["df"],
+                                                   SumSq = coef_summary["sumsq"],
+                                                   F_value = coef_summary["statistic"],
+                                                   p_value = coef_summary["p.value"]))
+}
+
+
+results_table<-results_table%>%
+  filter(!term=="Residuals")
+
+#apply a p value correction (FDR) for multiple comparisons 
+results_table$adj_pvalues <- p.adjust(results_table$p.value, method = "fdr")
+
+#view only p<0.05
+results_table_sign<-results_table%>%
+  filter(adj_pvalues<=0.05)
+
+head(results_table_sign)
+
+write.csv(results_table, file="output/lipids_metabolites/lipids/anova_full_results.csv")
+```
+
+# View concentrations of lipids by class 
+
+Summarize lipid concentration by class for each sample. 
+
+```{r}
+classes<-lipids_filtered%>%
+  ungroup()%>%
+  select(!type)%>%
+  select(!formula)%>%
+  group_by(sample, temperature, parent, ontology)%>%
+  summarise(class_area=sum(area_normalized))
+```
+
+Run model for each ontology. 
+
+```{r}
+ontology_list<-c(unique(classes$ontology))
+
+#Create an empty data frame to store the results
+results_table <- data.frame(Ontology = character(),
+                            Effect = character(),
+                            DF = numeric(),
+                            SumSq = numeric(),
+                            F_value = numeric(),
+                            p_value = numeric())
+
+#Loop over each compound in compound_list
+for(class in ontology_list){
+  
+  #Fit the linear mixed effect model for each compound
+  model <- classes%>%
+    filter(ontology==class)%>%
+    
+    aov(class_area ~ temperature * parent, data = .)
+  
+  qqPlot(residuals(model))
+
+  #Extract the relevant coefficients for interaction of treatment x position
+  anova_output <- anova(model)
+  coef_summary <- tidy(anova_output)
+  coef_summary <- as.data.frame(coef_summary)
+  
+  #Store the results in the results_table data frame
+  results_table <- rbind(results_table, data.frame(Ontology = class,
+                                                   Effect = coef_summary["term"],
+                                                   DF = coef_summary["df"],
+                                                   SumSq = coef_summary["sumsq"],
+                                                   F_value = coef_summary["statistic"],
+                                                   p_value = coef_summary["p.value"]))
+}
+
+
+results_table<-results_table%>%
+  filter(!term=="Residuals")
+
+#apply a p value correction (FDR) for multiple comparisons 
+results_table$adj_pvalues <- p.adjust(results_table$p.value, method = "fdr")
+
+#view only p<0.05
+results_table_sign<-results_table%>%
+  filter(adj_pvalues<=0.05)
+
+results_table_sign
+```
+
+   Ontology        term df        sumsq statistic      p.value  adj_pvalues
+1  BileAcid temperature  2 7.800681e-06  8.327628 8.990615e-04 0.0277424700
+2        CL      parent  2 1.387019e-04 13.694806 2.636644e-05 0.0014237878
+3   Cer_ADS      parent  2 1.960034e-04 10.344704 2.224116e-04 0.0080068191
+4 EtherDGDG temperature  2 1.485662e-06 10.393233 2.153021e-04 0.0080068191
+5 EtherMGDG      parent  2 7.278373e-06 14.517823 1.611506e-05 0.0011602844
+6      LCAE      parent  2 1.187502e-05 16.440865 5.325273e-06 0.0007800822
+7        SL      parent  2 5.213944e-04 15.901355 7.222983e-06 0.0007800822
+
+This does mask some of the differences in individual lipids that we saw above.  
