@@ -47,7 +47,7 @@ library(UpSetR)
 library(emmeans)
 library(car)
 
-conflictcarconflict_prefer("select", winner = "dplyr", quiet = FALSE)
+conflict_prefer("select", winner = "dplyr", quiet = FALSE)
 conflict_prefer("filter", winner = "dplyr", quiet = FALSE)
 conflict_prefer("rename", winner = "dplyr", quiet = FALSE)
 ```
@@ -228,7 +228,7 @@ filtered_data<-filtered_data2
 
 57 metabolites are kept after all samples >0 filtering, 569 were removed. This makes sense, the data frame kept all metabolites in the library so we expect far fewer to be retained.   
 
-66 are kept with filtering for >0 value in 90% of samples. Keeping more stringent filtering. 
+66 are kept with filtering for >0 value in 90% of samples. Keep these for now. 
 
 Normalize corrected area to sample protein. This will generate units of normalized peak area / ug protein. 
 
@@ -356,6 +356,205 @@ heatmap <- Heatmap(
 draw(heatmap)
 ```
 
+Plot raw values for high RSD metabolites. 
+
+```{r}
+rsd_list<-test_heatmap%>%
+  filter(RSD>100)%>%
+  pull(Name)%>%
+  unique()
+```
+
+There are 27 metabolites with RSD > 100. Plot these. 
+
+```{r}
+rsd_plot1<-filtered_data%>%
+  filter(Name %in% rsd_list)%>%
+  
+  ggplot(aes(x=paste(temperature, parent), y=area_normalized))+
+  facet_wrap(~Name, scales="free")+
+  geom_point()+
+  theme_classic()+
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1));rsd_plot1
+
+rsd_plot2<-filtered_data%>%
+  filter(Name %in% c("Trehalose-8TMS"))%>%
+  
+  ggplot(aes(x=paste(temperature, parent), y=area_normalized, label = tube))+
+  facet_wrap(~Name, scales="free")+
+  geom_point()+
+  geom_text(hjust=1.5)+
+  theme_classic()+
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1));rsd_plot2
+
+rsd_plot3<-filtered_data%>%
+  filter(Name %in% c("Sucrose-8TMS"))%>%
+  
+  ggplot(aes(x=paste(temperature, parent), y=area_normalized, label=tube))+
+  facet_wrap(~Name, scales="free")+
+  geom_point()+
+  geom_text(hjust=1.5)+
+  theme_classic()+
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1));rsd_plot3
+
+rsd_plot3<-filtered_data%>%
+  filter(Name %in% c("Monostearin-2TMS"))%>%
+  
+  ggplot(aes(x=paste(temperature, parent), y=area_normalized, label=tube))+
+  facet_wrap(~Name, scales="free")+
+  geom_point()+
+  geom_text(hjust=1.5)+
+  theme_classic()+
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1));rsd_plot3
+```
+
+The high RSD in the wildtype high temp group may be driven by one sample - L59. 
+
+Remove this sample and check again. 
+
+```{r}
+filtered_data<-filtered_data%>%
+  filter(!tube=="L59")
+```
+
+View heatmap again. 
+```{r}
+# Convert counts to Z-scores
+test_heatmap <- filtered_data %>% 
+  mutate(code=paste(temperature, parent))%>%
+  #group_by(Name) %>% 
+  #mutate(z_score = scale(area_normalized)) %>% 
+  group_by(code, Name)%>%
+  dplyr::summarise(RSD=(sd(area_normalized)*100)/mean(area_normalized))%>%
+  ungroup()
+
+# Pivot data to have metabolites as rows and sample as columns
+heatmap_data <- test_heatmap %>% 
+  dplyr::select(Name, code, RSD) %>%
+  spread(key = code, value = RSD)
+
+# Convert to matrix and set rownames
+heatmap_matrix <- as.matrix(column_to_rownames(heatmap_data, var = "Name"))
+
+# Create the heatmap
+heatmap <- Heatmap(
+  heatmap_matrix,
+  name = "RSD",
+  col = inferno(10),
+  cluster_rows = TRUE,
+  cluster_columns = FALSE,
+  show_row_names = TRUE,
+  show_column_names = TRUE,
+  #row_split=3,
+  row_title = "Metabolite", 
+  column_names_gp =  gpar(fontsize = 12, border=FALSE),
+  column_names_rot = 45,
+  row_gap = unit(1, "mm"), 
+  border = TRUE,
+  row_names_gp = gpar(fontsize = 12, alpha = 0.75, border = FALSE)
+)
+
+# Draw the heatmap
+draw(heatmap)
+```
+
+Plot again.
+
+```{r}
+rsd_list<-test_heatmap%>%
+  filter(RSD>100)%>%
+  pull(Name)%>%
+  unique()
+```
+
+```{r}
+rsd_plot1<-filtered_data%>%
+  filter(Name %in% rsd_list)%>%
+  
+  ggplot(aes(x=paste(temperature, parent), y=area_normalized))+
+  facet_wrap(~Name, scales="free")+
+  geom_point()+
+  theme_classic()+
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1));rsd_plot1
+```
+
+View metabolites that have duplicate TMS forms. 
+```{r}
+filtered_data%>%
+  arrange(Name)%>%
+  pull(Name)%>%
+  unique()
+```
+
+Plot concentrations of glucose - (2) does have higher RSD than (1). See which has higher concentration
+```{r}
+rsd_plot1<-filtered_data%>%
+  filter(Name %in% c("Glucose-meto-5TMS(1)", "Glucose-meto-5TMS(2)"))%>%
+  
+  ggplot(aes(x=paste(temperature, parent), y=area_normalized))+
+  facet_wrap(~Name, scales="free")+
+  geom_point()+
+  theme_classic()+
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1));rsd_plot1
+```
+
+Plot glycine
+```{r}
+rsd_plot1<-filtered_data%>%
+  filter(Name %in% c("Glycine-2TMS", "Glycine-3TMS"))%>%
+  
+  ggplot(aes(x=paste(temperature, parent), y=area_normalized))+
+  facet_wrap(~Name, scales="free")+
+  geom_point()+
+  theme_classic()+
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1));rsd_plot1
+```
+
+Remove glucose (2) and glycine 3TMS. 
+```{r}
+filtered_data<-filtered_data%>%
+  filter(!Name %in% c("Glycine-3TMS", "Glucose-meto-5TMS(1)"))
+```
+
+View heatmap again. 
+```{r}
+# Convert counts to Z-scores
+test_heatmap <- filtered_data %>% 
+  mutate(code=paste(temperature, parent))%>%
+  group_by(code, Name)%>%
+  dplyr::summarise(RSD=(sd(area_normalized)*100)/mean(area_normalized))%>%
+  ungroup()
+
+# Pivot data to have metabolites as rows and sample as columns
+heatmap_data <- test_heatmap %>% 
+  dplyr::select(Name, code, RSD) %>%
+  spread(key = code, value = RSD)
+
+# Convert to matrix and set rownames
+heatmap_matrix <- as.matrix(column_to_rownames(heatmap_data, var = "Name"))
+
+# Create the heatmap
+heatmap <- Heatmap(
+  heatmap_matrix,
+  name = "RSD",
+  col = inferno(10),
+  cluster_rows = TRUE,
+  cluster_columns = FALSE,
+  show_row_names = TRUE,
+  show_column_names = TRUE,
+  #row_split=3,
+  row_title = "Metabolite", 
+  column_names_gp =  gpar(fontsize = 12, border=FALSE),
+  column_names_rot = 45,
+  row_gap = unit(1, "mm"), 
+  border = TRUE,
+  row_names_gp = gpar(fontsize = 12, alpha = 0.75, border = FALSE)
+)
+
+# Draw the heatmap
+draw(heatmap)
+```
+
 Make a dataframe that calculates the standard deviation of the metabolite area within treatment relative to the mean (i.e., how "large" is the SD).  
 
 The formula will be:  
@@ -373,7 +572,7 @@ length(unique(test$Name))
 
 hist(test$RSD)
 ```
-66 metabolites before 
+64 metabolites before 
 
 Remove metabolites that have RSD < threshold in all treatments (RSD values are high, come back to this).  
 ```{r}
@@ -1415,68 +1614,51 @@ Perform an ANOVA with FDR corrections for metabolites to detect which metabolite
 
 First run overall model. 
 ```{r}
-model<- filtered_data%>%
+model_data<- filtered_data%>%
   ungroup()%>%
   select(!type)%>%
   select(!protein.ug)%>%
   select(!area_sorbitol)%>%
   select(!area_corrected)%>%
-  select(!area)%>%
+  select(!area)
   
-  aov(area_normalized ~ Name * temperature * parent, data=.)
+model<-aov(area_normalized ~ Name * temperature * parent, data=model_data)
 
 summary(model)
+
+emm<-emmeans(model, ~temperature |Name)
+pairs(emm)
+
+emm<-emmeans(model, ~parent |Name)
+pairs(emm)
+
+emm<-emmeans(model, ~parent:temperature |Name)
+posthocs<-print(pairs(emm))
 ```
 
-Run model for each metabolite and apply FDR p value correction. 
+For temp significant: 
+Propionic acid
+Butryic acid
+
+For parent significant: 
+None
+
+For temp x parent significant: 
+Propionic acid
+Butryic acid
+
+Plot these two acids. 
+
 ```{r}
-name_list<-c(unique(filtered_data$Name))
-
-#Create an empty data frame to store the results
-results_table <- data.frame(Metabolite = character(),
-                            Effect = character(),
-                            DF = numeric(),
-                            SumSq = numeric(),
-                            F_value = numeric(),
-                            p_value = numeric())
-
-#Loop over each compound in compound_list
-for(metabolite in name_list){
+plot1<-filtered_data%>%
+  filter(Name %in% c("Propionic acid", "Butyric acid-TMS"))%>%
   
-  #Fit the linear mixed effect model for each compound
-  model <- filtered_data%>%
-    filter(Name==metabolite)%>%
-    
-    aov(area_normalized ~ temperature * parent, data = .)
-
-  #Extract the relevant coefficients for interaction of treatment x position
-  anova_output <- anova(model)
-  coef_summary <- tidy(anova_output)
-  coef_summary <- as.data.frame(coef_summary)
   
-  #Store the results in the results_table data frame
-  results_table <- rbind(results_table, data.frame(Metabolite = metabolite,
-                                                   Effect = coef_summary["term"],
-                                                   DF = coef_summary["df"],
-                                                   SumSq = coef_summary["sumsq"],
-                                                   F_value = coef_summary["statistic"],
-                                                   p_value = coef_summary["p.value"]))
-}
-
-
-results_table<-results_table%>%
-  filter(!term=="Residuals")
-
-#apply a p value correction (FDR) for multiple comparisons 
-results_table$adj_pvalues <- p.adjust(results_table$p.value, method = "fdr")
-
-#view only p<0.05
-results_table_sign<-results_table%>%
-  filter(adj_pvalues<0.05)
-
-head(results_table_sign)
-
-write.csv(results_table, file="output/lipids_metabolites/metabolites/anova_full_results.csv")
+  ggplot(aes(x=paste(temperature, parent), y=area_normalized))+
+  facet_wrap(~Name, scales="free")+
+  geom_point()+
+  theme_classic()+
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1));plot1
 ```
 
 
