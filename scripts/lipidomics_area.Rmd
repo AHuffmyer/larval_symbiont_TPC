@@ -1679,7 +1679,7 @@ draw(heatmap)
 dev.off()
 ```
 
-# Perform ANOVAs of metabolite concentration between groups 
+# Perform ANOVAs of lipid concentration between groups 
 
 Perform an ANOVA with FDR corrections for lipids to detect which lipids are different between groups. 
 
@@ -1809,3 +1809,256 @@ results_table_sign
 7        SL      parent  2 5.213944e-04 15.901355 7.222983e-06 0.0007800822
 
 This does mask some of the differences in individual lipids that we saw above.  
+
+Plot total class concentration for these classes.  
+
+```{r}
+plot_c1<-classes%>%
+  filter(ontology %in% c("CL", "Cer_ADS", "EtherMGDG", "LCAE", "SL"))%>%
+  
+  
+  ggplot(aes(x=paste(parent), y=class_area, color=parent))+
+  facet_wrap(~ontology, scales="free")+
+  geom_boxplot(outliers=FALSE)+
+  geom_point()+
+  theme_classic()+
+  scale_color_manual(values=c("orange", "darkred", "darkgray"))+
+  #scale_x_discrete(limits=c("Bleached Ambient", "Bleached Moderate (+3)", "Bleached High (+6)", "Nonbleached Ambient", "Nonbleached Moderate (+3)", "Nonbleached High (+6)", "Wildtype Ambient", "Wildtype Moderate (+3)", "Wildtype High (+6)"))+
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1));plot_c1
+
+ggsave(plot_c1, filename="figures/lipids/sign_classes_parent.jpeg", width=8, height=8)
+```
+
+```{r}
+plot_c2<-classes%>%
+  filter(ontology %in% c("BileAcid", "EtherDGDG"))%>%
+  
+  
+  ggplot(aes(x=paste(temperature), y=class_area, color=temperature))+
+  facet_wrap(~ontology, scales="free")+
+  geom_boxplot(outliers=FALSE)+
+  geom_point()+
+  theme_classic()+
+  scale_color_manual(values=c("blue", "red", "orange"))+
+  scale_x_discrete(limits=c("Ambient", "Moderate (+3)", "High (+6)"))+
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1));plot_c2
+
+ggsave(plot_c2, filename="figures/lipids/sign_classes_temperature.jpeg", width=6, height=6)
+```
+
+# View total lipids 
+
+Add up total lipids - add up all classes
+
+```{r}
+totals<-classes%>%
+  group_by(sample, temperature, parent)%>%
+  summarise(total_area=sum(class_area))
+```
+
+View total lipids by treatment group. 
+
+```{r}
+plot_t1<-totals%>%
+  
+  ggplot(aes(x=paste(parent, temperature), y=total_area, color=parent))+
+  geom_boxplot(outliers=FALSE)+
+  geom_point()+
+  theme_classic()+
+  scale_color_manual(values=c("orange", "darkred", "darkgray"))+
+  scale_x_discrete(limits=c("Bleached Ambient", "Bleached Moderate (+3)", "Bleached High (+6)", "Nonbleached Ambient", "Nonbleached Moderate (+3)", "Nonbleached High (+6)", "Wildtype Ambient", "Wildtype Moderate (+3)", "Wildtype High (+6)"))+
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1));plot_t1
+
+ggsave(plot_t1, filename="figures/lipids/total_lipids.jpeg", width=8, height=8)
+```
+
+Run a model to analyze total lipids. 
+
+```{r}
+model<-totals%>%
+  
+  aov(total_area ~ temperature * parent, data=.)
+
+summary(model)
+```
+No effect on total lipids, almost an effect of temperature but not quite.  
+
+# View class composition as percentage of total lipids 
+
+Calculate lipid proportion of each class as a function of the total lipids. 
+
+```{r}
+classes<-left_join(classes, totals)
+
+classes$prop_class<-(classes$class_area/classes$total_area)*100
+```
+
+Most lipids (50-70%) are fatty acids. 
+
+View percent lipids for each class. 
+
+Fatty acids
+```{r}
+plot_t2<-classes%>%
+  filter(ontology=="FA")%>%
+  
+  ggplot(aes(x=paste(parent, temperature), y=prop_class, color=parent))+
+  facet_wrap(~ontology)+
+  geom_boxplot(outliers=FALSE)+
+  geom_point()+
+  theme_classic()+
+  scale_color_manual(values=c("orange", "darkred", "darkgray"))+
+  scale_x_discrete(limits=c("Bleached Ambient", "Bleached Moderate (+3)", "Bleached High (+6)", "Nonbleached Ambient", "Nonbleached Moderate (+3)", "Nonbleached High (+6)", "Wildtype Ambient", "Wildtype Moderate (+3)", "Wildtype High (+6)"))+
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1));plot_t2
+
+```
+
+TGs
+```{r}
+plot_t2<-classes%>%
+  filter(ontology=="TG")%>%
+  
+  ggplot(aes(x=paste(parent, temperature), y=prop_class, color=parent))+
+  facet_wrap(~ontology)+
+  geom_boxplot(outliers=FALSE)+
+  geom_point()+
+  theme_classic()+
+  scale_color_manual(values=c("orange", "darkred", "darkgray"))+
+  scale_x_discrete(limits=c("Bleached Ambient", "Bleached Moderate (+3)", "Bleached High (+6)", "Nonbleached Ambient", "Nonbleached Moderate (+3)", "Nonbleached High (+6)", "Wildtype Ambient", "Wildtype Moderate (+3)", "Wildtype High (+6)"))+
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1));plot_t2
+
+```
+
+Plot stacked bar plot by sample.  
+```{r}
+plot_t3<-classes%>%
+  
+  ggplot(aes(x=paste(sample), y=prop_class, fill=ontology))+
+  geom_bar(stat="identity")+
+  theme_classic()+
+  #scale_x_discrete(limits=c("Bleached Ambient", "Bleached Moderate (+3)", "Bleached High (+6)", "Nonbleached Ambient", "Nonbleached Moderate (+3)", "Nonbleached High (+6)", "Wildtype Ambient", "Wildtype Moderate (+3)", "Wildtype High (+6)"))+
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1));plot_t3
+```
+
+Run a model
+```{r}
+model<-classes%>%
+  filter(ontology=="FA")%>%
+  
+  aov(prop_class ~ temperature*parent, data=.)
+
+summary(model)
+```
+
+```{r}
+model<-classes%>%
+  filter(ontology=="TG")%>%
+  
+  aov(prop_class ~ temperature*parent, data=.)
+
+summary(model)
+```
+
+Run model for each ontology. 
+
+```{r}
+ontology_list<-c(unique(classes$ontology))
+
+#Create an empty data frame to store the results
+results_table <- data.frame(Ontology = character(),
+                            Effect = character(),
+                            DF = numeric(),
+                            SumSq = numeric(),
+                            F_value = numeric(),
+                            p_value = numeric())
+
+#Loop over each compound in compound_list
+for(class in ontology_list){
+  
+  #Fit the linear mixed effect model for each compound
+  model <- classes%>%
+    filter(ontology==class)%>%
+    
+    aov(prop_class ~ temperature * parent, data = .)
+  
+  qqPlot(residuals(model))
+
+  #Extract the relevant coefficients for interaction of treatment x position
+  anova_output <- anova(model)
+  coef_summary <- tidy(anova_output)
+  coef_summary <- as.data.frame(coef_summary)
+  
+  #Store the results in the results_table data frame
+  results_table <- rbind(results_table, data.frame(Ontology = class,
+                                                   Effect = coef_summary["term"],
+                                                   DF = coef_summary["df"],
+                                                   SumSq = coef_summary["sumsq"],
+                                                   F_value = coef_summary["statistic"],
+                                                   p_value = coef_summary["p.value"]))
+}
+
+
+results_table<-results_table%>%
+  filter(!term=="Residuals")
+
+#apply a p value correction (FDR) for multiple comparisons 
+results_table$adj_pvalues <- p.adjust(results_table$p.value, method = "fdr")
+
+#view only p<0.05
+results_table_sign<-results_table%>%
+  filter(adj_pvalues<=0.05)
+
+results_table_sign
+
+list<-c(results_table_sign$Ontology)
+```
+
+     Ontology        term df        sumsq statistic      p.value  adj_pvalues
+1     AHexCAS temperature  2 0.0003345747 10.147535 2.539264e-04 5.484810e-03
+2      AHexCS      parent  2 0.0185438708 10.286411 2.312780e-04 5.484810e-03
+3          CL      parent  2 0.0218972383 28.010323 1.864517e-08 2.013678e-06
+4     Cer_ADS      parent  2 0.0276896801 17.926508 2.352073e-06 1.270119e-04
+5        DGDG      parent  2 0.0459064060  6.965348 2.441071e-03 3.882885e-02
+6    EtherLPE      parent  2 0.0012377785 13.205228 3.553554e-05 1.096525e-03
+7   EtherMGDG      parent  2 0.0008023878 21.970836 2.950905e-07 2.124652e-05
+8  HexCer_NDS      parent  2 0.0003765059  6.924754 2.516684e-03 3.882885e-02
+9        LCAE      parent  2 0.0018770011 12.765934 4.661772e-05 1.258678e-03
+10        LPC      parent  2 0.0273479293  9.198133 4.864331e-04 9.551778e-03
+11       OxFA      parent  2 0.0960743056 14.724233 1.426868e-05 5.313635e-04
+12       SISE      parent  2 0.0001306493  8.984493 5.646436e-04 1.016358e-02
+13         SL      parent  2 0.0516161870 43.822892 5.251806e-11 1.134390e-08
+14         ST      parent  2 0.0060952440 14.666678 1.476010e-05 5.313635e-04
+
+Plot AHexCAS (sign by temperature) - higher at high temperature.  
+
+```{r}
+plot_sign1<-classes%>%
+  filter(ontology=="AHexCAS")%>%
+  
+  ggplot(aes(x=paste(temperature), y=prop_class, color=temperature))+
+  facet_wrap(~ontology)+
+  geom_boxplot(outliers=FALSE)+
+  geom_point()+
+  theme_classic()+
+  scale_color_manual(values=c("blue", "red", "orange"))+
+  scale_x_discrete(limits=c("Ambient", "Moderate (+3)", "High (+6)"))+
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1));plot_sign1
+```
+
+```{r}
+plot_sign2<-classes%>%
+  filter(ontology %in% list)%>%
+  filter(!ontology=="AHexCAS")%>%
+  
+  ggplot(aes(x=paste(parent), y=prop_class, color=parent))+
+  facet_wrap(~ontology, scales="free")+
+  geom_boxplot(outliers=FALSE)+
+  geom_point()+
+  theme_classic()+
+  scale_color_manual(values=c("orange", "darkred", "darkgray"))+
+  #scale_x_discrete(limits=c("Bleached Ambient", "Bleached Moderate (+3)", "Bleached High (+6)", "Nonbleached Ambient", "Nonbleached Moderate (+3)", "Nonbleached High (+6)", "Wildtype Ambient", "Wildtype Moderate (+3)", "Wildtype High (+6)"))+
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1));plot_sign2
+```
+
+
+
