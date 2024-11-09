@@ -12,10 +12,6 @@ editor_options:
   chunk_output_type: console
 ---
 
-NEED TO SELECT HIGHEST SIGNAL FOR DUPLICATE METABOLITE ENTRIES 
-NEED TO TROUBLESHOOT AND ADJUST METABOLITE DATA RSD FILTERING 
-NEED TO APPLY SAM OR OTHER MODELS 
-
 # Set Up    
 
 ```{r setup, include=FALSE}
@@ -200,7 +196,7 @@ kept_metabolites <- metabolites %>%
   distinct(Name)
 
 # do this instead by keeping those present at >0 value in at least 30% of samples (allowing for metabolites to remain if they are present in only one parent or temp group)
-threshold <- 0.5  # 30% threshold
+threshold <- 0.9  # 30% threshold
 
 filtered_data2 <- metabolites %>%
   group_by(Name) %>%
@@ -228,7 +224,7 @@ length(unique(filtered_data2$Name))
 filtered_data<-filtered_data2
 ```
 
-135 metabolites are kept after 50% of samples >0 filtering, many were removed. This makes sense, the data frame kept all metabolites in the library so we expect far fewer to be retained.   
+66 metabolites are kept after 90% of samples >0 filtering, many were removed. This makes sense, the data frame kept all metabolites in the library so we expect far fewer to be retained.   
 
 Normalize corrected area to sample protein. This will generate units of normalized peak area / ug protein. 
 
@@ -333,14 +329,6 @@ pca1<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="parent", loadi
         legend.title = element_text(size=18, face="bold"), 
         axis.text = element_text(size=18), 
         axis.title = element_text(size=18,  face="bold"));pca1
-```
-
-```{r}
-filtered_data<-filtered_data%>%
-  filter(!tube=="L78")
-
-wide_data<-wide_data%>%
-  filter(!tube=="L78")
 ```
 
 # Conduct filtering for relative standard deviation 
@@ -466,6 +454,8 @@ length(unique(filtered_data$Name))
 unique(filtered_data$Name)
 ```
 
+There are now 62 metabolites.  
+
 Make a dataframe that calculates the standard deviation of the metabolite area within treatment relative to the mean (i.e., how "large" is the SD).  
 
 The formula will be:  
@@ -483,7 +473,7 @@ length(unique(test$Name))
 
 hist(test$RSD)
 ```
-121 metabolites before 
+62 metabolites before 
 
 Remove metabolites that have RSD < threshold in all treatments (RSD values are high, come back to this).  
 ```{r}
@@ -497,7 +487,7 @@ keep_list<-c(unique(test$Name))
 
 length(unique(keep_list))
 ```
-92 metabolites after 
+59 metabolites after 
 
 Filter the filtered dataset to include the selected metabolites after RSD filtering.  
 ```{r}
@@ -511,6 +501,12 @@ filtered_data<-filtered_data%>%
   filter(!Name=="13C5,15N1-Valine")%>%
   filter(!Name=="13C6-Sorbitol")
 ```
+
+```{r}
+length(unique(filtered_data$Name))
+```
+
+59 metabolites kept 
 
 # Unsupervised analysis 
 
@@ -569,11 +565,11 @@ permanova
 
 adonis2(formula = vegan ~ parent * temperature, data = wide_data, method = "eu")
                    Df SumOfSqs      R2      F Pr(>F)
-parent              2    70.54 0.03083 0.8258  0.514
-temperature         2    65.22 0.02850 0.7635  0.553
-parent:temperature  4   273.08 0.11935 1.5985  0.111
-Residual           44  1879.16 0.82131              
-Total              52  2288.00 1.00000           
+parent              2    88.87 0.02897 0.7693  0.594
+temperature         2    89.03 0.02902 0.7706  0.589
+parent:temperature  4   348.48 0.11359 1.5082  0.100
+Residual           44  2541.62 0.82843              
+Total              52  3068.00 1.00000          
 
 ```{r}
 pca1<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="parent", loadings=FALSE,  colour="parent", shape="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=FALSE, loadings.label.size=5, loadings.label.vjust=-1, size=5) + 
@@ -681,6 +677,11 @@ heatmap <- Heatmap(
 
 # Draw the heatmap
 draw(heatmap)
+
+# save the heatmap 
+pdf("figures/metabolites/treatment_zscores.pdf", width=8, heigh=10)
+draw(heatmap)
+dev.off()
 ```
 
 By parent
@@ -722,6 +723,11 @@ heatmap <- Heatmap(
 
 # Draw the heatmap
 draw(heatmap)
+
+# save the heatmap 
+pdf("figures/metabolites/parent_zscores.pdf", width=8, heigh=10)
+draw(heatmap)
+dev.off()
 ```
 
 By temperature
@@ -763,889 +769,12 @@ heatmap <- Heatmap(
 
 # Draw the heatmap
 draw(heatmap)
-```
 
-
-
-# Supervised PLS-DA analysis  
-
-Script modified from the following tutorial: https://mixomicsteam.github.io/Bookdown/plsda.html
-
-## PLS-DA for the effect of parent 
-
-Generate a PLS-DA and plot.  
-```{r, results=FALSE}
-#assigning datasets 
-X <- wide_data
-
-levels(as.factor(X$parent))
-levels(as.factor(X$temperature))
-
-Y <- as.factor(X$parent) #select treatment names
-Y
-
-X<-X %>% select(where(is.numeric)) #pull only data columns
-
-# run PLSDA 
-MyResult.plsda <- plsda(X,Y, ncomp=2) # 1 Run the method with ncomp = groups -1
-plotIndiv(MyResult.plsda)    # 2 Plot the samples
-
-cols<-c("gray", "orange", "brown4") 
-
-pdf("figures/metabolites/PLSDA_Parent.pdf", width=9, height=6)
-plotIndiv(MyResult.plsda, col=cols, ind.names = FALSE, legend=TRUE, legend.title = "Parent", ellipse = FALSE, title="", style = "graphics", centroid=FALSE, point.lwd = 2, cex=2)
-dev.off() 
-
-plotIndiv(MyResult.plsda, col=cols, ind.names = FALSE, legend=TRUE, legend.title = "Parent", ellipse = FALSE, title="", style = "graphics", centroid=FALSE, point.lwd = 2, cex=2)
-```
-
-View classification plot. 
-
-```{r}
-perf.plsda <- perf(MyResult.plsda, validation = 'Mfold', folds = 2, 
-                  progressBar = FALSE,  # Set to TRUE to track progress
-                  nrepeat = 50)         # We suggest nrepeat = 50
-
-plot(perf.plsda, sd = TRUE, legend.position = 'horizontal')
-```
-
-Set model to determine VIPs.  
-
-```{r, message=FALSE}
-MyResult.plsda_parent <- plsda(X,Y, ncomp=2) 
-
-#view plsda model again
-plotIndiv(MyResult.plsda_parent, col=cols, ind.names = FALSE, legend=TRUE, legend.title = "Parent", ellipse = TRUE, title="", style = "graphics", centroid=FALSE, point.lwd = 2, cex=2)
-```
-
-Extract VIP scores 
-
-View the lipids that are most highly differentiating lipids     
-
-```{r}
-#extract
-parent_VIP <- PLSDA.VIP(MyResult.plsda_parent, graph=TRUE)
-
-parent_VIP_DF <- as.data.frame(parent_VIP[["tab"]])
-parent_VIP_DF
-
-# Converting row names to column
-parent_VIP_table <- rownames_to_column(parent_VIP_DF, var = "Metabolite")
-
-#filter for VIP > 1
-parent_VIP_1 <- parent_VIP_table %>% 
-  filter(VIP >= 1)
-
-write_csv(parent_VIP_1, "output/lipids_metabolites/metabolites/Overall_Parent_VIPs.csv")
-
-#plot
-parent_VIP_1 %>%
-  arrange(VIP) %>%
-  ggplot( aes(x = VIP, y = reorder(Metabolite,VIP,sum))) +
-  geom_point() +
-  ylab("Metabolite") +
-  xlab("VIP Score") +
-  ggtitle("Parent VIP") +
-  theme_bw() + theme(panel.border = element_rect(linetype = "solid", color = "black"), panel.grid.major = element_blank(), #Makes background theme white
-                     panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
-
-
-pdf("figures/metabolites/Parent_VIP.pdf", width=4, height=4)
-parent_VIP_1 %>%
-  arrange(VIP) %>%
-  ggplot( aes(x = VIP, y = reorder(Metabolite,VIP,sum))) +
-  geom_point() +
-  ylab("Metabolite") +
-  xlab("VIP Score") +
-  ggtitle("Parent VIP > 1") +
-  theme_bw() + theme(panel.border = element_rect(linetype = "solid", color = "black"), panel.grid.major = element_blank(), #Makes background theme white
-                     panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
-dev.off() 
-```
-
-These lists represent VIPs that drive separation between parent groups.  
-
-Make a list of vips. 
-```{r}
-parent_vip_list<-parent_VIP_1%>%
-  pull(Metabolite)
-```
-There are 15 VIPs. 
-
-Plot heatmap of z score of lipids across life stages.  
-
-```{r}
-# Filter data for VIP metabolites
-parent_vip_data <- filtered_data %>% filter(Name %in% parent_vip_list)
-
-# Convert counts to Z-scores
-parent_vip_data <- parent_vip_data %>% 
-  group_by(Name) %>% 
-  mutate(z_score = scale(area_normalized)) %>% 
-  group_by(parent, Name)%>%
-  summarise(z_score = mean(z_score, na.rm=TRUE))%>%
-  ungroup()
-
-# Pivot data to have metabolites as rows and lifestage as columns
-heatmap_data <- parent_vip_data %>% 
-  dplyr::select(Name, parent, z_score) %>%
-  spread(key = parent, value = z_score)
-
-# Convert to matrix and set rownames
-heatmap_matrix <- as.matrix(column_to_rownames(heatmap_data, var = "Name"))
-
-# Create the heatmap
-heatmap <- Heatmap(
-  heatmap_matrix,
-  name = "Z-score",
-  col = inferno(10),
-  cluster_rows = TRUE,
-  cluster_columns = FALSE,
-  show_row_names = TRUE,
-  show_column_names = TRUE,
-  #row_split=3,
-  row_title = "Metabolite", 
-  column_names_gp =  gpar(fontsize = 12, border=FALSE),
-  column_names_rot = 45,
-  row_gap = unit(1, "mm"), 
-  border = TRUE,
-  row_names_gp = gpar(fontsize = 12, alpha = 0.75, border = FALSE)
-)
-
-# Draw the heatmap
-draw(heatmap)
-
-dev.off()
-pdf("figures/metabolites/VIP_heatmap_parent.pdf", width=5, height=6)
+# save the heatmap 
+pdf("figures/metabolites/temperature_zscores.pdf", width=8, heigh=10)
 draw(heatmap)
 dev.off()
 ```
-
-View PCA for VIPs
-
-```{r}
-vip_data_parent<-filtered_data%>%
-  ungroup()%>%
-  select(!type)%>%
-  select(!protein.ug)%>%
-  select(!area_sorbitol)%>%
-  select(!area_corrected)%>%
-  select(!area)%>%
-  filter(Name %in% parent_vip_list)%>%
-  pivot_wider(names_from=Name, values_from=area_normalized)
-```
-
-```{r}
-vip_data_parent%>%
-    select_if(~ any(is.na(.)))
-```
-
-No columns have NA's.  
-
-```{r}
-vip_data_parent$temperature<-factor(vip_data_parent$temperature, levels=c("Ambient", "Moderate (+3)", "High (+6)"))
-
-vip_data_parent$parent<-factor(vip_data_parent$parent, levels=c("Wildtype", "Bleached", "Nonbleached"))
-```
-
-All characteristics are renamed.  
-
-View scree plot. 
-
-```{r}
-scaled.pca<-prcomp(vip_data_parent %>% select(where(is.numeric)), scale=TRUE, center=TRUE) 
-
-fviz_eig(scaled.pca)
-```
-
-Prepare a PCA plot
-```{r}
-# scale data
-vegan <- scale(vip_data_parent%>% select(where(is.numeric)))
-
-# PerMANOVA 
-permanova<-adonis2(vegan ~ parent*temperature, data = vip_data_parent, method='eu')
-permanova
-```
-
-adonis2(formula = vegan ~ parent * temperature, data = vip_data_parent, method = "eu")
-                   Df SumOfSqs      R2      F Pr(>F)
-parent              2    44.50 0.05705 1.5591  0.182
-temperature         2    22.15 0.02839 0.7760  0.548
-parent:temperature  4    85.45 0.10955 1.4969  0.159
-Residual           44   627.91 0.80501              
-Total              52   780.00 1.00000      
-
-
-```{r}
-pca_vip_parent1<-ggplot2::autoplot(scaled.pca, data=vip_data_parent, frame.colour="parent", loadings=FALSE,  colour="parent", shape="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
-  scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
-  scale_fill_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
-  scale_shape_manual(name="Temperature", values=c(19,17,15))+
-  theme_classic()+
-   theme(legend.text = element_text(size=14), 
-         legend.position="right",
-        plot.background = element_blank(),
-        legend.title = element_text(size=14, face="bold"), 
-        axis.text = element_text(size=14), 
-        axis.title = element_text(size=14,  face="bold"));pca_vip_parent1
-
-pca_vip_parent2<-ggplot2::autoplot(scaled.pca, data=vip_data_parent, frame.colour="temperature", loadings=FALSE,  colour="temperature", shape="parent", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
-  scale_color_manual(name="Temperature", values=c("blue", "orange", "red"))+
-  scale_fill_manual(name="Temperature", values=c("blue", "orange", "red"))+
-  scale_shape_manual(name="Parental Phenotype", values=c(19,17,15))+
-  theme_classic()+
-   theme(legend.text = element_text(size=14), 
-         legend.position="right",
-        plot.background = element_blank(),
-        legend.title = element_text(size=14, face="bold"), 
-        axis.text = element_text(size=14), 
-        axis.title = element_text(size=14,  face="bold"));pca_vip_parent2
-
-pca_plots_parent<-plot_grid(pca_vip_parent1, pca_vip_parent2, ncol=2, nrow=1)
-
-ggsave(pca_plots_parent, filename="figures/metabolites/pca_plots_parentVIP.jpeg", width=12, height=4)
-```
-
-View a PCA with treatment code information. 
-```{r}
-test_wide_data<-vip_data_parent%>%
-  mutate(code=paste(parent, temperature))
-
-levels(as.factor(test_wide_data$code))
-
-pca_parent3<-ggplot2::autoplot(scaled.pca, data=test_wide_data, frame.colour="code", loadings=FALSE,  colour="code", shape="code", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
-  scale_color_manual(name="Group", values=c("orange", "orange", "orange", "brown4", "brown4", "brown4", "gray", "gray", "gray"))+
-  scale_fill_manual(name="Group", values=c("orange", "orange", "orange", "brown4", "brown4", "brown4", "gray", "gray", "gray"))+
-  scale_shape_manual(name="Group", values=c(19,17,15,19,17,15,19,17,15))+
-  theme_classic()+
-   theme(legend.text = element_text(size=14), 
-         legend.position="right",
-        plot.background = element_blank(),
-        legend.title = element_text(size=14, face="bold"), 
-        axis.text = element_text(size=14), 
-        axis.title = element_text(size=14,  face="bold"));pca_parent3
-
-ggsave(pca_parent3, filename="figures/metabolites/pca_all_groups_parentVIP.jpeg", width=8, height=6)
-```
-
-## PLS-DA for the effect of temperature 
-
-Generate a PLS-DA and plot.  
-```{r, results=FALSE}
-#assigning datasets 
-X <- wide_data
-
-levels(as.factor(X$parent))
-levels(as.factor(X$temperature))
-
-Y <- as.factor(X$temperature) #select treatment names
-Y
-
-levels(Y)
-
-X<-X %>% select(where(is.numeric)) #pull only data columns
-
-# run PLSDA 
-MyResult.plsda <- plsda(X,Y, ncomp=2) # 1 Run the method with ncomp = groups -1
-plotIndiv(MyResult.plsda)    # 2 Plot the samples
-
-cols<-c("blue", "orange", "red") 
-
-pdf("figures/metabolites/PLSDA_Temperature.pdf", width=9, height=6)
-plotIndiv(MyResult.plsda, col=cols, ind.names = FALSE, legend=TRUE, legend.title = "Temperature", ellipse = FALSE, title="", style = "graphics", centroid=FALSE, point.lwd = 2, cex=2)
-dev.off() 
-
-plotIndiv(MyResult.plsda, col=cols, ind.names = FALSE, legend=TRUE, legend.title = "Temperature", ellipse = FALSE, title="", style = "graphics", centroid=FALSE, point.lwd = 2, cex=2)
-```
-
-View classification plot. 
-
-```{r}
-perf.plsda <- perf(MyResult.plsda, validation = 'Mfold', folds = 2, 
-                  progressBar = FALSE,  # Set to TRUE to track progress
-                  nrepeat = 50)         # We suggest nrepeat = 50
-
-plot(perf.plsda, sd = TRUE, legend.position = 'horizontal')
-```
-
-Set model to determine VIPs.  
-
-```{r, message=FALSE}
-MyResult.plsda_temperature <- plsda(X,Y, ncomp=2) 
-
-#view plsda model again
-plotIndiv(MyResult.plsda_temperature, col=cols, ind.names = FALSE, legend=TRUE, legend.title = "Temperature", ellipse = TRUE, title="", style = "graphics", centroid=FALSE, point.lwd = 2, cex=2)
-```
-
-Extract VIP scores 
-
-View the lipids that are most highly differentiating lipids     
-
-```{r}
-#extract
-temperature_VIP <- PLSDA.VIP(MyResult.plsda_temperature, graph=TRUE)
-
-temperature_VIP_DF <- as.data.frame(temperature_VIP[["tab"]])
-temperature_VIP_DF
-
-# Converting row names to column
-temperature_VIP_table <- rownames_to_column(temperature_VIP_DF, var = "Metabolite")
-
-#filter for VIP > 1
-temperature_VIP_1 <- temperature_VIP_table %>% 
-  filter(VIP >= 1)
-
-write_csv(temperature_VIP_1, "output/lipids_metabolites/metabolites/Overall_Temperature_VIPs.csv")
-
-#plot
-temperature_VIP_1 %>%
-  arrange(VIP) %>%
-  ggplot( aes(x = VIP, y = reorder(Metabolite,VIP,sum))) +
-  geom_point() +
-  ylab("Metabolite") +
-  xlab("VIP Score") +
-  ggtitle("Temperature VIP") +
-  theme_bw() + theme(panel.border = element_rect(linetype = "solid", color = "black"), panel.grid.major = element_blank(), #Makes background theme white
-                     panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
-
-
-pdf("figures/metabolites/Temperature_VIP.pdf", width=4, height=4)
-temperature_VIP_1 %>%
-  arrange(VIP) %>%
-  ggplot( aes(x = VIP, y = reorder(Metabolite,VIP,sum))) +
-  geom_point() +
-  ylab("Metabolite") +
-  xlab("VIP Score") +
-  ggtitle("Temperature VIP > 1") +
-  theme_bw() + theme(panel.border = element_rect(linetype = "solid", color = "black"), panel.grid.major = element_blank(), #Makes background theme white
-                     panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
-dev.off() 
-```
-
-These lists represent VIPs that drive separation between temperature groups.  
-
-Make a list of vips. 
-```{r}
-temperature_vip_list<-temperature_VIP_1%>%
-  pull(Metabolite)
-```
-There are 10 VIPs. 
-
-Plot heatmap of z score of metabolites across temperature.  
-
-```{r}
-# Filter data for VIP metabolites
-temperature_vip_data <- filtered_data %>% filter(Name %in% temperature_vip_list)
-
-# Convert counts to Z-scores
-temperature_vip_data <- temperature_vip_data %>% 
-  group_by(Name) %>% 
-  mutate(z_score = scale(area_normalized)) %>% 
-  group_by(temperature, Name)%>%
-  summarise(z_score = mean(z_score, na.rm=TRUE))%>%
-  ungroup()
-
-temperature_vip_data$temperature<-factor(temperature_vip_data$temperature, levels=c("Ambient", "Moderate (+3)", "High (+6)"))
-
-# Pivot data to have metabolites as rows and lifestage as columns
-heatmap_data <- temperature_vip_data %>% 
-  dplyr::select(Name, temperature, z_score) %>%
-  spread(key = temperature, value = z_score)
-
-# Convert to matrix and set rownames
-heatmap_matrix <- as.matrix(column_to_rownames(heatmap_data, var = "Name"))
-
-# Create the heatmap
-heatmap <- Heatmap(
-  heatmap_matrix,
-  name = "Z-score",
-  col = inferno(10),
-  cluster_rows = TRUE,
-  cluster_columns = FALSE,
-  show_row_names = TRUE,
-  show_column_names = TRUE,
-  #row_split=3,
-  row_title = "Metabolite", 
-  column_names_gp =  gpar(fontsize = 12, border=FALSE),
-  column_names_rot = 45,
-  row_gap = unit(1, "mm"), 
-  border = TRUE,
-  row_names_gp = gpar(fontsize = 12, alpha = 0.75, border = FALSE)
-)
-
-# Draw the heatmap
-draw(heatmap)
-
-dev.off()
-pdf("figures/metabolites/VIP_heatmap_temperature.pdf", width=6, height=7)
-draw(heatmap)
-dev.off()
-```
-
-View PCA for VIPs
-
-```{r}
-vip_data_temperature<-filtered_data%>%
-  ungroup()%>%
-  select(!type)%>%
-  select(!protein.ug)%>%
-  select(!area_sorbitol)%>%
-  select(!area_corrected)%>%
-  select(!area)%>%
-  filter(Name %in% temperature_vip_list)%>%
-  pivot_wider(names_from=Name, values_from=area_normalized)
-```
-
-```{r}
-vip_data_temperature%>%
-    select_if(~ any(is.na(.)))
-```
-
-No columns have NA's.  
-
-```{r}
-vip_data_temperature$temperature<-factor(vip_data_temperature$temperature, levels=c("Ambient", "Moderate (+3)", "High (+6)"))
-
-vip_data_temperature$parent<-factor(vip_data_temperature$parent, levels=c("Wildtype", "Bleached", "Nonbleached"))
-```
-
-All characteristics are renamed.  
-
-View scree plot. 
-
-```{r}
-scaled.pca<-prcomp(vip_data_temperature %>% select(where(is.numeric)), scale=TRUE, center=TRUE) 
-
-fviz_eig(scaled.pca)
-```
-
-Prepare a PCA plot
-```{r}
-# scale data
-vegan <- scale(vip_data_temperature %>% select(where(is.numeric)))
-
-# PerMANOVA 
-permanova<-adonis2(vegan ~ parent*temperature, data = vip_data_temperature, method='eu')
-permanova
-```
-
-adonis2(formula = vegan ~ parent * temperature, data = vip_data_temperature, method = "eu")
-                   Df SumOfSqs      R2      F Pr(>F)
-parent              2    28.82 0.05543 1.5314  0.208
-temperature         2    23.68 0.04553 1.2579  0.263
-parent:temperature  4    53.42 0.10273 1.4192  0.203
-Residual           44   414.08 0.79630              
-Total              52   520.00 1.00000   
-
-
-```{r}
-pca_vip_temperature1<-ggplot2::autoplot(scaled.pca, data=vip_data_temperature, frame.colour="parent", loadings=FALSE,  colour="parent", shape="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
-  scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
-  scale_fill_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
-  scale_shape_manual(name="Temperature", values=c(19,17,15))+
-  theme_classic()+
-   theme(legend.text = element_text(size=14), 
-         legend.position="right",
-        plot.background = element_blank(),
-        legend.title = element_text(size=14, face="bold"), 
-        axis.text = element_text(size=14), 
-        axis.title = element_text(size=14,  face="bold"));pca_vip_temperature1
-
-pca_vip_temperature2<-ggplot2::autoplot(scaled.pca, data=vip_data_temperature, frame.colour="temperature", loadings=FALSE,  colour="temperature", shape="parent", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
-  scale_color_manual(name="Temperature", values=c("blue", "orange", "red"))+
-  scale_fill_manual(name="Temperature", values=c("blue", "orange", "red"))+
-  scale_shape_manual(name="Parental Phenotype", values=c(19,17,15))+
-  theme_classic()+
-   theme(legend.text = element_text(size=14), 
-         legend.position="right",
-        plot.background = element_blank(),
-        legend.title = element_text(size=14, face="bold"), 
-        axis.text = element_text(size=14), 
-        axis.title = element_text(size=14,  face="bold"));pca_vip_temperature2
-
-pca_plots_temperature<-plot_grid(pca_vip_temperature1, pca_vip_temperature2, ncol=2, nrow=1)
-
-ggsave(pca_plots_temperature, filename="figures/metabolites/pca_plots_temperatureVIP.jpeg", width=12, height=4)
-```
-
-View a PCA with treatment code information. 
-```{r}
-test_wide_data<-vip_data_temperature%>%
-  mutate(code=paste(parent, temperature))
-
-levels(as.factor(test_wide_data$code))
-
-pca_parent3<-ggplot2::autoplot(scaled.pca, data=test_wide_data, frame.colour="code", loadings=FALSE,  colour="code", shape="code", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
-  scale_color_manual(name="Group", values=c("orange", "orange", "orange", "brown4", "brown4", "brown4", "gray", "gray", "gray"))+
-  scale_fill_manual(name="Group", values=c("orange", "orange", "orange", "brown4", "brown4", "brown4", "gray", "gray", "gray"))+
-  scale_shape_manual(name="Group", values=c(19,17,15,19,17,15,19,17,15))+
-  theme_classic()+
-   theme(legend.text = element_text(size=14), 
-         legend.position="right",
-        plot.background = element_blank(),
-        legend.title = element_text(size=14, face="bold"), 
-        axis.text = element_text(size=14), 
-        axis.title = element_text(size=14,  face="bold"));pca_parent3
-
-ggsave(pca_parent3, filename="figures/metabolites/pca_all_groups_temperatureVIP.jpeg", width=8, height=6)
-```
-
-## PLS-DA for the effect of parent x temperature 
-
-Generate a PLS-DA and plot.  
-```{r, results=FALSE}
-#assigning datasets 
-X <- wide_data
-
-levels(as.factor(X$parent))
-levels(as.factor(X$temperature))
-
-X$code<-paste(X$parent, X$temperature)
-
-levels(as.factor(X$code))
-
-Y <- as.factor(X$code) #select treatment names
-Y
-
-levels(Y)
-
-X<-X %>% select(where(is.numeric)) #pull only data columns
-
-# run PLSDA 
-MyResult.plsda <- plsda(X,Y, ncomp=5) # 1 Run the method with ncomp = groups -1
-plotIndiv(MyResult.plsda)    # 2 Plot the samples
-
-cols<-c("orange", "orange3", "orange4", "brown", "brown2", "brown4", "gray", "lightgray", "darkgray") 
-
-pdf("figures/metabolites/PLSDA_interaction.pdf", width=9, height=6)
-plotIndiv(MyResult.plsda, col=cols, ind.names = FALSE, legend=TRUE, legend.title = "Temperature", ellipse = FALSE, title="", style = "graphics", centroid=FALSE, point.lwd = 2, cex=2)
-dev.off() 
-
-plotIndiv(MyResult.plsda, col=cols, ind.names = FALSE, legend=TRUE, legend.title = "Temperature", ellipse = FALSE, title="", style = "graphics", centroid=FALSE, point.lwd = 2, cex=2)
-```
-
-View classification plot. 
-
-```{r}
-perf.plsda <- perf(MyResult.plsda, validation = 'Mfold', folds = 2, 
-                  progressBar = FALSE,  # Set to TRUE to track progress
-                  nrepeat = 50)         # We suggest nrepeat = 50
-
-plot(perf.plsda, sd = TRUE, legend.position = 'horizontal')
-```
-
-Set model to determine VIPs.  
-
-```{r, message=FALSE}
-MyResult.plsda_interaction <- plsda(X,Y, ncomp=5) 
-
-#view plsda model again
-plotIndiv(MyResult.plsda_interaction, col=cols, ind.names = FALSE, legend=TRUE, legend.title = "Parent x Temperature", ellipse = TRUE, title="", style = "graphics", centroid=FALSE, point.lwd = 2, cex=2)
-```
-
-Extract VIP scores 
-
-View the metabolites that are most highly differentiating metabolites     
-
-```{r}
-#extract
-interaction_VIP <- PLSDA.VIP(MyResult.plsda_interaction, graph=TRUE)
-
-interaction_VIP_DF <- as.data.frame(interaction_VIP[["tab"]])
-interaction_VIP_DF
-
-# Converting row names to column
-interaction_VIP_table <- rownames_to_column(interaction_VIP_DF, var = "Metabolite")
-
-#filter for VIP > 1
-interaction_VIP_1 <- interaction_VIP_table %>% 
-  filter(VIP >= 1)
-
-write_csv(interaction_VIP_1, "output/lipids_metabolites/metabolites/Overall_Interaction_VIPs.csv")
-
-#plot
-interaction_VIP_1 %>%
-  arrange(VIP) %>%
-  ggplot( aes(x = VIP, y = reorder(Metabolite,VIP,sum))) +
-  geom_point() +
-  ylab("Metabolite") +
-  xlab("VIP Score") +
-  ggtitle("Parent x Temperature VIP") +
-  theme_bw() + theme(panel.border = element_rect(linetype = "solid", color = "black"), panel.grid.major = element_blank(), #Makes background theme white
-                     panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
-
-
-pdf("figures/metabolites/Interaction_VIP.pdf", width=4, height=4)
-interaction_VIP_1 %>%
-  arrange(VIP) %>%
-  ggplot( aes(x = VIP, y = reorder(Metabolite,VIP,sum))) +
-  geom_point() +
-  ylab("Metabolite") +
-  xlab("VIP Score") +
-  ggtitle("Interaction VIP > 1") +
-  theme_bw() + theme(panel.border = element_rect(linetype = "solid", color = "black"), panel.grid.major = element_blank(), #Makes background theme white
-                     panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
-dev.off() 
-```
-
-These lists represent VIPs that drive separation between parent x temperature groups.  
-
-Make a list of vips. 
-```{r}
-interaction_vip_list<-interaction_VIP_1%>%
-  pull(Metabolite)
-```
-There are 13 VIPs. 
-
-Plot heatmap of z score of lipids across groups.   
-
-```{r}
-# Filter data for VIP metabolites
-interaction_vip_data <- filtered_data %>% filter(Name %in% interaction_vip_list)
-
-# Convert counts to Z-scores
-interaction_vip_data <- interaction_vip_data %>% 
-  mutate(code=paste(parent, temperature))%>%
-  group_by(Name) %>% 
-  mutate(z_score = scale(area_normalized)) %>% 
-  group_by(code, Name)%>%
-  summarise(z_score = mean(z_score, na.rm=TRUE))%>%
-  ungroup()
-
-interaction_vip_data$code<-factor(interaction_vip_data$code, levels=c("Bleached Ambient", "Bleached Moderate (+3)", "Bleached High (+6)", "Nonbleached Ambient", "Nonbleached Moderate (+3)", "Nonbleached High (+6)", "Wildtype Ambient", "Wildtype Moderate (+3)", "Wildtype High (+6)"))
-
-# Pivot data to have metabolites as rows and lifestage as columns
-heatmap_data <- interaction_vip_data %>% 
-  dplyr::select(Name, code, z_score) %>%
-  spread(key = code, value = z_score)
-
-# Convert to matrix and set rownames
-heatmap_matrix <- as.matrix(column_to_rownames(heatmap_data, var = "Name"))
-
-# Create the heatmap
-heatmap <- Heatmap(
-  heatmap_matrix,
-  name = "Z-score",
-  col = inferno(10),
-  cluster_rows = TRUE,
-  cluster_columns = FALSE,
-  show_row_names = TRUE,
-  show_column_names = TRUE,
-  #row_split=4,
-  row_title = "Metabolite", 
-  column_names_gp =  gpar(fontsize = 12, border=FALSE),
-  column_names_rot = 45,
-  row_gap = unit(1, "mm"), 
-  border = TRUE,
-  row_names_gp = gpar(fontsize = 12, alpha = 0.75, border = FALSE)
-)
-
-# Draw the heatmap
-draw(heatmap)
-
-dev.off()
-pdf("figures/metabolites/VIP_heatmap_parentxtemperature.pdf", width=8, height=8)
-draw(heatmap)
-dev.off()
-```
-
-View PCA for VIPs
-
-```{r}
-vip_data_interaction<-filtered_data%>%
-  ungroup()%>%
-  select(!type)%>%
-  select(!protein.ug)%>%
-  select(!area_sorbitol)%>%
-  select(!area_corrected)%>%
-  select(!area)%>%
-  filter(Name %in% interaction_vip_list)%>%
-  pivot_wider(names_from=Name, values_from=area_normalized)
-```
-
-```{r}
-vip_data_interaction%>%
-    select_if(~ any(is.na(.)))
-```
-
-No columns have NA's.  
-
-```{r}
-vip_data_interaction$temperature<-factor(vip_data_interaction$temperature, levels=c("Ambient", "Moderate (+3)", "High (+6)"))
-
-vip_data_interaction$parent<-factor(vip_data_interaction$parent, levels=c("Wildtype", "Bleached", "Nonbleached"))
-```
-
-All characteristics are renamed.  
-
-View scree plot. 
-
-```{r}
-scaled.pca<-prcomp(vip_data_interaction %>% select(where(is.numeric)), scale=TRUE, center=TRUE)
-
-fviz_eig(scaled.pca)
-```
-
-Prepare a PCA plot
-```{r}
-# scale data
-vegan <- scale(vip_data_interaction %>% select(where(is.numeric)))
-
-# PerMANOVA 
-permanova<-adonis2(vegan ~ parent*temperature, data = vip_data_interaction, method='eu')
-permanova
-```
-
-adonis2(formula = vegan ~ parent * temperature, data = vip_data_interaction, method = "eu")
-                   Df SumOfSqs      R2      F Pr(>F)  
-parent              2    28.06 0.04151 1.1445  0.332  
-temperature         2    27.70 0.04098 1.1299  0.315  
-parent:temperature  4    80.85 0.11960 1.6489  0.099 .
-Residual           44   539.39 0.79791                
-Total              52   676.00 1.00000               
-
-```{r}
-pca_vip_interaction1<-ggplot2::autoplot(scaled.pca, data=vip_data_interaction, frame.colour="parent", loadings=FALSE,  colour="parent", shape="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
-  scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
-  scale_fill_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
-  scale_shape_manual(name="Temperature", values=c(19,17,15))+
-  theme_classic()+
-   theme(legend.text = element_text(size=14), 
-         legend.position="right",
-        plot.background = element_blank(),
-        legend.title = element_text(size=14, face="bold"), 
-        axis.text = element_text(size=14), 
-        axis.title = element_text(size=14,  face="bold"));pca_vip_interaction1
-
-pca_vip_interaction2<-ggplot2::autoplot(scaled.pca, data=vip_data_interaction, frame.colour="temperature", loadings=FALSE,  colour="temperature", shape="parent", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
-  scale_color_manual(name="Temperature", values=c("blue", "orange", "red"))+
-  scale_fill_manual(name="Temperature", values=c("blue", "orange", "red"))+
-  scale_shape_manual(name="Parental Phenotype", values=c(19,17,15))+
-  theme_classic()+
-   theme(legend.text = element_text(size=14), 
-         legend.position="right",
-        plot.background = element_blank(),
-        legend.title = element_text(size=14, face="bold"), 
-        axis.text = element_text(size=14), 
-        axis.title = element_text(size=14,  face="bold"));pca_vip_interaction2
-
-pca_plots_interaction<-plot_grid(pca_vip_interaction1, pca_vip_interaction2, ncol=2, nrow=1)
-
-ggsave(pca_plots_interaction, filename="figures/metabolites/pca_plots_interactionVIP.jpeg", width=12, height=4)
-```
-
-View a PCA with treatment code information. 
-```{r}
-test_wide_data<-vip_data_interaction%>%
-  mutate(code=paste(parent, temperature))
-
-levels(as.factor(test_wide_data$code))
-
-pca_interaction3<-ggplot2::autoplot(scaled.pca, data=test_wide_data, frame.colour="code", loadings=FALSE,  colour="code", shape="code", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
-  scale_color_manual(name="Group", values=c("orange", "orange", "orange", "brown4", "brown4", "brown4", "gray", "gray", "gray"))+
-  scale_fill_manual(name="Group", values=c("orange", "orange", "orange", "brown4", "brown4", "brown4", "gray", "gray", "gray"))+
-  scale_shape_manual(name="Group", values=c(19,17,15,19,17,15,19,17,15))+
-  theme_classic()+
-   theme(legend.text = element_text(size=14), 
-         legend.position="right",
-        plot.background = element_blank(),
-        legend.title = element_text(size=14, face="bold"), 
-        axis.text = element_text(size=14), 
-        axis.title = element_text(size=14,  face="bold"));pca_interaction3
-
-ggsave(pca_interaction3, filename="figures/metabolites/pca_all_groups_interactionVIP.jpeg", width=8, height=6)
-```
-
-# Plot mean values of VIPs 
-
-Plot "interaction" or parent x temperature VIPs as a mean. 
-
-```{r}
-interaction_means<-filtered_data%>%
-  ungroup()%>%
-  select(!type)%>%
-  select(!protein.ug)%>%
-  select(!area_sorbitol)%>%
-  select(!area_corrected)%>%
-  select(!area)%>%
-  filter(Name %in% interaction_vip_list)%>%
-  
-  group_by(Name, parent, temperature)%>%
-  summarise(mean=mean(area_normalized, na.rm=TRUE), se=sd(area_normalized, na.rm=TRUE)/sqrt(length(area_normalized)))%>%
-  mutate(temperature=factor(temperature, levels=c("Ambient", "Moderate (+3)", "High (+6)")))%>%
-  
-  ggplot(aes(x = temperature, y = mean, color = parent)) +
-  facet_wrap(~Name, scales="free")+
-  geom_line(aes(group=parent), position=position_dodge(0.3))+
-  geom_point(position=position_dodge(0.3))+
-  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0, position=position_dodge(0.3))+
-  scale_color_manual(values=c("orange", "brown4", "gray"))+
-  labs(x = "",y = "Mean Normalized Area") +
-  theme_classic()+
-  theme(
-    axis.text.x=element_text(angle=45, vjust=1, hjust=1)
-  );interaction_means
-
-ggsave(interaction_means, filename="figures/metabolites/interaction_VIP_means.jpeg", width=12, height=12)
-```
-
-# Output lists for Metaboanalyst 
-
-List of parental VIPS
-```{r}
-parent_vip_list%>%
-  as.data.frame()%>%
-  write_csv(., file="output/lipids_metabolites/metabolites/parent_VIP_list.csv")
-```
-
-List of temperature VIPS
-```{r}
-temperature_vip_list%>%
-  as.data.frame()%>%
-  write_csv(., file="output/lipids_metabolites/metabolites/temperature_VIP_list.csv")
-```
-
-List of interaction VIPS
-```{r}
-interaction_vip_list%>%
-  as.data.frame()%>%
-  write_csv(., file="output/lipids_metabolites/metabolites/interaction_VIP_list.csv")
-```
-
-Full list of lipids
-```{r}
-full_metabolite_list<-metabolites%>%
-  pull(Name)%>%
-  unique()%>%
-  as.data.frame()%>%
-  write_csv(., file="output/lipids_metabolites/metabolites/full_metabolite_list.csv")
-```
-
-What is the overlap in these lists? Create an upset plot. 
-
-```{r}
-# Combine lists into a data frame indicating membership (1 = present, 0 = absent)
-upset_data <- data.frame(
-  Name = unique(c(parent_vip_list, temperature_vip_list, interaction_vip_list)),
-  List1 = as.numeric(unique(c(parent_vip_list, temperature_vip_list, interaction_vip_list)) %in% parent_vip_list),
-  List2 = as.numeric(unique(c(parent_vip_list, temperature_vip_list, interaction_vip_list)) %in% temperature_vip_list),
-  List3 = as.numeric(unique(c(parent_vip_list, temperature_vip_list, interaction_vip_list)) %in% interaction_vip_list)
-)
-
-# Convert data to the format needed for the UpSetR plot
-plot_data <- upset_data[, -1]
-row.names(plot_data) <- upset_data$Name
-names(plot_data) <- c("Parent", "Temperature", "PxT Group")
-
-# Generate the UpSet plot
-pdf("figures/metabolites/upset_VIP_list_overlap.pdf", width=6, height=6)
-upset(plot_data, sets = c("Parent", "Temperature", "PxT Group"), keep.order = TRUE)
-dev.off()
-
-```
-
-No signature of changes in metabolome by parent or temperature treatment. 
 
 # Perform ANOVAs of metabolite concentration between groups 
 
@@ -1694,15 +823,87 @@ Butryic acid
 Plot these two acids. 
 
 ```{r}
-plot1<-filtered_data%>%s
+plot1<-filtered_data%>%
   filter(Name %in% c("Propionic acid", "Butyric acid-TMS"))%>%
   
   
-  ggplot(aes(x=paste(parent), y=area_normalized))+
+  ggplot(aes(x=paste(temperature, parent), y=area_normalized))+
   facet_wrap(~Name, scales="free")+
-  geom_point()+
+  geom_boxplot()+
   theme_classic()+
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1));plot1
 ```
 
+# Plot metabolites of interest 
 
+```{r}
+plot2<-filtered_data%>%
+  filter(Name %in% c("Glucose-meto-5TMS(1)", "Urea-2TMS", "Docosahexaenoic acid-TMS", "Inositol-6TMS(2)-myo", "Inositol-6TMS(3)-Scyllo", "Glutaric acid-2TMS"))%>%
+  
+  
+  ggplot(aes(x=paste(parent, temperature), y=area_normalized, color=parent))+
+  facet_wrap(~Name, scales="free")+
+  geom_boxplot(outliers=FALSE)+
+  geom_point()+
+  theme_classic()+
+  scale_color_manual(values=c("orange", "darkred", "darkgray"))+
+  scale_x_discrete(limits=c("Bleached Ambient", "Bleached Moderate (+3)", "Bleached High (+6)", "Nonbleached Ambient", "Nonbleached Moderate (+3)", "Nonbleached High (+6)", "Wildtype Ambient", "Wildtype Moderate (+3)", "Wildtype High (+6)"))+
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1));plot2
+
+ggsave(plot2, filename="figures/metabolites/test_metabolites.jpeg", width=12, height=8)
+```
+
+```{r}
+model<-filtered_data%>%
+  filter(Name=="Glucose-meto-5TMS(1)")%>%
+  
+  aov(log(1+area_normalized) ~ temperature * parent, data=.)
+
+summary(model)
+```
+
+```{r}
+model<-filtered_data%>%
+  filter(Name=="Urea-2TMS")%>%
+  
+  aov(log(1+area_normalized) ~ temperature * parent, data=.)
+
+summary(model)
+```
+
+```{r}
+model<-filtered_data%>%
+  filter(Name=="Docosahexaenoic acid-TMS")%>%
+  
+  aov(log(1+area_normalized) ~ temperature * parent, data=.)
+
+summary(model)
+```
+
+```{r}
+model<-filtered_data%>%
+  filter(Name=="Inositol-6TMS(2)-myo")%>%
+  
+  aov(log(1+area_normalized) ~ temperature * parent, data=.)
+
+summary(model)
+```
+
+```{r}
+model<-filtered_data%>%
+  filter(Name=="Inositol-6TMS(3)-Scyllo")%>%
+  
+  aov(log(1+area_normalized) ~ temperature * parent, data=.)
+
+summary(model)
+```
+Parent effect 
+
+```{r}
+model<-filtered_data%>%
+  filter(Name=="Glutaric acid-2TMS")%>%
+  
+  aov(log(1+area_normalized) ~ temperature * parent, data=.)
+
+summary(model)
+```
