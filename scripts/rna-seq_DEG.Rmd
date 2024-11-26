@@ -6,6 +6,9 @@ output: html_document
 editor_options: 
   chunk_output_type: console
 ---
+
+Next steps: Add an analysis using pairwise group model with Wald test to see if DEGs are the same as those detected with interactive effect model. Look for DEGs at 33°C between B and NB that are not present at 27°C. 
+
 Analysis of RNAseq Differential Gene Expression (DEG).  
 
 ```{r setup, include=FALSE}
