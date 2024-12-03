@@ -2040,10 +2040,13 @@ plot_sign1<-classes%>%
   geom_boxplot(outliers=FALSE)+
   geom_point()+
   theme_classic()+
+  ggtitle("Sterol Lipids")+
   scale_color_manual(values=c("blue", "red", "orange"))+
   scale_x_discrete(limits=c("Ambient", "Moderate (+3)", "High (+6)"))+
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1));plot_sign1
 ```
+
+- AHexCAS = other class of sterol lipids (acylhexosyl campesterol); higher at +6°C temperature
 
 ```{r}
 plot_sign2<-classes%>%
@@ -2059,6 +2062,22 @@ plot_sign2<-classes%>%
   #scale_x_discrete(limits=c("Bleached Ambient", "Bleached Moderate (+3)", "Bleached High (+6)", "Nonbleached Ambient", "Nonbleached Moderate (+3)", "Nonbleached High (+6)", "Wildtype Ambient", "Wildtype Moderate (+3)", "Wildtype High (+6)"))+
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1));plot_sign2
 ```
+
+https://systemsomicslab.github.io/compms/msdial/lipidnomenclature.html
+
+- AHexCS = other class of sterol lipids (acylhexosyl cholesterol); lower in bleached 
+- Cer_ADS = Ceramides Sphinogolipids (ceramide alpha-hydroxy fatty acid-dihydrosphingosine); lower in bleached 
+- CL = glycerophospholipids (cardiolipin); lower in bleached 
+- DGDG = glycerolipids (digalactosyldiacylglycerol); higher in bleached
+- EtherLPE = Glycerophospholipids (Ether-linked lysophosphatidylethanolamine); higher in bleached
+- EtherMGDG = Glycerolipids (Ether-linked monogalactosyldiacylglycerol); higher in bleached
+- HexCer_NDS = Sphingolipids, neutral glycosphingolipids (Hexosylceramide non-hydroxyfatty acid-dihydrosphingosine); higher in bleached 
+- LCAE = fatty acid (long-chain aliphatic ester); lower in bleached 
+- LPC = Glycerophospholipid (Lysophophatidylcholine); lower in bleached 
+- OxFA = Oxidized fatty acids; lower in wildtype, similar in bleached/non bleached
+- SISE = Sterol lipids (Sitosterol ester); higher in wiltyp, similar in bleached/non bleached
+- SL = Sphingolipids (sulfonolipid); higher in bleached, lowest in wildtype
+- ST = Sterol lipids; lower in bleached
 
 
 
