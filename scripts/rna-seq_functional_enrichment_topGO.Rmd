@@ -336,6 +336,133 @@ parent_enrich_plot1 <- ggplot(p05_res_reduced, aes(x=weightFisher,y=reorder(Term
 
 
 
+## Temperature enrichment 
+
+Test set of genes:  
+```{r}
+temperature_test_set<-temperature_DEG_list%>%rename("gene_id"=gene)%>%pull(gene_id)
+
+temperature.vector=as.factor(as.integer(background %in% temperature_test_set)) 
+names(temperature.vector)<-background#set names
+```
+
+Run TopGO
+
+```{r}
+GOdata <- new("topGOdata",
+              description = "Temperature DEGs",
+              ontology = "BP",
+              allGenes = temperature.vector,
+              nodeSize = 5,
+              gene2GO = geneID2GO, annot = annFUN.gene2GO) 
+
+GOdata
+numSigGenes(GOdata)
+sum(feasible(GOdata))
+
+#321 sig genes
+#8237 genes used in analysis 
+```
+
+Run fisher test. 
+```{r}
+resultFisher <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
+resultFisher
+hist(score(resultFisher), 50, xlab = "p-values")
+#269 terms with p<0.01
+
+resultWeight <- runTest(GOdata, algorithm = "weight01", statistic = "fisher")
+resultWeight
+hist(score(resultWeight), 50, xlab = "p-values")
+#89 terms with p<0.01
+```
+
+Which test should be used? 
+
+```{r}
+allRes <- GenTable(GOdata, classicFisher = resultFisher, weightFisher = resultWeight, orderBy = "weightFisher", ranksOf = "classicFisher", topNodes = length(score(resultFisher)))
+
+# Convert character columns to numeric
+allRes$classicFisher <- as.numeric(allRes$classicFisher)
+allRes$weightFisher <- as.numeric(allRes$weightFisher)
+
+#adjust p-values 
+allRes$bh_adjust <- p.adjust(allRes$classicFisher, method="BH") #add adjusted p-values
+
+#adjust p-values 
+allRes$bh_adjust_weight <- p.adjust(allRes$weightFisher, method="BH") #add adjusted p-values
+```
+
+```{r}
+showSigOfNodes(GOdata, score(resultFisher), firstSigNodes = 5, useInfo = 'def')
+dev.off()
+
+showSigOfNodes(GOdata, score(resultWeight), firstSigNodes = 5, useInfo = 'def')
+dev.off()
+```
+
+The subgraph induced by the top 5 GO terms identified by the classic algorithm for scoring GO terms for enrichment. Boxes indicate the 5 most significant terms. Box color represents the relative significance, ranging from dark red (most significant) to light yellow (least significant). Black arrows indicate is-a relationships and red arrows part-of relationships.
+
+Proceed using weighted fisher test results.  
+```{r}
+p05_res <- allRes %>% dplyr::filter(weightFisher < 0.05)
+  
+#Reduce/collapse GO term set with the rrvgo package 
+simMatrix <- calculateSimMatrix(p05_res$GO.ID,
+                                orgdb="org.Ce.eg.db", #c. elegans database
+                                ont="BP",
+                                method="Rel")
+```
+
+```{r}
+ #calculate similarity 
+scores <- setNames(-log(as.numeric(p05_res$weightFisher)), p05_res$GO.ID)
+reducedTerms <- reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Ce.eg.db")
+dim(reducedTerms)
+```
+131 terms at p<0.05
+
+```{r}
+#keep only the goterms from the reduced list
+p05_res_reduced <- p05_res %>%
+  filter(GO.ID %in% reducedTerms$go)
+
+#add in parent terms to list of go terms 
+p05_res_reduced$ParentTerm <- reducedTerms$parentTerm[match(p05_res_reduced$GO.ID, reducedTerms$go)]
+
+length(unique(p05_res_reduced$ParentTerm))
+
+p05_res_reduced <- p05_res_reduced %>% group_by(ParentTerm) %>% mutate("N_in_Parent" = dplyr::n()) %>% ungroup()
+length(unique(p05_res_reduced$ParentTerm))
+```
+
+The reduced list of terms is 131 terms that falls under 35 parent terms.
+
+```{r}
+write.csv(p05_res_reduced, "output/rna_seq/topGO/temperature_topGO_results.csv")
+```
+
+Plot results. 
+
+```{r}
+temperature_enrich_plot1 <- ggplot(p05_res_reduced, aes(x=weightFisher,y=reorder(Term,weightFisher)))+
+  #facet_grid(ParentTerm ~ ., scales="free", labeller = label_wrap_gen(width = 10, multi_line = TRUE))+
+  geom_point(size=2, color="black")+
+  geom_segment(aes(x=0, xend=weightFisher, y=Term, yend=Term)) +
+  #geom_hline(yintercept = 0, linetype="solid", color = 'black', linewidth=0.5, show.legend = TRUE)+
+  #scale_y_continuous(limits=c(0,40))+
+   #scale_x_discrete(labels = label_wrap(30)) +
+  #scale_fill_gradientn(colours=c("white","#fddbc7","#f4a582","#d6604d","#b2182b"), na.value = "grey98",limits = c(0, 100)) +
+  #labs(title = "Enriched Biological Process Parent GO Terms, Brown Module", x="Parent Term", y="Number of Significant (p < 0.01) GO Terms in Module", colour="p-value") +
+  theme_classic() + 
+  theme(axis.text.y = element_text(size = 8), 
+              axis.title = element_text(size = 8), 
+              plot.title = element_text(hjust = 0.5, size = 8));temperature_enrich_plot1
+```
+
 ## Interaction enrichment 
 
 Test set of genes:  
