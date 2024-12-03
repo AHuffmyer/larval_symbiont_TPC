@@ -1,0 +1,44 @@
+"","GO.ID","Term","Annotated","Significant","Expected","Rank in classicFisher","classicFisher","weightFisher","bh_adjust","bh_adjust_weight","ParentTerm","N_in_Parent"
+"1","GO:0000098","sulfur amino acid catabolic process",14,3,0.07,2,5e-05,5e-05,0.213025,0.391966,"sulfur amino acid catabolic process",4
+"2","GO:0046500","S-adenosylmethionine metabolic process",17,3,0.09,3,9.2e-05,9.2e-05,0.261310666666667,0.391966,"sulfur amino acid catabolic process",4
+"3","GO:0098700","neurotransmitter loading into synaptic v...",5,2,0.03,4,0.00028,0.00028,0.51126,0.795293333333333,"neurotransmitter loading into synaptic vesicle",3
+"4","GO:0009725","response to hormone",696,9,3.72,36,0.01004,0.00055,1,0.923108333333333,"response to hormone",2
+"5","GO:0009068","aspartate family amino acid catabolic pr...",18,2,0.1,19,0.00404,0.00404,1,1,"aspartate family amino acid catabolic process",4
+"6","GO:0050830","defense response to Gram-positive bacter...",63,3,0.34,21,0.00452,0.00452,1,1,"defense response to Gram-positive bacterium",2
+"7","GO:0007275","multicellular organism development",3638,22,19.43,792,0.26371,0.00523,1,1,"multicellular organism development",2
+"8","GO:0051289","protein homotetramerization",68,3,0.36,24,0.0056,0.0056,1,1,"protein homotetramerization",3
+"9","GO:0030207","chondroitin sulfate catabolic process",23,2,0.12,26,0.00657,0.00657,1,1,"sulfur amino acid catabolic process",4
+"10","GO:0045117","azole transmembrane transport",23,2,0.12,27,0.00657,0.00657,1,1,"azole transmembrane transport",1
+"11","GO:0051591","response to cAMP",73,3,0.39,28,0.00682,0.00682,1,1,"response to hormone",2
+"12","GO:0006555","methionine metabolic process",25,2,0.13,31,0.00774,0.00774,1,1,"aspartate family amino acid catabolic process",4
+"13","GO:0010888","negative regulation of lipid storage",26,2,0.14,34,0.00836,0.00836,1,1,"negative regulation of lipid storage",4
+"14","GO:1901576","organic substance biosynthetic process",4397,28,23.49,414,0.11152,0.01362,1,1,"organic substance biosynthetic process",1
+"15","GO:0043154","negative regulation of cysteine-type end...",35,2,0.19,42,0.01484,0.01484,1,1,"negative regulation of cysteine-type endopeptidase activity involved in apoptotic process",3
+"16","GO:0032259","methylation",228,3,1.22,453,0.1215,0.01651,1,1,"methylation",1
+"17","GO:0032608","interferon-beta production",42,2,0.22,58,0.02097,0.02082,1,1,"interferon-beta production",1
+"18","GO:0043086","negative regulation of catalytic activit...",393,5,2.1,210,0.05694,0.02266,1,1,"negative regulation of cysteine-type endopeptidase activity involved in apoptotic process",3
+"19","GO:0061844","antimicrobial humoral immune response me...",44,2,0.24,67,0.02289,0.02289,1,1,"defense response to Gram-positive bacterium",2
+"20","GO:0006102","isocitrate metabolic process",5,1,0.03,75,0.02643,0.02643,1,1,"isocitrate metabolic process",2
+"21","GO:0010265","SCF complex assembly",5,1,0.03,76,0.02643,0.02643,1,1,"protein homotetramerization",3
+"22","GO:0051031","tRNA transport",5,1,0.03,81,0.02643,0.02643,1,1,"negative regulation of lipid storage",4
+"23","GO:0070813","hydrogen sulfide metabolic process",5,1,0.03,82,0.02643,0.02643,1,1,"sulfur amino acid catabolic process",4
+"24","GO:0033138","positive regulation of peptidyl-serine p...",48,2,0.26,93,0.02693,0.02693,1,1,"positive regulation of peptidyl-serine phosphorylation",4
+"25","GO:0061014","positive regulation of mRNA catabolic pr...",96,2,0.51,344,0.09282,0.03126,1,1,"positive regulation of peptidyl-serine phosphorylation",4
+"26","GO:0019346","transsulfuration",6,1,0.03,102,0.03164,0.03164,1,1,"aspartate family amino acid catabolic process",4
+"27","GO:0042780","tRNA 3'-end processing",6,1,0.03,104,0.03164,0.03164,1,1,"tRNA 3'-end processing",2
+"28","GO:0046416","D-amino acid metabolic process",6,1,0.03,105,0.03164,0.03164,1,1,"aspartate family amino acid catabolic process",4
+"29","GO:0072327","vulval cell fate specification",6,1,0.03,108,0.03164,0.03164,1,1,"multicellular organism development",2
+"30","GO:0051589","negative regulation of neurotransmitter ...",21,2,0.11,23,0.00549,0.03605,1,1,"neurotransmitter loading into synaptic vesicle",3
+"31","GO:0045005","DNA-templated DNA replication maintenanc...",36,2,0.19,45,0.01566,0.03611,1,1,"DNA-templated DNA replication maintenance of fidelity",2
+"32","GO:0006272","leading strand elongation",7,1,0.04,123,0.03681,0.03681,1,1,"DNA-templated DNA replication maintenance of fidelity",2
+"33","GO:0060625","regulation of protein deneddylation",7,1,0.04,126,0.03681,0.03681,1,1,"positive regulation of peptidyl-serine phosphorylation",4
+"34","GO:0005984","disaccharide metabolic process",8,1,0.04,145,0.04196,0.04196,1,1,"disaccharide metabolic process",1
+"35","GO:0007190","activation of adenylate cyclase activity",8,1,0.04,146,0.04196,0.04196,1,1,"negative regulation of cysteine-type endopeptidase activity involved in apoptotic process",3
+"36","GO:0006614","SRP-dependent cotranslational protein ta...",63,2,0.34,155,0.04434,0.04434,1,1,"negative regulation of lipid storage",4
+"37","GO:0001682","tRNA 5'-leader removal",9,1,0.05,162,0.04708,0.04708,1,1,"tRNA 3'-end processing",2
+"38","GO:0040022","feminization of hermaphroditic germ-line",9,1,0.05,166,0.04708,0.04708,1,1,"feminization of hermaphroditic germ-line",1
+"39","GO:0042416","dopamine biosynthetic process",9,1,0.05,168,0.04708,0.04708,1,1,"isocitrate metabolic process",2
+"40","GO:0090309","positive regulation of DNA methylation-d...",9,1,0.05,171,0.04708,0.04708,1,1,"protein homotetramerization",3
+"41","GO:0097064","ncRNA export from nucleus",9,1,0.05,172,0.04708,0.04708,1,1,"negative regulation of lipid storage",4
+"42","GO:2000301","negative regulation of synaptic vesicle ...",9,1,0.05,173,0.04708,0.04708,1,1,"neurotransmitter loading into synaptic vesicle",3
+"43","GO:2000767","positive regulation of cytoplasmic trans...",9,1,0.05,174,0.04708,0.04708,1,1,"positive regulation of peptidyl-serine phosphorylation",4

@@ -1,0 +1,53 @@
+"","GO.ID","Term","Annotated","Significant","Expected","Rank in classicFisher","classicFisher","weightFisher","bh_adjust","bh_adjust_weight","ParentTerm","N_in_Parent"
+"1","GO:0061077","chaperone-mediated protein folding",58,20,5.11,1,4.5e-08,8.6e-07,0.000207344333333333,0.00732806,"chaperone-mediated protein folding",5
+"2","GO:0006986","response to unfolded protein",124,24,10.91,20,0.00017,2.2e-05,0.0689795238095238,0.0823696666666667,"response to unfolded protein",5
+"3","GO:0051384","response to glucocorticoid",126,25,11.09,15,8.3e-05,6e-05,0.0471495333333333,0.08521,"response to unfolded protein",5
+"4","GO:0009820","alkaloid metabolic process",8,5,0.7,24,0.00023,0.00023,0.0816595833333333,0.195983,"alkaloid metabolic process",1
+"5","GO:0042594","response to starvation",235,34,20.68,88,0.00252,0.00023,0.244010454545455,0.195983,"response to starvation",5
+"6","GO:0006702","androgen biosynthetic process",9,5,0.79,37,0.00049,0.00049,0.107007906976744,0.347940833333333,"androgen biosynthetic process",3
+"7","GO:0042464","dosage compensation by hypoactivation of...",9,5,0.79,38,0.00049,0.00049,0.107007906976744,0.347940833333333,"dosage compensation by hypoactivation of X chromosome",1
+"8","GO:0065008","regulation of biological quality",2591,271,228.05,23,0.00022,0.00054,0.0815052173913043,0.353949230769231,"androgen biosynthetic process",3
+"9","GO:0030174","regulation of DNA-templated DNA replicat...",6,4,0.53,52,0.00077,0.00077,0.125403396226415,0.437411333333333,"regulation of DNA-templated DNA replication initiation",2
+"10","GO:0010556","regulation of macromolecule biosynthetic...",2483,228,218.55,1696,0.22343,0.00108,1,0.553865,"chaperone-mediated protein folding",5
+"11","GO:1901570","fatty acid derivative biosynthetic proce...",98,20,8.63,27,0.00028,0.00124,0.0882532142857143,0.553865,"fatty acid derivative biosynthetic process",2
+"12","GO:0046500","S-adenosylmethionine metabolic process",17,6,1.5,83,0.00242,0.00153,0.243876896551724,0.553865,"S-adenosylmethionine metabolic process",1
+"13","GO:0019433","triglyceride catabolic process",26,6,2.29,345,0.02275,0.00154,0.559144582132565,0.553865,"triglyceride catabolic process",2
+"14","GO:0071222","cellular response to lipopolysaccharide",95,15,8.36,310,0.01828,0.00155,0.492981514195584,0.553865,"response to unfolded protein",5
+"15","GO:0006268","DNA unwinding involved in DNA replicatio...",7,4,0.62,68,0.00168,0.00168,0.194601216216216,0.553865,"regulation of DNA-templated DNA replication initiation",2
+"16","GO:0048208","COPII vesicle coating",60,13,5.28,77,0.0018,0.0018,0.196638461538462,0.568066666666667,"COPII vesicle coating",2
+"17","GO:1901576","organic substance biosynthetic process",4397,398,387.01,1577,0.20688,0.00235,1,0.687360666666667,"chaperone-mediated protein folding",5
+"18","GO:0009068","aspartate family amino acid catabolic pr...",18,8,1.58,12,6.8e-05,0.0024,0.0471495333333333,0.687360666666667,"aspartate family amino acid catabolic process",4
+"19","GO:0035864","response to potassium ion",22,6,1.94,223,0.00996,0.00252,0.372468165938865,0.692674838709677,"response to potassium ion",3
+"20","GO:0009408","response to heat",190,32,16.72,25,0.00024,0.00277,0.0818016,0.717829696969697,"response to starvation",5
+"21","GO:0006783","heme biosynthetic process",23,7,2.02,93,0.00278,0.00278,0.25471376344086,0.717829696969697,"heme biosynthetic process",3
+"22","GO:1900150","regulation of defense response to fungus",8,4,0.7,96,0.00312,0.00312,0.265097777777778,0.759586285714286,"response to starvation",5
+"23","GO:0006559","L-phenylalanine catabolic process",18,6,1.58,106,0.00336,0.00336,0.265097777777778,0.789313684210526,"aspartate family amino acid catabolic process",4
+"24","GO:0007076","mitotic chromosome condensation",30,8,2.64,109,0.00352,0.00352,0.272672,0.789313684210526,"mitotic chromosome condensation",4
+"25","GO:0014070","response to organic cyclic compound",742,95,65.31,14,7.9e-05,0.00371,0.0471495333333333,0.810587435897436,"response to unfolded protein",5
+"26","GO:0019752","carboxylic acid metabolic process",779,107,68.57,4,1e-06,0.00446,0.00213025,0.828352950819672,"aspartate family amino acid catabolic process",4
+"27","GO:0036258","multivesicular body assembly",25,7,2.2,128,0.00466,0.00466,0.304231259259259,0.828352950819672,"COPII vesicle coating",2
+"28","GO:0042592","homeostatic process",1227,128,108,295,0.01804,0.00473,0.492981514195584,0.828352950819672,"homeostatic process",1
+"29","GO:0022900","electron transport chain",127,19,11.18,273,0.01495,0.00475,0.46662619047619,0.828352950819672,"electron transport chain",2
+"30","GO:0044249","cellular biosynthetic process",4370,398,384.64,1325,0.15807,0.0052,1,0.828352950819672,"chaperone-mediated protein folding",5
+"31","GO:0045988","negative regulation of striated muscle c...",9,4,0.79,139,0.00523,0.00523,0.317005034965035,0.828352950819672,"negative regulation of striated muscle contraction",1
+"32","GO:0006415","translational termination",56,6,4.93,2552,0.37077,0.00529,1,0.828352950819672,"heme biosynthetic process",3
+"33","GO:0000098","sulfur amino acid catabolic process",14,5,1.23,141,0.00532,0.00532,0.317005034965035,0.828352950819672,"aspartate family amino acid catabolic process",4
+"34","GO:0042149","cellular response to glucose starvation",32,8,2.82,145,0.00541,0.00541,0.317921448275862,0.828352950819672,"response to starvation",5
+"35","GO:0007140","male meiotic nuclear division",103,14,9.07,715,0.06667,0.00577,0.789011826923077,0.828352950819672,"mitotic chromosome condensation",4
+"36","GO:0045229","external encapsulating structure organiz...",259,27,22.8,1555,0.20188,0.00589,1,0.828352950819672,"external encapsulating structure organization",1
+"37","GO:0042026","protein refolding",13,5,1.14,111,0.00368,0.0059,0.282498018018018,0.828352950819672,"chaperone-mediated protein folding",5
+"38","GO:0072595","maintenance of protein localization in o...",37,6,3.26,965,0.10188,0.00593,0.897833185108583,0.828352950819672,"maintenance of protein localization in organelle",2
+"39","GO:1900034","regulation of cellular response to heat",40,9,3.52,168,0.00684,0.00684,0.3328515625,0.922540266666667,"response to starvation",5
+"40","GO:0006897","endocytosis",484,44,42.6,2972,0.43316,0.00716,1,0.922540266666667,"endocytosis",1
+"41","GO:0006418","tRNA aminoacylation for protein translat...",27,7,2.38,178,0.00738,0.00738,0.3328515625,0.922540266666667,"heme biosynthetic process",3
+"42","GO:0042572","retinol metabolic process",27,7,2.38,179,0.00738,0.00738,0.3328515625,0.922540266666667,"androgen biosynthetic process",3
+"43","GO:0010032","meiotic chromosome condensation",15,5,1.32,184,0.00741,0.00741,0.3328515625,0.922540266666667,"mitotic chromosome condensation",4
+"44","GO:0010824","regulation of centrosome duplication",44,10,3.87,116,0.00412,0.00771,0.302642413793103,0.922540266666667,"mitotic chromosome condensation",4
+"45","GO:0006119","oxidative phosphorylation",102,13,8.98,1000,0.11111,0.00808,0.925356079136691,0.922540266666667,"electron transport chain",2
+"46","GO:0042420","dopamine catabolic process",10,4,0.88,199,0.00812,0.00812,0.339169215686275,0.922540266666667,"triglyceride catabolic process",2
+"47","GO:0046689","response to mercury ion",10,4,0.88,200,0.00812,0.00812,0.339169215686275,0.922540266666667,"response to potassium ion",3
+"48","GO:0090251","protein localization involved in establi...",10,4,0.88,201,0.00812,0.00812,0.339169215686275,0.922540266666667,"maintenance of protein localization in organelle",2
+"49","GO:0007224","smoothened signaling pathway",161,22,14.17,358,0.02481,0.00846,0.588881323155216,0.948521842105263,"smoothened signaling pathway",1
+"50","GO:0042759","long-chain fatty acid biosynthetic proce...",28,7,2.46,211,0.00911,0.00911,0.365578387096774,0.984353020833333,"fatty acid derivative biosynthetic process",2
+"51","GO:0043200","response to amino acid",95,15,8.36,311,0.01828,0.00941,0.492981514195584,0.984353020833333,"response to unfolded protein",5
+"52","GO:0046686","response to cadmium ion",58,12,5.11,114,0.004,0.00943,0.296382608695652,0.984353020833333,"response to potassium ion",3
