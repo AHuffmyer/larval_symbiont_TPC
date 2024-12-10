@@ -1,5 +1,5 @@
-Tube,Resuspension.Vol,Date.Counted ,Squares_counted,Count1,Count2,Count3,Count4,Count5,Count6,Notes,CV
-F1,,,,,,,,,,,#DIV/0!
+Tube,Resuspension.Vol.uL,Date.Counted ,Squares_counted,Count1,Count2,Count3,Count4,Count5,Count6,Notes,CV
+F1,100,20241209,4,128,137,100,101,123,100,,14.37700421
 F2,,,,,,,,,,,
 F3,,,,,,,,,,,
 F4,,,,,,,,,,,
