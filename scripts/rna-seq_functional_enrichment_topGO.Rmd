@@ -270,7 +270,7 @@ The subgraph induced by the top 5 GO terms identified by the classic algorithm f
 
 Proceed using weighted fisher test results.  
 ```{r}
-p05_res <- allRes %>% dplyr::filter(weightFisher < 0.01)
+p05_res <- allRes %>% dplyr::filter(weightFisher < 0.05)
   
 #Reduce/collapse GO term set with the rrvgo package 
 simMatrix <- calculateSimMatrix(p05_res$GO.ID,
@@ -326,14 +326,10 @@ parent_enrich_plot1 <- ggplot(p05_res_reduced, aes(x=weightFisher,y=reorder(Term
   theme(axis.text.y = element_text(size = 8), 
               axis.title = element_text(size = 8), 
               plot.title = element_text(hjust = 0.5, size = 8));parent_enrich_plot1
+
+#save plot 
+ggsave(parent_enrich_plot1, filename="figures/rna_seq/topGO/parent_enrichment.png", width=10, height=40)
 ```
-
-
-
-
-
-
-
 
 
 ## Temperature enrichment 
@@ -449,7 +445,7 @@ Plot results.
 
 ```{r}
 temperature_enrich_plot1 <- ggplot(p05_res_reduced, aes(x=weightFisher,y=reorder(Term,weightFisher)))+
-  #facet_grid(ParentTerm ~ ., scales="free", labeller = label_wrap_gen(width = 10, multi_line = TRUE))+
+  facet_grid(ParentTerm ~ ., scales="free", labeller = label_wrap_gen(width = 10, multi_line = TRUE))+
   geom_point(size=2, color="black")+
   geom_segment(aes(x=0, xend=weightFisher, y=Term, yend=Term)) +
   #geom_hline(yintercept = 0, linetype="solid", color = 'black', linewidth=0.5, show.legend = TRUE)+
@@ -461,6 +457,9 @@ temperature_enrich_plot1 <- ggplot(p05_res_reduced, aes(x=weightFisher,y=reorder
   theme(axis.text.y = element_text(size = 8), 
               axis.title = element_text(size = 8), 
               plot.title = element_text(hjust = 0.5, size = 8));temperature_enrich_plot1
+
+#save plot 
+ggsave(temperature_enrich_plot1, filename="figures/rna_seq/topGO/temperature_enrichment.png", width=10, height=40)
 ```
 
 ## Interaction enrichment 
@@ -496,12 +495,12 @@ Run fisher test.
 resultFisher <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
 resultFisher
 hist(score(resultFisher), 50, xlab = "p-values")
-#35 terms with p<0.01
+#35 terms with p<0.05
 
 resultWeight <- runTest(GOdata, algorithm = "weight01", statistic = "fisher")
 resultWeight
 hist(score(resultWeight), 50, xlab = "p-values")
-#21 terms with p<0.01
+#21 terms with p<0.05
 ```
 
 Which test should be used? 
@@ -576,7 +575,7 @@ Plot results.
 
 ```{r}
 interaction_enrich_plot1 <- ggplot(p05_res_reduced, aes(x=weightFisher,y=reorder(Term,weightFisher)))+
-  #facet_grid(ParentTerm ~ ., scales="free", labeller = label_wrap_gen(width = 10, multi_line = TRUE))+
+  facet_grid(ParentTerm ~ ., scales="free", labeller = label_wrap_gen(width = 10, multi_line = TRUE))+
   geom_point(size=2, color="black")+
   geom_segment(aes(x=0, xend=weightFisher, y=Term, yend=Term)) +
   #geom_hline(yintercept = 0, linetype="solid", color = 'black', linewidth=0.5, show.legend = TRUE)+
@@ -588,6 +587,9 @@ interaction_enrich_plot1 <- ggplot(p05_res_reduced, aes(x=weightFisher,y=reorder
   theme(axis.text.y = element_text(size = 8), 
               axis.title = element_text(size = 8), 
               plot.title = element_text(hjust = 0.5, size = 8));interaction_enrich_plot1
+
+#save plot 
+ggsave(temperature_enrich_plot1, filename="figures/rna_seq/topGO/temperature_enrichment.png", width=10, height=40)
 ```
 
 
