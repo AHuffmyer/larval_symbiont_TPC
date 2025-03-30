@@ -589,7 +589,7 @@ interaction_enrich_plot1 <- ggplot(p05_res_reduced, aes(x=weightFisher,y=reorder
               plot.title = element_text(hjust = 0.5, size = 8));interaction_enrich_plot1
 
 #save plot 
-ggsave(temperature_enrich_plot1, filename="figures/rna_seq/topGO/temperature_enrichment.png", width=10, height=40)
+ggsave(interaction_enrich_plot1, filename="figures/rna_seq/topGO/interaction_enrichment.png", width=10, height=20)
 ```
 
 
