@@ -62,6 +62,10 @@ Calculate:
 - Saturating irradiance
 - Alpha 
 
+
+
+
+
 # Setup  
 
 Set up workspace, set options, and load required packages.    

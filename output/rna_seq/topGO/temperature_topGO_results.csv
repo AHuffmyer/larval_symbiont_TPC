@@ -1,132 +1,268 @@
 "","GO.ID","Term","Annotated","Significant","Expected","Rank in classicFisher","classicFisher","weightFisher","bh_adjust","bh_adjust_weight","ParentTerm","N_in_Parent"
-"1","GO:0000082","G1/S transition of mitotic cell cycle",213,25,8.3,29,7.2e-07,4e-11,0.000207344333333333,1.7042e-07,"G1/S transition of mitotic cell cycle",10
-"2","GO:0030174","regulation of DNA-templated DNA replicat...",6,6,0.23,13,3.3e-09,3.3e-09,2.16302307692308e-06,9.3731e-06,"regulation of DNA-templated DNA replication initiation",26
-"3","GO:0006297","nucleotide-excision repair, DNA gap fill...",21,9,0.82,18,3.6e-08,3.6e-08,1.7042e-05,7.32806e-05,"regulation of DNA-templated DNA replication initiation",26
-"4","GO:0019725","cellular homeostasis",666,33,25.95,702,0.08894,4.3e-08,1,7.32806e-05,"cellular homeostasis",2
-"5","GO:0060249","anatomical structure homeostasis",364,26,14.19,156,0.002,1.3e-06,0.1070450625,0.00184621666666667,"cellular homeostasis",2
-"6","GO:0009059","macromolecule biosynthetic process",3633,163,141.58,255,0.00838,2.3e-06,0.277014749034749,0.00279975714285714,"macromolecule biosynthetic process",5
-"7","GO:0006270","DNA replication initiation",32,14,1.25,6,3.5e-12,3.6e-06,4.97058333333333e-09,0.00383445,"regulation of DNA-templated DNA replication initiation",26
-"8","GO:0033567","DNA replication, Okazaki fragment proces...",8,5,0.31,34,4.4e-06,4.4e-06,0.00110271764705882,0.00416582222222222,"regulation of DNA-templated DNA replication initiation",26
-"9","GO:0071103","DNA conformation change",199,27,7.76,16,1.2e-08,5.2e-06,6.39075e-06,0.00443092,"DNA conformation change",6
-"10","GO:0006334","nucleosome assembly",51,10,1.99,46,2.2e-05,2.2e-05,0.00407526086956522,0.0156218333333333,"nucleosome assembly",4
-"11","GO:0042276","error-prone translesion synthesis",18,6,0.7,51,4.2e-05,4.2e-05,0.00701729411764706,0.0275293846153846,"regulation of DNA-templated DNA replication initiation",26
-"12","GO:0002697","regulation of immune effector process",196,22,7.64,35,7.1e-06,4.8e-05,0.00172854571428571,0.0292148571428571,"regulation of immune effector process",5
-"13","GO:0002819","regulation of adaptive immune response",68,12,2.65,36,1e-05,5.5e-05,0.00236694444444444,0.0312436666666667,"regulation of immune effector process",5
-"14","GO:0006268","DNA unwinding involved in DNA replicatio...",7,4,0.27,57,7.2e-05,7.2e-05,0.0105777931034483,0.0360889411764706,"DNA conformation change",6
-"15","GO:0043137","DNA replication, removal of RNA primer",7,4,0.27,58,7.2e-05,7.2e-05,0.0105777931034483,0.0360889411764706,"DNA replication, removal of RNA primer",5
-"16","GO:0006261","DNA-templated DNA replication",158,41,6.16,1,3.3e-23,8.1e-05,2.81193e-19,0.0383445,"regulation of DNA-templated DNA replication initiation",26
-"17","GO:0002230","positive regulation of defense response ...",21,6,0.82,62,0.00011,0.00011,0.0151179032258065,0.0493321052631579,"positive regulation of defense response to virus by host",7
-"18","GO:0070987","error-free translesion synthesis",22,6,0.86,68,0.00015,0.00015,0.0185239130434783,0.0580977272727273,"regulation of DNA-templated DNA replication initiation",26
-"19","GO:0042023","DNA endoreduplication",32,7,1.25,71,0.00019,0.00019,0.0221779452054795,0.0703908695652174,"regulation of DNA-templated DNA replication initiation",26
-"20","GO:0000819","sister chromatid segregation",244,22,9.51,74,2e-04,0.00022,0.0230297297297297,0.0705186206896552,"G1/S transition of mitotic cell cycle",10
-"21","GO:0032608","interferon-beta production",42,8,1.64,70,0.00018,0.00022,0.0219111428571429,0.0705186206896552,"interferon-beta production",3
-"22","GO:0019985","translesion synthesis",39,11,1.52,23,1.7e-07,0.00023,6.29813043478261e-05,0.0705186206896552,"regulation of DNA-templated DNA replication initiation",26
-"23","GO:1905710","positive regulation of membrane permeabi...",32,4,1.25,449,0.03446,0.00023,0.650831346578366,0.0705186206896552,"positive regulation of membrane permeability",1
-"24","GO:0006986","response to unfolded protein",124,16,4.83,47,2.3e-05,0.00024,0.00416985106382979,0.0705186206896552,"response to odorant",9
-"25","GO:1990834","response to odorant",9,4,0.35,75,0.00024,0.00024,0.0272672,0.0705186206896552,"response to odorant",9
-"26","GO:0051289","protein homotetramerization",68,10,2.65,80,0.00027,0.00027,0.0284033333333333,0.076689,"nucleosome assembly",4
-"27","GO:0071897","DNA biosynthetic process",183,28,7.13,10,3.8e-10,0.00028,3.23798e-07,0.0769638709677419,"regulation of DNA-templated DNA replication initiation",26
-"28","GO:0051606","detection of stimulus",234,13,9.12,820,0.12554,0.00057,1,0.134915833333333,"detection of stimulus",1
-"29","GO:0006283","transcription-coupled nucleotide-excisio...",66,9,2.57,125,0.00097,0.00097,0.06612296,0.217509736842105,"regulation of DNA-templated DNA replication initiation",26
-"30","GO:0016237","microautophagy",6,3,0.23,129,0.00107,0.00107,0.0695990076335878,0.222377317073171,"DNA replication, removal of RNA primer",5
-"31","GO:0002218","activation of innate immune response",125,15,4.87,60,9.7e-05,0.00113,0.0137756166666667,0.229255476190476,"regulation of immune effector process",5
-"32","GO:0006518","peptide metabolic process",620,28,24.16,1352,0.23144,0.00165,1,0.299873653846154,"peptide metabolic process",4
-"33","GO:0045005","DNA-templated DNA replication maintenanc...",36,7,1.4,92,4e-04,0.00178,0.0362595744680851,0.299873653846154,"regulation of DNA-templated DNA replication initiation",26
-"34","GO:1902946","protein localization to early endosome",12,4,0.47,121,0.00087,0.00181,0.061266694214876,0.299873653846154,"protein localization to early endosome",4
-"35","GO:1902969","mitotic DNA replication",15,4,0.58,164,0.0022,0.00181,0.112928915662651,0.299873653846154,"regulation of DNA-templated DNA replication initiation",26
-"36","GO:0006272","leading strand elongation",7,3,0.27,149,0.00183,0.00183,0.100602774193548,0.299873653846154,"regulation of DNA-templated DNA replication initiation",26
-"37","GO:0016191","synaptic vesicle uncoating",7,3,0.27,150,0.00183,0.00183,0.100602774193548,0.299873653846154,"synaptic vesicle uncoating",2
-"38","GO:0036500","ATF6-mediated unfolded protein response",7,3,0.27,152,0.00183,0.00183,0.100602774193548,0.299873653846154,"response to odorant",9
-"39","GO:0005984","disaccharide metabolic process",8,3,0.31,171,0.00284,0.00284,0.136721129943503,0.410163389830509,"disaccharide metabolic process",1
-"40","GO:0048026","positive regulation of mRNA splicing, vi...",16,4,0.62,177,0.00284,0.00284,0.136721129943503,0.410163389830509,"positive regulation of mRNA splicing, via spliceosome",3
-"41","GO:0071480","cellular response to gamma radiation",26,5,1.01,179,0.00292,0.00292,0.137465856353591,0.414688666666667,"cellular response to gamma radiation",2
-"42","GO:0007088","regulation of mitotic nuclear division",165,12,6.43,406,0.02747,0.00354,0.573788201438849,0.486914285714286,"G1/S transition of mitotic cell cycle",10
-"43","GO:0046500","S-adenosylmethionine metabolic process",17,4,0.66,196,0.0036,0.0036,0.155713705583756,0.486914285714286,"S-adenosylmethionine metabolic process",2
-"44","GO:0051085","chaperone cofactor-dependent protein ref...",17,4,0.66,197,0.0036,0.0036,0.155713705583756,0.486914285714286,"chaperone cofactor-dependent protein refolding",3
-"45","GO:0006298","mismatch repair",28,5,1.09,203,0.00409,0.00409,0.171648990384615,0.540954393939394,"regulation of DNA-templated DNA replication initiation",26
-"46","GO:0010556","regulation of macromolecule biosynthetic...",2483,115,96.76,312,0.01483,0.00417,0.405020608974359,0.540954393939394,"macromolecule biosynthetic process",5
-"47","GO:1900034","regulation of cellular response to heat",40,6,1.56,207,0.00419,0.00419,0.171648990384615,0.540954393939394,"positive regulation of defense response to virus by host",7
-"48","GO:0030261","chromosome condensation",69,8,2.69,216,0.00514,0.00465,0.202768240740741,0.587698382352941,"DNA conformation change",6
-"49","GO:0006260","DNA replication",245,48,9.55,2,2.4e-21,0.00537,1.02252e-17,0.646875915492958,"regulation of DNA-templated DNA replication initiation",26
-"50","GO:0032481","positive regulation of type I interferon...",42,7,1.64,128,0.00106,0.00539,0.0695990076335878,0.646875915492958,"interferon-beta production",3
-"51","GO:0007060","male meiosis chromosome segregation",10,3,0.39,220,0.00574,0.00574,0.220317747747748,0.653276666666667,"male meiosis chromosome segregation",5
-"52","GO:1901576","organic substance biosynthetic process",4397,201,171.35,95,0.00041,0.00575,0.0367748421052632,0.653276666666667,"macromolecule biosynthetic process",5
-"53","GO:0040036","regulation of fibroblast growth factor r...",44,6,1.71,233,0.00676,0.00638,0.247218712446352,0.715315526315789,"positive regulation of defense response to virus by host",7
-"54","GO:0033045","regulation of sister chromatid segregati...",105,9,4.09,372,0.02099,0.00751,0.480795134408602,0.81588575,"G1/S transition of mitotic cell cycle",10
-"55","GO:1901570","fatty acid derivative biosynthetic proce...",98,9,3.82,298,0.0139,0.00759,0.387871493506493,0.81588575,"fatty acid derivative biosynthetic process",1
-"56","GO:0043085","positive regulation of catalytic activit...",841,35,32.77,1985,0.36506,0.00798,1,0.822327831325301,"positive regulation of catalytic activity",3
-"57","GO:0009949","polarity specification of anterior/poste...",21,4,0.82,248,0.00801,0.00801,0.270846071428571,0.822327831325301,"polarity specification of anterior/posterior axis",2
-"58","GO:0045471","response to ethanol",195,15,7.6,262,0.0091,0.0091,0.295958396946565,0.901640697674419,"response to odorant",9
-"59","GO:0007062","sister chromatid cohesion",53,8,2.07,123,0.00093,0.00921,0.0644270731707317,0.902050689655172,"DNA conformation change",6
-"60","GO:0006401","RNA catabolic process",276,17,10.76,502,0.04131,0.0096,0.701200219123506,0.919119101123595,"DNA replication, removal of RNA primer",5
-"61","GO:0098869","cellular oxidant detoxification",78,8,3.04,273,0.01067,0.01067,0.333036886446886,0.99911065934066,"response to odorant",9
-"62","GO:0071276","cellular response to cadmium ion",23,4,0.9,276,0.01115,0.01115,0.342993321299639,1,"response to odorant",9
-"63","GO:0006915","apoptotic process",1126,49,43.88,1324,0.21967,0.01227,1,1,"apoptotic process",1
-"64","GO:0034080","CENP-A containing chromatin assembly",13,3,0.51,286,0.01254,0.01254,0.363446734693878,1,"nucleosome assembly",4
-"65","GO:1903863","P granule assembly",5,2,0.19,304,0.014,0.014,0.387871493506493,1,"polarity specification of anterior/posterior axis",2
-"66","GO:1990947","exit from meiosis",5,2,0.19,305,0.014,0.014,0.387871493506493,1,"male meiosis chromosome segregation",5
-"67","GO:0072676","lymphocyte migration",34,3,1.32,892,0.14513,0.01401,1,1,"regulation of immune effector process",5
-"68","GO:0010454","negative regulation of cell fate commitm...",37,3,1.44,993,0.17359,0.01402,1,1,"negative regulation of cell fate commitment",2
-"69","GO:0032259","methylation",228,10,8.89,2096,0.39686,0.01406,1,1,"methylation",1
-"70","GO:0048232","male gamete generation",488,20,19.02,2298,0.44093,0.01407,1,1,"male meiosis chromosome segregation",5
-"71","GO:0043171","peptide catabolic process",21,4,0.82,250,0.00801,0.01541,0.270846071428571,1,"peptide metabolic process",4
-"72","GO:0000098","sulfur amino acid catabolic process",14,3,0.55,318,0.0155,0.0155,0.407640432098765,1,"S-adenosylmethionine metabolic process",2
-"73","GO:0006266","DNA ligation",14,3,0.55,319,0.0155,0.0155,0.407640432098765,1,"regulation of DNA-templated DNA replication initiation",26
-"74","GO:0000724","double-strand break repair via homologou...",121,13,4.72,117,0.00083,0.01666,0.0589369166666667,1,"regulation of DNA-templated DNA replication initiation",26
-"75","GO:0034404","nucleobase-containing small molecule bio...",101,9,3.94,327,0.01668,0.01668,0.434649174311927,1,"nucleobase-containing small molecule biosynthetic process",2
-"76","GO:0001101","response to acid chemical",305,17,11.89,698,0.08694,0.01714,1,1,"response to odorant",9
-"77","GO:0019730","antimicrobial humoral response",69,5,2.69,848,0.13071,0.01884,1,1,"regulation of immune effector process",5
-"78","GO:0061077","chaperone-mediated protein folding",58,9,2.26,89,0.00037,0.01985,0.0350307777777778,1,"chaperone cofactor-dependent protein refolding",3
-"79","GO:0007091","metaphase/anaphase transition of mitotic...",61,6,2.38,424,0.03074,0.02024,0.608196146788991,1,"G1/S transition of mitotic cell cycle",10
-"80","GO:0043122","regulation of canonical NF-kappaB signal...",74,5,2.88,940,0.16113,0.02042,1,1,"positive regulation of defense response to virus by host",7
-"81","GO:0000727","double-strand break repair via break-ind...",6,2,0.23,354,0.02047,0.02047,0.472696124661247,1,"regulation of DNA-templated DNA replication initiation",26
-"82","GO:0006269","DNA replication, synthesis of RNA primer",6,2,0.23,356,0.02047,0.02047,0.472696124661247,1,"regulation of DNA-templated DNA replication initiation",26
-"83","GO:0006335","DNA replication-dependent chromatin asse...",6,2,0.23,357,0.02047,0.02047,0.472696124661247,1,"nucleosome assembly",4
-"84","GO:0010998","regulation of translational initiation b...",6,2,0.23,359,0.02047,0.02047,0.472696124661247,1,"peptide metabolic process",4
-"85","GO:0032516","positive regulation of phosphoprotein ph...",6,2,0.23,361,0.02047,0.02047,0.472696124661247,1,"positive regulation of catalytic activity",3
-"86","GO:0036490","regulation of translation in response to...",6,2,0.23,362,0.02047,0.02047,0.472696124661247,1,"peptide metabolic process",4
-"87","GO:0045008","depyrimidination",6,2,0.23,365,0.02047,0.02047,0.472696124661247,1,"regulation of DNA-templated DNA replication initiation",26
-"88","GO:0046098","guanine metabolic process",6,2,0.23,366,0.02047,0.02047,0.472696124661247,1,"guanine metabolic process",4
-"89","GO:0016049","cell growth",457,13,17.81,4040,0.91184,0.02131,1,1,"cell growth",1
-"90","GO:1900182","positive regulation of protein localizat...",64,7,2.49,280,0.01182,0.02178,0.358427829181495,1,"protein localization to early endosome",4
-"91","GO:0045892","negative regulation of DNA-templated tra...",682,33,26.58,781,0.11262,0.02221,1,1,"macromolecule biosynthetic process",5
-"92","GO:0034975","protein folding in endoplasmic reticulum",16,3,0.62,378,0.02252,0.02252,0.504981368421053,1,"chaperone cofactor-dependent protein refolding",3
-"93","GO:0051403","stress-activated MAPK cascade",200,8,7.79,2600,0.52156,0.02362,1,1,"stress-activated MAPK cascade",1
-"94","GO:0000086","G2/M transition of mitotic cell cycle",148,11,5.77,421,0.02958,0.02431,0.598696389548694,1,"G1/S transition of mitotic cell cycle",10
-"95","GO:0031297","replication fork processing",29,4,1.13,386,0.02492,0.02492,0.542126887755102,1,"regulation of DNA-templated DNA replication initiation",26
-"96","GO:0018205","peptidyl-lysine modification",237,7,9.24,3691,0.82319,0.02625,1,1,"peptidyl-lysine modification",1
-"97","GO:0051984","positive regulation of chromosome segreg...",39,5,1.52,329,0.01691,0.02632,0.437963860182371,1,"G1/S transition of mitotic cell cycle",10
-"98","GO:0000712","resolution of meiotic recombination inte...",17,3,0.66,397,0.02657,0.02657,0.561036138613861,1,"male meiosis chromosome segregation",5
-"99","GO:0006271","DNA strand elongation involved in DNA re...",24,10,0.94,14,8.5e-09,0.02674,4.99898666666667e-06,1,"regulation of DNA-templated DNA replication initiation",26
-"100","GO:0006282","regulation of DNA repair",82,7,3.2,488,0.04018,0.02758,0.69821074,1,"positive regulation of defense response to virus by host",7
-"101","GO:0006303","double-strand break repair via nonhomolo...",59,7,2.3,245,0.00765,0.02923,0.264254493927126,1,"regulation of DNA-templated DNA replication initiation",26
-"102","GO:0071287","cellular response to manganese ion",18,3,0.7,428,0.03099,0.03099,0.608196146788991,1,"response to odorant",9
-"103","GO:0008088","axo-dendritic transport",79,4,3.08,1998,0.37075,0.03133,1,1,"protein localization to early endosome",4
-"104","GO:0016070","RNA metabolic process",2461,104,95.91,990,0.17222,0.03183,1,1,"macromolecule biosynthetic process",5
-"105","GO:0009200","deoxyribonucleoside triphosphate metabol...",14,3,0.55,321,0.0155,0.03612,0.407640432098765,1,"guanine metabolic process",4
-"106","GO:0000076","DNA replication checkpoint signaling",19,3,0.74,457,0.03576,0.03616,0.65219805907173,1,"G1/S transition of mitotic cell cycle",10
-"107","GO:0006265","DNA topological change",8,2,0.31,461,0.03628,0.03628,0.65219805907173,1,"DNA conformation change",6
-"108","GO:0008216","spermidine metabolic process",8,2,0.31,462,0.03628,0.03628,0.65219805907173,1,"spermidine metabolic process",1
-"109","GO:0019878","lysine biosynthetic process via aminoadi...",8,2,0.31,463,0.03628,0.03628,0.65219805907173,1,"nucleobase-containing small molecule biosynthetic process",2
-"110","GO:0051257","meiotic spindle midzone assembly",8,2,0.31,467,0.03628,0.03628,0.65219805907173,1,"male meiosis chromosome segregation",5
-"111","GO:1903894","regulation of IRE1-mediated unfolded pro...",8,2,0.31,468,0.03628,0.03628,0.65219805907173,1,"positive regulation of defense response to virus by host",7
-"112","GO:0050766","positive regulation of phagocytosis",51,5,1.99,550,0.04743,0.03794,0.732157663043478,1,"synaptic vesicle uncoating",2
-"113","GO:0072526","pyridine-containing compound catabolic p...",50,4,1.95,845,0.1294,0.03884,1,1,"DNA replication, removal of RNA primer",5
-"114","GO:1901977","negative regulation of cell cycle checkp...",8,2,0.31,469,0.03628,0.03888,0.65219805907173,1,"G1/S transition of mitotic cell cycle",10
-"115","GO:0006067","ethanol metabolic process",10,2,0.39,576,0.0554,0.03889,0.798753637901861,1,"ethanol metabolic process",1
-"116","GO:0009259","ribonucleotide metabolic process",390,12,15.2,3742,0.8396,0.0395,1,1,"guanine metabolic process",4
-"117","GO:0044743","protein transmembrane import into intrac...",35,4,1.36,539,0.04585,0.04076,0.719498802946593,1,"protein localization to early endosome",4
-"118","GO:0007096","regulation of exit from mitosis",20,3,0.78,491,0.04089,0.04089,0.69821074,1,"G1/S transition of mitotic cell cycle",10
-"119","GO:0046940","nucleoside monophosphate phosphorylation",20,3,0.78,493,0.04089,0.04089,0.69821074,1,"guanine metabolic process",4
-"120","GO:0070593","dendrite self-avoidance",20,3,0.78,494,0.04089,0.04089,0.69821074,1,"negative regulation of cell fate commitment",2
-"121","GO:0006919","activation of cysteine-type endopeptidas...",49,5,1.91,500,0.04097,0.04097,0.69821074,1,"positive regulation of catalytic activity",3
-"122","GO:0051247","positive regulation of protein metabolic...",1023,38,39.87,3085,0.65236,0.04237,1,1,"positive regulation of mRNA splicing, via spliceosome",3
-"123","GO:0001816","cytokine production",289,24,11.26,90,0.00037,0.04253,0.0350307777777778,1,"interferon-beta production",3
-"124","GO:0043488","regulation of mRNA stability",140,8,5.46,1003,0.17964,0.04437,1,1,"DNA replication, removal of RNA primer",5
-"125","GO:0016233","telomere capping",33,5,1.29,258,0.00842,0.04494,0.277014749034749,1,"DNA conformation change",6
-"126","GO:0000706","meiotic DNA double-strand break processi...",9,2,0.35,521,0.04547,0.04547,0.719498802946593,1,"regulation of DNA-templated DNA replication initiation",26
-"127","GO:0006307","DNA dealkylation involved in DNA repair",9,2,0.35,522,0.04547,0.04547,0.719498802946593,1,"regulation of DNA-templated DNA replication initiation",26
-"128","GO:1900102","negative regulation of endoplasmic retic...",9,2,0.35,529,0.04547,0.04547,0.719498802946593,1,"positive regulation of defense response to virus by host",7
-"129","GO:0009636","response to toxic substance",502,33,19.56,161,0.00207,0.04599,0.109405432098765,1,"response to odorant",9
-"130","GO:0009650","UV protection",21,3,0.82,546,0.04637,0.04637,0.722337787934186,1,"cellular response to gamma radiation",2
-"131","GO:0045893","positive regulation of DNA-templated tra...",871,43,33.94,605,0.06,0.04901,0.845057851239669,1,"positive regulation of mRNA splicing, via spliceosome",3
+"1","GO:0009059","macromolecule biosynthetic process",3633,1431,1428.15,3690,0.45737,5.7e-06,1,0.0485697,"macromolecule biosynthetic process",6
+"2","GO:0071103","DNA conformation change",199,113,78.23,7,3.4e-07,1.4e-05,0.000413877142857143,0.059647,"DNA conformation change",13
+"3","GO:0019725","cellular homeostasis",666,260,261.81,4314,0.57477,4.2e-05,1,0.0894705,"cellular homeostasis",1
+"4","GO:0050709","negative regulation of protein secretion",58,26,22.8,2105,0.23195,0.00011,0.93739072951208,0.156218333333333,"negative regulation of peptide secretion",11
+"5","GO:0002792","negative regulation of peptide secretion",69,27,27.12,4151,0.55795,0.00011,1,0.156218333333333,"negative regulation of peptide secretion",11
+"6","GO:0000082","G1/S transition of mitotic cell cycle",213,94,83.73,1062,0.08309,0.00019,0.639702569558102,0.231284285714286,"G1/S transition of mitotic cell cycle",14
+"7","GO:0000381","regulation of alternative mRNA splicing,...",62,38,24.37,86,0.00036,0.00036,0.0356693023255814,0.34084,"regulation of alternative mRNA splicing, via spliceosome",6
+"8","GO:0065008","regulation of biological quality",2591,1028,1018.53,2787,0.33137,0.00038,1,0.34084,"regulation of biological quality",1
+"9","GO:0007131","reciprocal meiotic recombination",50,32,19.66,81,0.00035,0.00041,0.0356693023255814,0.34084,"reciprocal meiotic recombination",10
+"10","GO:0005984","disaccharide metabolic process",8,8,3.14,100,0.00057,0.00057,0.0484527450980392,0.34084,"disaccharide metabolic process",5
+"11","GO:0033045","regulation of sister chromatid segregati...",105,57,41.28,149,0.00125,6e-04,0.071484899328859,0.34084,"G1/S transition of mitotic cell cycle",14
+"12","GO:0051383","kinetochore organization",22,19,8.65,24,7.3e-06,0.00061,0.00259180416666667,0.34084,"DNA conformation change",13
+"13","GO:0046599","regulation of centriole replication",11,10,4.32,104,0.00062,0.00062,0.0495767272727273,0.34084,"regulation of centriole replication",7
+"14","GO:0035735","intraciliary transport involved in ciliu...",30,21,11.79,107,0.00064,0.00064,0.0495767272727273,0.34084,"intraciliary transport involved in cilium assembly",4
+"15","GO:0006986","response to unfolded protein",124,69,48.74,53,0.00015,0.00073,0.0241160377358491,0.358778947368421,"response to unfolded protein",15
+"16","GO:1902117","positive regulation of organelle assembl...",70,35,27.52,716,0.04423,0.00076,0.5233146740638,0.358778947368421,"regulation of centriole replication",7
+"17","GO:0036297","interstrand cross-link repair",36,24,14.15,122,8e-04,8e-04,0.0554211382113821,0.358778947368421,"interstrand cross-link repair",18
+"18","GO:0036258","multivesicular body assembly",25,18,9.83,129,0.00093,0.00093,0.0614304651162791,0.3962265,"multivesicular body assembly",9
+"19","GO:0032509","endosome transport via multivesicular bo...",32,20,12.58,288,0.00662,0.00109,0.190938795986622,0.442280476190476,"intraciliary transport involved in cilium assembly",4
+"20","GO:0000395","mRNA 5'-splice site recognition",7,7,2.75,154,0.00144,0.00144,0.0786553846153846,0.533488695652174,"regulation of alternative mRNA splicing, via spliceosome",6
+"21","GO:0006272","leading strand elongation",7,7,2.75,155,0.00144,0.00144,0.0786553846153846,0.533488695652174,"leading strand elongation",12
+"22","GO:0006997","nucleus organization",125,55,49.14,1625,0.16119,0.0016,0.804450605892162,0.550587692307692,"nucleus organization",2
+"23","GO:0031323","regulation of cellular metabolic process",3391,1383,1333.02,397,0.01169,0.00168,0.250908035264484,0.550587692307692,"regulation of cellular metabolic process",3
+"24","GO:0007286","spermatid development",167,85,65.65,152,0.00141,0.00168,0.078526862745098,0.550587692307692,"reciprocal meiotic recombination",10
+"25","GO:0044703","multi-organism reproductive process",1262,530,496.1,479,0.01844,0.00214,0.328031816283925,0.611217884615385,"reciprocal meiotic recombination",10
+"26","GO:0009068","aspartate family amino acid catabolic pr...",18,15,7.08,56,0.00017,0.00238,0.0249753448275862,0.611217884615385,"aspartate family amino acid catabolic process",20
+"27","GO:0000915","actomyosin contractile ring assembly",18,14,7.08,133,0.00103,0.00238,0.0643672661870504,0.611217884615385,"actomyosin contractile ring assembly",7
+"28","GO:0016310","phosphorylation",1272,511,500.03,2242,0.25638,0.00243,0.97440409455843,0.611217884615385,"phosphorylation",5
+"29","GO:0006297","nucleotide-excision repair, DNA gap fill...",21,15,8.26,207,0.00288,0.00288,0.118553043478261,0.611217884615385,"interstrand cross-link repair",18
+"30","GO:0007059","chromosome segregation",372,197,146.23,5,3.5e-08,0.00289,5.9647e-05,0.611217884615385,"G1/S transition of mitotic cell cycle",14
+"31","GO:0006261","DNA-templated DNA replication",158,104,62.11,1,9.7e-12,0.00296,8.26537e-08,0.611217884615385,"leading strand elongation",12
+"32","GO:0006284","base-excision repair",43,27,16.9,164,0.00152,0.00315,0.0789751219512195,0.611217884615385,"interstrand cross-link repair",18
+"33","GO:0019985","translesion synthesis",39,24,15.33,240,0.00404,0.00329,0.142841659751037,0.611217884615385,"interstrand cross-link repair",18
+"34","GO:0006750","glutathione biosynthetic process",14,11,5.5,212,0.0033,0.0033,0.12800778280543,0.611217884615385,"glutathione biosynthetic process",3
+"35","GO:0045842","positive regulation of mitotic metaphase...",14,11,5.5,213,0.0033,0.0033,0.12800778280543,0.611217884615385,"G1/S transition of mitotic cell cycle",14
+"36","GO:1900038","negative regulation of cellular response...",9,8,3.54,218,0.00332,0.00332,0.12800778280543,0.611217884615385,"negative regulation of cellular response to hypoxia",10
+"37","GO:0006576","biogenic amine metabolic process",95,45,37.34,893,0.06627,0.00365,0.632347894736842,0.611217884615385,"biogenic amine metabolic process",1
+"38","GO:0030174","regulation of DNA-templated DNA replicat...",6,6,2.36,228,0.00368,0.00368,0.136336,0.611217884615385,"leading strand elongation",12
+"39","GO:0071073","positive regulation of phospholipid bios...",6,6,2.36,230,0.00368,0.00368,0.136336,0.611217884615385,"positive regulation of phospholipid biosynthetic process",6
+"40","GO:0032488","Cdc42 protein signal transduction",12,8,4.72,791,0.0516,0.00368,0.533484242788462,0.611217884615385,"Cdc42 protein signal transduction",4
+"41","GO:0043330","response to exogenous dsRNA",25,11,9.83,3085,0.38649,0.0037,1,0.611217884615385,"response to unfolded protein",15
+"42","GO:0031329","regulation of cellular catabolic process",701,288,275.57,1711,0.16729,0.00372,0.804450605892162,0.611217884615385,"regulation of cellular catabolic process",3
+"43","GO:0016322","neuron remodeling",57,33,22.41,222,0.00335,0.00387,0.128582657657658,0.622193773584906,"neuron remodeling",2
+"44","GO:0051289","protein homotetramerization",68,38,26.73,238,0.004,0.004,0.142841659751037,0.623858928571429,"multivesicular body assembly",9
+"45","GO:0042276","error-prone translesion synthesis",18,13,7.08,246,0.00478,0.00478,0.163575823293173,0.695017217391304,"interstrand cross-link repair",18
+"46","GO:0034641","cellular nitrogen compound metabolic pro...",3819,1563,1501.27,205,0.00281,0.00502,0.116646699029126,0.695017217391304,"cellular nitrogen compound metabolic process",3
+"47","GO:0006071","glycerol metabolic process",11,9,4.32,254,0.00514,0.00514,0.170089728682171,0.695017217391304,"disaccharide metabolic process",5
+"48","GO:0051382","kinetochore assembly",11,9,4.32,256,0.00514,0.00514,0.170089728682171,0.695017217391304,"DNA conformation change",13
+"49","GO:0007088","regulation of mitotic nuclear division",165,83,64.86,192,0.00247,0.00583,0.108686224489796,0.695017217391304,"G1/S transition of mitotic cell cycle",14
+"50","GO:0070301","cellular response to hydrogen peroxide",46,27,18.08,268,0.00594,0.00594,0.188158884758364,0.695017217391304,"interstrand cross-link repair",18
+"51","GO:0030968","endoplasmic reticulum unfolded protein r...",93,51,36.56,169,0.00164,0.00616,0.0822025882352941,0.695017217391304,"response to unfolded protein",15
+"52","GO:0006270","DNA replication initiation",32,23,12.58,62,0.00019,0.00625,0.02529671875,0.695017217391304,"leading strand elongation",12
+"53","GO:0061063","positive regulation of nematode larval d...",49,29,19.26,231,0.00374,0.00633,0.137731681034483,0.695017217391304,"positive regulation of nematode larval development",4
+"54","GO:0030261","chromosome condensation",69,44,27.12,31,3.2e-05,0.00634,0.00879587096774194,0.695017217391304,"DNA conformation change",13
+"55","GO:0007283","spermatogenesis",431,214,169.43,22,5e-06,0.00642,0.00193659090909091,0.695017217391304,"reciprocal meiotic recombination",10
+"56","GO:0019388","galactose catabolic process",13,10,5.11,292,0.0067,0.0067,0.190938795986622,0.695017217391304,"disaccharide metabolic process",5
+"57","GO:0031573","mitotic intra-S DNA damage checkpoint si...",13,10,5.11,293,0.0067,0.0067,0.190938795986622,0.695017217391304,"G1/S transition of mitotic cell cycle",14
+"58","GO:0034080","CENP-A containing chromatin assembly",13,10,5.11,294,0.0067,0.0067,0.190938795986622,0.695017217391304,"multivesicular body assembly",9
+"59","GO:0097237","cellular response to toxic substance",168,80,66.04,440,0.01649,0.00707,0.316573673913043,0.695017217391304,"response to unfolded protein",15
+"60","GO:0034404","nucleobase-containing small molecule bio...",101,51,39.7,416,0.01416,0.00726,0.290041730769231,0.695017217391304,"aspartate family amino acid catabolic process",20
+"61","GO:0071396","cellular response to lipid",344,155,135.23,428,0.01533,0.00734,0.305055754060325,0.695017217391304,"response to unfolded protein",15
+"62","GO:0006979","response to oxidative stress",426,193,167.46,263,0.00562,0.00738,0.182083726235741,0.695017217391304,"interstrand cross-link repair",18
+"63","GO:0006376","mRNA splice site recognition",25,19,9.83,69,0.00021,0.00751,0.025563,0.695017217391304,"regulation of alternative mRNA splicing, via spliceosome",6
+"64","GO:0033567","DNA replication, Okazaki fragment proces...",8,7,3.14,311,0.00759,0.00759,0.20147785046729,0.695017217391304,"leading strand elongation",12
+"65","GO:0051257","meiotic spindle midzone assembly",8,7,3.14,312,0.00759,0.00759,0.20147785046729,0.695017217391304,"reciprocal meiotic recombination",10
+"66","GO:1900150","regulation of defense response to fungus",8,7,3.14,314,0.00759,0.00759,0.20147785046729,0.695017217391304,"negative regulation of cellular response to hypoxia",10
+"67","GO:0051984","positive regulation of chromosome segreg...",39,27,15.33,52,0.00014,0.00784,0.0229411538461538,0.695017217391304,"G1/S transition of mitotic cell cycle",14
+"68","GO:0010032","meiotic chromosome condensation",15,11,5.9,325,0.00798,0.00798,0.207943669724771,0.695017217391304,"DNA conformation change",13
+"69","GO:0009411","response to UV",142,74,55.82,146,0.00122,0.0081,0.0707185034013605,0.695017217391304,"response to UV",3
+"70","GO:0048515","spermatid differentiation",184,97,72.33,51,0.00013,0.00848,0.0217201960784314,0.695017217391304,"reciprocal meiotic recombination",10
+"71","GO:1901566","organonitrogen compound biosynthetic pro...",1355,510,532.66,7053,0.92081,0.00871,1,0.695017217391304,"macromolecule biosynthetic process",6
+"72","GO:0072329","monocarboxylic acid catabolic process",104,50,40.88,703,0.04183,0.00887,0.507017681365576,0.695017217391304,"aspartate family amino acid catabolic process",20
+"73","GO:0051085","chaperone cofactor-dependent protein ref...",17,12,6.68,333,0.00897,0.00897,0.22746943019943,0.695017217391304,"macromolecule biosynthetic process",6
+"74","GO:0031623","receptor internalization",54,25,21.23,1841,0.17978,0.00901,0.831653300760043,0.695017217391304,"receptor internalization",7
+"75","GO:1901698","response to nitrogen compound",870,357,342,1500,0.14368,0.00918,0.804450605892162,0.695017217391304,"response to unfolded protein",15
+"76","GO:0043648","dicarboxylic acid metabolic process",99,50,38.92,421,0.01497,0.00925,0.302991377672209,0.695017217391304,"aspartate family amino acid catabolic process",20
+"77","GO:0010324","membrane invagination",81,38,31.84,1256,0.09865,0.00932,0.668008498808578,0.695017217391304,"membrane invagination",2
+"78","GO:0019217","regulation of fatty acid metabolic proce...",53,26,20.83,1238,0.09497,0.00934,0.65261239516129,0.695017217391304,"aspartate family amino acid catabolic process",20
+"79","GO:0046040","IMP metabolic process",15,9,5.9,1068,0.08568,0.00937,0.639702569558102,0.695017217391304,"aspartate family amino acid catabolic process",20
+"80","GO:0034031","ribonucleoside bisphosphate catabolic pr...",5,5,1.97,340,0.00937,0.00937,0.22746943019943,0.695017217391304,"phosphorylation",5
+"81","GO:0034034","purine nucleoside bisphosphate catabolic...",5,5,1.97,341,0.00937,0.00937,0.22746943019943,0.695017217391304,"phosphorylation",5
+"82","GO:0051096","positive regulation of helicase activity",5,5,1.97,344,0.00937,0.00937,0.22746943019943,0.695017217391304,"positive regulation of helicase activity",2
+"83","GO:0051311","meiotic metaphase chromosome alignment",5,5,1.97,345,0.00937,0.00937,0.22746943019943,0.695017217391304,"reciprocal meiotic recombination",10
+"84","GO:0051598","meiotic recombination checkpoint signali...",5,5,1.97,346,0.00937,0.00937,0.22746943019943,0.695017217391304,"G1/S transition of mitotic cell cycle",14
+"85","GO:1903753","negative regulation of p38MAPK cascade",5,5,1.97,348,0.00937,0.00937,0.22746943019943,0.695017217391304,"negative regulation of cellular response to hypoxia",10
+"86","GO:1901142","insulin metabolic process",11,7,4.32,1167,0.09099,0.00937,0.639702569558102,0.695017217391304,"insulin metabolic process",1
+"87","GO:0036499","PERK-mediated unfolded protein response",12,7,4.72,1506,0.14614,0.00938,0.804450605892162,0.695017217391304,"response to unfolded protein",15
+"88","GO:0000281","mitotic cytokinesis",112,59,44.03,200,0.00266,0.0096,0.112765472636816,0.702621440677966,"actomyosin contractile ring assembly",7
+"89","GO:0006302","double-strand break repair",199,102,78.23,85,0.00036,0.01017,0.0356693023255814,0.704919090909091,"interstrand cross-link repair",18
+"90","GO:0006094","gluconeogenesis",55,32,21.62,225,0.00346,0.01045,0.131034044444444,0.704919090909091,"disaccharide metabolic process",5
+"91","GO:0034501","protein localization to kinetochore",23,15,9.04,370,0.0106,0.0106,0.240358597402597,0.704919090909091,"protein localization to kinetochore",10
+"92","GO:0060627","regulation of vesicle-mediated transport",392,166,154.1,1325,0.11375,0.01067,0.726989574309186,0.704919090909091,"negative regulation of peptide secretion",11
+"93","GO:0008630","intrinsic apoptotic signaling pathway in...",77,37,30.27,942,0.07306,0.01068,0.639702569558102,0.704919090909091,"Cdc42 protein signal transduction",4
+"94","GO:0110020","regulation of actomyosin structure organ...",64,34,25.16,448,0.01695,0.01075,0.316573673913043,0.704919090909091,"regulation of centriole replication",7
+"95","GO:0040026","positive regulation of vulval developmen...",31,19,12.19,379,0.01081,0.01081,0.240358597402597,0.704919090909091,"positive regulation of nematode larval development",4
+"96","GO:0007060","male meiosis chromosome segregation",10,8,3.93,380,0.01086,0.01086,0.240358597402597,0.704919090909091,"reciprocal meiotic recombination",10
+"97","GO:0032876","negative regulation of DNA endoreduplica...",10,8,3.93,381,0.01086,0.01086,0.240358597402597,0.704919090909091,"leading strand elongation",12
+"98","GO:0046487","glyoxylate metabolic process",10,8,3.93,383,0.01086,0.01086,0.240358597402597,0.704919090909091,"aspartate family amino acid catabolic process",20
+"99","GO:1902804","negative regulation of synaptic vesicle ...",10,8,3.93,384,0.01086,0.01086,0.240358597402597,0.704919090909091,"negative regulation of peptide secretion",11
+"100","GO:0050766","positive regulation of phagocytosis",51,26,20.05,859,0.05972,0.01092,0.592402933643772,0.704919090909091,"negative regulation of peptide secretion",11
+"101","GO:0006890","retrograde vesicle-mediated transport, G...",67,36,26.34,393,0.01142,0.01142,0.246353974683544,0.731652781954887,"receptor internalization",7
+"102","GO:0019432","triglyceride biosynthetic process",26,15,10.22,710,0.04416,0.01336,0.5233146740638,0.838316029411765,"triglyceride biosynthetic process",4
+"103","GO:0043161","proteasome-mediated ubiquitin-dependent ...",340,151,133.66,590,0.02861,0.01353,0.413196288135593,0.841526496350365,"regulation of cellular catabolic process",3
+"104","GO:0006101","citrate metabolic process",42,24,16.51,418,0.01433,0.01433,0.292119449760766,0.884825579710145,"aspartate family amino acid catabolic process",20
+"105","GO:0032872","regulation of stress-activated MAPK casc...",158,70,62.11,1322,0.11257,0.01509,0.725574107413011,0.913307183098591,"negative regulation of cellular response to hypoxia",10
+"106","GO:0040016","embryonic cleavage",14,10,5.5,425,0.01522,0.01522,0.303722763466042,0.913307183098591,"actomyosin contractile ring assembly",7
+"107","GO:0043113","receptor clustering",37,19,14.54,1223,0.09215,0.01522,0.641511560457516,0.913307183098591,"protein localization to kinetochore",10
+"108","GO:0006606","protein import into nucleus",151,65,59.36,1898,0.19327,0.01636,0.867678435194942,0.917481257861635,"protein localization to kinetochore",10
+"109","GO:0048026","positive regulation of mRNA splicing, vi...",16,11,6.29,442,0.0165,0.0165,0.316573673913043,0.917481257861635,"regulation of alternative mRNA splicing, via spliceosome",6
+"110","GO:0009165","nucleotide biosynthetic process",257,115,101.03,700,0.0409,0.01677,0.497869857142857,0.917481257861635,"aspartate family amino acid catabolic process",20
+"111","GO:0051223","regulation of protein transport",433,177,170.21,2261,0.26198,0.01698,0.975641744011976,0.917481257861635,"negative regulation of peptide secretion",11
+"112","GO:0006334","nucleosome assembly",51,28,20.05,449,0.01701,0.01701,0.316573673913043,0.917481257861635,"multivesicular body assembly",9
+"113","GO:0070193","synaptonemal complex organization",18,13,7.08,247,0.00478,0.01701,0.163575823293173,0.917481257861635,"DNA conformation change",13
+"114","GO:0070372","regulation of ERK1 and ERK2 cascade",108,47,42.46,1972,0.21059,0.01705,0.905281914257228,0.917481257861635,"negative regulation of cellular response to hypoxia",10
+"115","GO:0000050","urea cycle",7,6,2.75,450,0.01709,0.01709,0.316573673913043,0.917481257861635,"urea cycle",3
+"116","GO:0006268","DNA unwinding involved in DNA replicatio...",7,6,2.75,451,0.01709,0.01709,0.316573673913043,0.917481257861635,"DNA conformation change",13
+"117","GO:0036089","cleavage furrow formation",7,6,2.75,452,0.01709,0.01709,0.316573673913043,0.917481257861635,"membrane invagination",2
+"118","GO:0043137","DNA replication, removal of RNA primer",7,6,2.75,453,0.01709,0.01709,0.316573673913043,0.917481257861635,"leading strand elongation",12
+"119","GO:0043570","maintenance of DNA repeat elements",7,6,2.75,454,0.01709,0.01709,0.316573673913043,0.917481257861635,"DNA conformation change",13
+"120","GO:0051177","meiotic sister chromatid cohesion",7,6,2.75,456,0.01709,0.01709,0.316573673913043,0.917481257861635,"DNA conformation change",13
+"121","GO:0051495","positive regulation of cytoskeleton orga...",124,51,48.74,3034,0.37044,0.01712,1,0.917481257861635,"regulation of centriole replication",7
+"122","GO:0007076","mitotic chromosome condensation",30,18,11.79,462,0.01736,0.01736,0.319491490280778,0.9245285,"DNA conformation change",13
+"123","GO:0032880","regulation of protein localization",655,278,257.48,751,0.04797,0.01767,0.533484242788462,0.925359817073171,"negative regulation of peptide secretion",11
+"124","GO:0006298","mismatch repair",28,17,11.01,465,0.01771,0.01771,0.323333542976939,0.925359817073171,"interstrand cross-link repair",18
+"125","GO:0046483","heterocycle metabolic process",3474,1442,1365.64,75,0.00027,0.01771,0.0305882051282051,0.925359817073171,"cellular nitrogen compound metabolic process",3
+"126","GO:0062033","positive regulation of mitotic sister ch...",22,14,8.65,474,0.01808,0.01808,0.323333542976939,0.929096987951807,"G1/S transition of mitotic cell cycle",14
+"127","GO:0051597","response to methylmercury",24,15,9.43,475,0.0181,0.0181,0.323333542976939,0.929096987951807,"response to unfolded protein",15
+"128","GO:0008283","cell population proliferation",1253,478,492.56,6119,0.82787,0.01847,1,0.938324404761905,"cell population proliferation",1
+"129","GO:0002009","morphogenesis of an epithelium",776,288,305.05,6822,0.91264,0.0185,1,0.938324404761905,"morphogenesis of an epithelium",3
+"130","GO:1901576","organic substance biosynthetic process",4397,1799,1728.48,117,0.00077,0.01981,0.0554211382113821,0.998822544378698,"macromolecule biosynthetic process",6
+"131","GO:0006888","endoplasmic reticulum to Golgi vesicle-m...",151,75,59.36,267,0.00582,0.01998,0.185738651685393,1,"receptor internalization",7
+"132","GO:0009267","cellular response to starvation",161,75,63.29,632,0.03468,0.02073,0.467576392405063,1,"interstrand cross-link repair",18
+"133","GO:0000819","sister chromatid segregation",244,125,95.92,45,8.5e-05,0.02144,0.0160952222222222,1,"G1/S transition of mitotic cell cycle",14
+"134","GO:0097193","intrinsic apoptotic signaling pathway",220,115,86.48,36,5.4e-05,0.02146,0.0123330263157895,1,"Cdc42 protein signal transduction",4
+"135","GO:0006099","tricarboxylic acid cycle",39,22,15.33,511,0.02247,0.02247,0.366045248091603,1,"tricarboxylic acid cycle",4
+"136","GO:0007175","negative regulation of epidermal growth ...",9,7,3.54,515,0.02251,0.02251,0.366045248091603,1,"positive regulation of phospholipid biosynthetic process",6
+"137","GO:0031954","positive regulation of protein autophosp...",9,7,3.54,516,0.02251,0.02251,0.366045248091603,1,"positive regulation of phospholipid biosynthetic process",6
+"138","GO:1900102","negative regulation of endoplasmic retic...",9,7,3.54,519,0.02251,0.02251,0.366045248091603,1,"negative regulation of cellular response to hypoxia",10
+"139","GO:2000301","negative regulation of synaptic vesicle ...",9,7,3.54,520,0.02251,0.02251,0.366045248091603,1,"negative regulation of peptide secretion",11
+"140","GO:0009967","positive regulation of signal transducti...",929,371,365.19,2936,0.35195,0.02252,1,1,"negative regulation of cellular response to hypoxia",10
+"141","GO:0008053","mitochondrial fusion",20,11,7.86,1328,0.11424,0.02253,0.726989574309186,1,"mitochondrial fusion",2
+"142","GO:1904380","endoplasmic reticulum mannose trimming",14,8,5.5,1447,0.1376,0.02255,0.797069748470428,1,"endoplasmic reticulum mannose trimming",3
+"143","GO:0051924","regulation of calcium ion transport",120,42,47.17,6352,0.85748,0.02288,1,1,"negative regulation of peptide secretion",11
+"144","GO:0007399","nervous system development",1842,694,724.1,7477,0.95139,0.02317,1,1,"neuron remodeling",2
+"145","GO:0007063","regulation of sister chromatid cohesion",27,19,10.61,138,0.00105,0.02368,0.0643672661870504,1,"DNA conformation change",13
+"146","GO:0006273","lagging strand elongation",12,11,4.72,73,0.00026,0.02374,0.0299386486486486,1,"leading strand elongation",12
+"147","GO:2000144","positive regulation of DNA-templated tra...",27,16,10.61,579,0.02825,0.02377,0.411413588435374,1,"positive regulation of nematode larval development",4
+"148","GO:0042537","benzene-containing compound metabolic pr...",17,12,6.68,334,0.00897,0.02377,0.22746943019943,1,"benzene-containing compound metabolic process",1
+"149","GO:0009142","nucleoside triphosphate biosynthetic pro...",94,42,36.95,1709,0.1669,0.02377,0.804450605892162,1,"aspartate family amino acid catabolic process",20
+"150","GO:0042982","amyloid precursor protein metabolic proc...",32,16,12.58,1502,0.145,0.02382,0.804450605892162,1,"amyloid precursor protein metabolic process",1
+"151","GO:0061097","regulation of protein tyrosine kinase ac...",60,26,23.59,2533,0.30359,0.02385,0.975641744011976,1,"positive regulation of phospholipid biosynthetic process",6
+"152","GO:0065005","protein-lipid complex assembly",14,7,5.5,2447,0.28863,0.02388,0.975641744011976,1,"multivesicular body assembly",9
+"153","GO:1990778","protein localization to cell periphery",218,85,85.7,4187,0.56494,0.02395,1,1,"protein localization to kinetochore",10
+"154","GO:0006974","DNA damage response",631,307,248.05,8,4.5e-07,0.02532,0.00047930625,1,"interstrand cross-link repair",18
+"155","GO:0006633","fatty acid biosynthetic process",133,69,52.28,177,0.00205,0.02547,0.0986895480225989,1,"aspartate family amino acid catabolic process",20
+"156","GO:0043574","peroxisomal transport",48,24,18.87,1084,0.08602,0.02552,0.639702569558102,1,"intraciliary transport involved in cilium assembly",4
+"157","GO:0007062","sister chromatid cohesion",53,35,20.83,42,7.2e-05,0.02557,0.0146074285714286,1,"DNA conformation change",13
+"158","GO:0045184","establishment of protein localization",1196,493,470.15,960,0.07646,0.02563,0.639702569558102,1,"protein localization to kinetochore",10
+"159","GO:0034599","cellular response to oxidative stress",230,104,90.41,654,0.03728,0.0257,0.469089112081514,1,"interstrand cross-link repair",18
+"160","GO:0046500","S-adenosylmethionine metabolic process",17,11,6.68,612,0.03032,0.02608,0.419707508090615,1,"S-adenosylmethionine metabolic process",1
+"161","GO:0090110","COPII-coated vesicle cargo loading",11,8,4.32,554,0.02612,0.02612,0.397748107142857,1,"receptor internalization",7
+"162","GO:0032790","ribosome disassembly",16,9,6.29,1409,0.12939,0.02617,0.77643111971831,1,"ribosome disassembly",2
+"163","GO:0031297","replication fork processing",29,17,11.4,569,0.02736,0.02736,0.409008,1,"leading strand elongation",12
+"164","GO:0032465","regulation of cytokinesis",72,39,28.3,307,0.00728,0.02779,0.20147785046729,1,"actomyosin contractile ring assembly",7
+"165","GO:0008631","intrinsic apoptotic signaling pathway in...",41,26,16.12,163,0.00151,0.02802,0.0789368711656442,1,"Cdc42 protein signal transduction",4
+"166","GO:0016079","synaptic vesicle exocytosis",86,41,33.81,912,0.0697,0.02818,0.639702569558102,1,"receptor internalization",7
+"167","GO:0042572","retinol metabolic process",27,16,10.61,580,0.02825,0.02825,0.411413588435374,1,"triglyceride biosynthetic process",4
+"168","GO:0009409","response to cold",46,23,18.08,1196,0.09161,0.02829,0.639702569558102,1,"response to UV",3
+"169","GO:0009968","negative regulation of signal transducti...",831,357,326.67,405,0.01299,0.02829,0.273303185185185,1,"negative regulation of cellular response to hypoxia",10
+"170","GO:0048025","negative regulation of mRNA splicing, vi...",13,9,5.11,584,0.02839,0.02839,0.411413588435374,1,"regulation of alternative mRNA splicing, via spliceosome",6
+"171","GO:0048312","intracellular distribution of mitochondr...",13,9,5.11,585,0.02839,0.02839,0.411413588435374,1,"intracellular distribution of mitochondria",2
+"172","GO:0002218","activation of innate immune response",125,53,49.14,2300,0.26629,0.02839,0.975641744011976,1,"negative regulation of cellular response to hypoxia",10
+"173","GO:0014075","response to amine",37,17,14.54,2233,0.25285,0.02847,0.963695402144772,1,"response to unfolded protein",15
+"174","GO:0071897","DNA biosynthetic process",183,89,71.94,270,0.00598,0.02938,0.18872437037037,1,"leading strand elongation",12
+"175","GO:0034389","lipid droplet organization",23,14,9.04,605,0.02972,0.02972,0.417894587458746,1,"nucleus organization",2
+"176","GO:1905952","regulation of lipid localization",121,60,47.57,407,0.01327,0.02983,0.277606301703163,1,"protein localization to kinetochore",10
+"177","GO:0042023","DNA endoreduplication",32,22,12.58,113,7e-04,0.02995,0.0523219298245614,1,"leading strand elongation",12
+"178","GO:0030970","retrograde protein transport, ER to cyto...",30,21,11.79,108,0.00064,0.02996,0.0495767272727273,1,"response to unfolded protein",15
+"179","GO:0032387","negative regulation of intracellular tra...",77,40,30.27,436,0.01606,0.03004,0.313869862385321,1,"negative regulation of peptide secretion",11
+"180","GO:0000079","regulation of cyclin-dependent protein s...",56,27,22.01,1299,0.10978,0.03027,0.719311144393241,1,"G1/S transition of mitotic cell cycle",14
+"181","GO:0030032","lamellipodium assembly",50,25,19.66,984,0.08081,0.03038,0.639702569558102,1,"multivesicular body assembly",9
+"182","GO:1901673","regulation of mitotic spindle assembly",19,12,7.47,617,0.03044,0.03044,0.419707508090615,1,"regulation of centriole replication",7
+"183","GO:0032481","positive regulation of type I interferon...",42,21,16.51,1276,0.10407,0.03044,0.694424800313234,1,"positive regulation of nematode larval development",4
+"184","GO:0006457","protein folding",165,87,64.86,79,0.00029,0.03082,0.0312796202531646,1,"macromolecule biosynthetic process",6
+"185","GO:0035264","multicellular organism growth",238,92,93.56,4524,0.60757,0.03117,1,1,"multicellular organism growth",2
+"186","GO:0072657","protein localization to membrane",391,145,153.7,6286,0.83553,0.03131,1,1,"protein localization to kinetochore",10
+"187","GO:0006936","muscle contraction",180,55,70.76,8100,0.99452,0.03206,1,1,"muscle contraction",1
+"188","GO:0042594","response to starvation",235,114,92.38,184,0.00228,0.03284,0.105586304347826,1,"interstrand cross-link repair",18
+"189","GO:0014070","response to organic cyclic compound",742,295,291.68,3282,0.41134,0.03348,1,1,"response to unfolded protein",15
+"190","GO:0031328","positive regulation of cellular biosynth...",1402,577,551.13,883,0.06414,0.03635,0.61895463193658,1,"regulation of cellular metabolic process",3
+"191","GO:0007368","determination of left/right symmetry",165,70,64.86,2069,0.22693,0.03685,0.934591846302562,1,"determination of left/right symmetry",1
+"192","GO:0006301","postreplication repair",45,29,17.69,94,0.00055,0.03736,0.0484527450980392,1,"interstrand cross-link repair",18
+"193","GO:0032434","regulation of proteasomal ubiquitin-depe...",124,57,48.74,958,0.07621,0.03752,0.639702569558102,1,"regulation of cellular catabolic process",3
+"194","GO:0006721","terpenoid metabolic process",61,32,23.98,538,0.02498,0.03753,0.395538812615955,1,"triglyceride biosynthetic process",4
+"195","GO:0006195","purine nucleotide catabolic process",80,38,31.45,1061,0.08287,0.03761,0.639702569558102,1,"phosphorylation",5
+"196","GO:0035493","SNARE complex assembly",19,13,7.47,355,0.00971,0.03767,0.232412668539326,1,"mitochondrial fusion",2
+"197","GO:0042775","mitochondrial ATP synthesis coupled elec...",59,28,23.19,1384,0.12513,0.0377,0.768179200288184,1,"tricarboxylic acid cycle",4
+"198","GO:1900424","regulation of defense response to bacter...",28,15,11.01,1123,0.08913,0.03775,0.639702569558102,1,"negative regulation of cellular response to hypoxia",10
+"199","GO:1902116","negative regulation of organelle assembl...",31,16,12.19,1314,0.11193,0.03776,0.722542068181818,1,"regulation of centriole replication",7
+"200","GO:0046320","regulation of fatty acid oxidation",17,10,6.68,1046,0.0822,0.03778,0.639702569558102,1,"aspartate family amino acid catabolic process",20
+"201","GO:0062013","positive regulation of small molecule me...",92,39,36.17,2673,0.3063,0.03781,0.976424354657688,1,"aspartate family amino acid catabolic process",20
+"202","GO:0030262","apoptotic nuclear changes",31,15,12.19,1912,0.19613,0.03781,0.868189834454216,1,"ribosome disassembly",2
+"203","GO:0019471","4-hydroxyproline metabolic process",11,7,4.32,1168,0.09099,0.03782,0.639702569558102,1,"glutathione biosynthetic process",3
+"204","GO:0000727","double-strand break repair via break-ind...",6,5,2.36,655,0.03782,0.03782,0.469089112081514,1,"interstrand cross-link repair",18
+"205","GO:0005997","xylulose metabolic process",6,5,2.36,656,0.03782,0.03782,0.469089112081514,1,"disaccharide metabolic process",5
+"206","GO:0006002","fructose 6-phosphate metabolic process",6,5,2.36,657,0.03782,0.03782,0.469089112081514,1,"endoplasmic reticulum mannose trimming",3
+"207","GO:0006269","DNA replication, synthesis of RNA primer",6,5,2.36,659,0.03782,0.03782,0.469089112081514,1,"leading strand elongation",12
+"208","GO:0006554","lysine catabolic process",6,5,2.36,661,0.03782,0.03782,0.469089112081514,1,"aspartate family amino acid catabolic process",20
+"209","GO:0010998","regulation of translational initiation b...",6,5,2.36,663,0.03782,0.03782,0.469089112081514,1,"urea cycle",3
+"210","GO:0019346","transsulfuration",6,5,2.36,664,0.03782,0.03782,0.469089112081514,1,"aspartate family amino acid catabolic process",20
+"211","GO:0031991","regulation of actomyosin contractile rin...",6,5,2.36,665,0.03782,0.03782,0.469089112081514,1,"actomyosin contractile ring assembly",7
+"212","GO:0032516","positive regulation of phosphoprotein ph...",6,5,2.36,666,0.03782,0.03782,0.469089112081514,1,"positive regulation of phospholipid biosynthetic process",6
+"213","GO:0035437","maintenance of protein localization in e...",6,5,2.36,667,0.03782,0.03782,0.469089112081514,1,"protein localization to kinetochore",10
+"214","GO:0036490","regulation of translation in response to...",6,5,2.36,668,0.03782,0.03782,0.469089112081514,1,"urea cycle",3
+"215","GO:0048613","embryonic ectodermal digestive tract mor...",6,5,2.36,669,0.03782,0.03782,0.469089112081514,1,"morphogenesis of an epithelium",3
+"216","GO:0071267","L-methionine salvage",6,5,2.36,675,0.03782,0.03782,0.469089112081514,1,"aspartate family amino acid catabolic process",20
+"217","GO:0090387","phagolysosome assembly involved in apopt...",6,5,2.36,678,0.03782,0.03782,0.469089112081514,1,"multivesicular body assembly",9
+"218","GO:0097091","synaptic vesicle clustering",6,5,2.36,679,0.03782,0.03782,0.469089112081514,1,"receptor internalization",7
+"219","GO:0061355","Wnt protein secretion",14,7,5.5,2448,0.28863,0.03788,0.975641744011976,1,"Wnt protein secretion",2
+"220","GO:0090306","meiotic spindle assembly",28,11,11.01,4291,0.57237,0.03796,1,1,"reciprocal meiotic recombination",10
+"221","GO:1902905","positive regulation of supramolecular fi...",112,44,44.03,4036,0.53824,0.03796,1,1,"regulation of centriole replication",7
+"222","GO:0032784","regulation of DNA-templated transcriptio...",56,21,22.01,4881,0.65798,0.03801,1,1,"regulation of cellular metabolic process",3
+"223","GO:0070252","actin-mediated cell contraction",64,21,25.16,6558,0.88526,0.03818,1,1,"actin-mediated cell contraction",1
+"224","GO:0042149","cellular response to glucose starvation",32,18,12.58,689,0.03861,0.03861,0.47680552173913,1,"interstrand cross-link repair",18
+"225","GO:0006303","double-strand break repair via nonhomolo...",59,28,23.19,1385,0.12513,0.03921,0.768179200288184,1,"interstrand cross-link repair",18
+"226","GO:0035082","axoneme assembly",85,48,33.41,131,0.00096,0.03931,0.0624439694656489,1,"multivesicular body assembly",9
+"227","GO:0016049","cell growth",457,150,179.65,8208,0.99865,0.03965,1,1,"multicellular organism growth",2
+"228","GO:0016070","RNA metabolic process",2461,964,967.43,4341,0.57651,0.04002,1,1,"cellular nitrogen compound metabolic process",3
+"229","GO:0000212","meiotic spindle organization",63,29,24.77,1699,0.16663,0.04056,0.804450605892162,1,"reciprocal meiotic recombination",10
+"230","GO:0046688","response to copper ion",56,28,22.01,895,0.0672,0.04124,0.634945881057269,1,"response to unfolded protein",15
+"231","GO:0051726","regulation of cell cycle",939,409,369.12,203,0.00269,0.04131,0.112913743842365,1,"G1/S transition of mitotic cell cycle",14
+"232","GO:0007098","centrosome cycle",140,78,55.03,37,5.5e-05,0.04196,0.0123330263157895,1,"G1/S transition of mitotic cell cycle",14
+"233","GO:0061077","chaperone-mediated protein folding",58,34,22.8,180,0.0022,0.04279,0.103469285714286,1,"macromolecule biosynthetic process",6
+"234","GO:0008637","apoptotic mitochondrial changes",78,38,30.66,847,0.0567,0.04527,0.569741391509434,1,"intracellular distribution of mitochondria",2
+"235","GO:0006164","purine nucleotide biosynthetic process",218,92,85.7,1954,0.20694,0.04534,0.899573524631793,1,"aspartate family amino acid catabolic process",20
+"236","GO:0009132","nucleoside diphosphate metabolic process",79,35,31.06,1981,0.21185,0.04551,0.905281914257228,1,"aspartate family amino acid catabolic process",20
+"237","GO:0051299","centrosome separation",31,16,12.19,1315,0.11193,0.04552,0.722542068181818,1,"G1/S transition of mitotic cell cycle",14
+"238","GO:0000303","response to superoxide",38,18,14.94,1908,0.19608,0.04558,0.868189834454216,1,"interstrand cross-link repair",18
+"239","GO:0015697","quaternary ammonium group transport",8,6,3.14,724,0.04559,0.04559,0.527099579375848,1,"quaternary ammonium group transport",1
+"240","GO:0071896","protein localization to adherens junctio...",8,6,3.14,729,0.04559,0.04559,0.527099579375848,1,"protein localization to kinetochore",10
+"241","GO:0044539","long-chain fatty acid import into cell",16,9,6.29,1410,0.12939,0.0456,0.77643111971831,1,"protein localization to kinetochore",10
+"242","GO:0046475","glycerophospholipid catabolic process",15,8,5.9,1916,0.19695,0.04564,0.868189834454216,1,"phosphorylation",5
+"243","GO:0006896","Golgi to vacuole transport",18,9,7.08,2142,0.24336,0.04566,0.958936305849839,1,"receptor internalization",7
+"244","GO:0051100","negative regulation of binding",112,45,44.03,3698,0.46071,0.04572,1,1,"positive regulation of helicase activity",2
+"245","GO:1901570","fatty acid derivative biosynthetic proce...",98,52,38.52,233,0.0038,0.04574,0.138511574468085,1,"triglyceride biosynthetic process",4
+"246","GO:0031440","regulation of mRNA 3'-end processing",36,13,14.15,5257,0.71072,0.04587,1,1,"regulation of alternative mRNA splicing, via spliceosome",6
+"247","GO:0070534","protein K63-linked ubiquitination",33,17,12.97,1282,0.10483,0.04604,0.695141190661479,1,"protein K63-linked ubiquitination",1
+"248","GO:1901137","carbohydrate derivative biosynthetic pro...",522,190,205.2,7146,0.92747,0.04696,1,1,"endoplasmic reticulum mannose trimming",3
+"249","GO:0019221","cytokine-mediated signaling pathway",234,107,91.99,539,0.02502,0.04723,0.395538812615955,1,"response to unfolded protein",15
+"250","GO:0005980","glycogen catabolic process",35,19,13.76,790,0.05149,0.04762,0.533484242788462,1,"tricarboxylic acid cycle",4
+"251","GO:0009725","response to hormone",696,300,273.6,478,0.01816,0.04864,0.323726694560669,1,"response to unfolded protein",15
+"252","GO:1903829","positive regulation of protein localizat...",343,146,134.83,1340,0.11452,0.049,0.728227552238806,1,"negative regulation of peptide secretion",11
+"253","GO:0006119","oxidative phosphorylation",102,49,40.1,719,0.04425,0.04921,0.5233146740638,1,"tricarboxylic acid cycle",4
+"254","GO:0032508","DNA duplex unwinding",64,35,25.16,330,0.00883,0.04925,0.22731247734139,1,"DNA conformation change",13
+"255","GO:0010800","positive regulation of peptidyl-threonin...",20,12,7.86,754,0.04933,0.04933,0.533484242788462,1,"positive regulation of phospholipid biosynthetic process",6
+"256","GO:0070830","bicellular tight junction assembly",36,18,14.15,1394,0.12666,0.04936,0.771458084345961,1,"multivesicular body assembly",9
+"257","GO:0008089","anterograde axonal transport",34,17,13.37,1435,0.13545,0.04939,0.797069748470428,1,"intraciliary transport involved in cilium assembly",4
+"258","GO:0051301","cell division",442,196,173.75,422,0.01513,0.04958,0.303722763466042,1,"actomyosin contractile ring assembly",7
+"259","GO:0006206","pyrimidine nucleobase metabolic process",20,12,7.86,755,0.04933,0.04962,0.533484242788462,1,"aspartate family amino acid catabolic process",20
+"260","GO:0042304","regulation of fatty acid biosynthetic pr...",28,15,11.01,1124,0.08913,0.04963,0.639702569558102,1,"aspartate family amino acid catabolic process",20
+"261","GO:0009416","response to light stimulus",349,150,137.19,1067,0.08453,0.04964,0.639702569558102,1,"response to UV",3
+"262","GO:0007111","meiosis II cytokinesis",10,7,3.93,757,0.04971,0.04971,0.533484242788462,1,"actomyosin contractile ring assembly",7
+"263","GO:0007270","neuron-neuron synaptic transmission",10,7,3.93,758,0.04971,0.04971,0.533484242788462,1,"Wnt protein secretion",2
+"264","GO:0009957","epidermal cell fate specification",10,7,3.93,760,0.04971,0.04971,0.533484242788462,1,"morphogenesis of an epithelium",3
+"265","GO:0030590","first cell cycle pseudocleavage",10,7,3.93,761,0.04971,0.04971,0.533484242788462,1,"first cell cycle pseudocleavage",1
+"266","GO:0046498","S-adenosylhomocysteine metabolic process",10,7,3.93,763,0.04971,0.04971,0.533484242788462,1,"glutathione biosynthetic process",3
+"267","GO:0072711","cellular response to hydroxyurea",10,7,3.93,765,0.04971,0.04971,0.533484242788462,1,"response to unfolded protein",15

@@ -201,15 +201,23 @@ Annotation setting: annFUN.gene2GO
 
 nodeSize = 5; this setting prunes GO terms that have <5 annotated genes associated with this GO term. "It is often the case that many GO terms which have few annotated genes are detected to be significantly enriched due to artifacts in the statistical test. These small sized GO terms are of less importance for the analysis and in many cases they can be omitted. By using the nodeSize argument the user can control the size of the GO terms used in the analysis. Once the genes are annotated to the each GO term and the true path rule is applied the nodes with less than nodeSize annotated genes are removed from the GO hierarchy. We found that values between 5 and 10 for the nodeSize parameter yield more stable results. The default value for the nodeSize parameter is 1, meaning that no pruning is performed." - TopGO documentation 
 
-## Parent enrichment 
+## Parent enrichment: NB vs B 
+
+Load in DEGs from NB vs B comparison. 
 
 Test set of genes:  
 ```{r}
-parent_test_set<-parent_DEG_list%>%rename("gene_id"=gene)%>%pull(gene_id)
+parent_test_set<-parent_DEG_list%>%filter(contrast=="NBvsB")%>%rename("gene_id"=gene)%>%pull(gene_id)
 
 parent.vector=as.factor(as.integer(background %in% parent_test_set)) 
 names(parent.vector)<-background#set names
 ```
+
+View number of DEGs
+```{r}
+length(parent_test_set)
+```
+1082 DEGs
 
 Run TopGO
 
@@ -225,8 +233,8 @@ GOdata
 numSigGenes(GOdata)
 sum(feasible(GOdata))
 
-#725 sig genes
-#8237 genes used in analysis 
+#254 sig genes
+#8237 genes used in analysis as background
 ```
 
 Run fisher test. 
@@ -234,12 +242,12 @@ Run fisher test.
 resultFisher <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
 resultFisher
 hist(score(resultFisher), 50, xlab = "p-values")
-#223 terms with p<0.01
+#95 terms with p<0.01
 
 resultWeight <- runTest(GOdata, algorithm = "weight01", statistic = "fisher")
 resultWeight
 hist(score(resultWeight), 50, xlab = "p-values")
-#82 terms with p<0.01
+#28 terms with p<0.01
 ```
 
 Which test should be used? 
@@ -288,7 +296,7 @@ reducedTerms <- reduceSimMatrix(simMatrix,
                                 orgdb="org.Ce.eg.db")
 dim(reducedTerms)
 ```
-148 terms at p<0.05
+76 terms at p<0.05
 
 ```{r}
 #keep only the goterms from the reduced list
@@ -304,7 +312,7 @@ p05_res_reduced <- p05_res_reduced %>% group_by(ParentTerm) %>% mutate("N_in_Par
 length(unique(p05_res_reduced$ParentTerm))
 ```
 
-The reduced list of terms is 148 terms that falls under 46 parent terms.
+The reduced list of terms is 32 terms that falls under 32 parent terms.
 
 ```{r}
 write.csv(p05_res_reduced, "output/rna_seq/topGO/parent_topGO_results.csv")
@@ -574,15 +582,10 @@ write.csv(p05_res_reduced, "output/rna_seq/topGO/interaction_topGO_results.csv")
 Plot results. 
 
 ```{r}
-interaction_enrich_plot1 <- ggplot(p05_res_reduced, aes(x=weightFisher,y=reorder(Term,weightFisher)))+
-  facet_grid(ParentTerm ~ ., scales="free", labeller = label_wrap_gen(width = 10, multi_line = TRUE))+
+interaction_enrich_plot1 <- ggplot(p05_res_reduced, aes(x=weightFisher, y=reorder(Term,weightFisher)))+
+  facet_grid(ParentTerm ~ ., scales="free", labeller = label_wrap_gen(width=50, multi_line = TRUE))+
   geom_point(size=2, color="black")+
   geom_segment(aes(x=0, xend=weightFisher, y=Term, yend=Term)) +
-  #geom_hline(yintercept = 0, linetype="solid", color = 'black', linewidth=0.5, show.legend = TRUE)+
-  #scale_y_continuous(limits=c(0,40))+
-   #scale_x_discrete(labels = label_wrap(30)) +
-  #scale_fill_gradientn(colours=c("white","#fddbc7","#f4a582","#d6604d","#b2182b"), na.value = "grey98",limits = c(0, 100)) +
-  #labs(title = "Enriched Biological Process Parent GO Terms, Brown Module", x="Parent Term", y="Number of Significant (p < 0.01) GO Terms in Module", colour="p-value") +
   theme_classic() + 
   theme(axis.text.y = element_text(size = 8), 
               axis.title = element_text(size = 8), 
@@ -591,10 +594,4 @@ interaction_enrich_plot1 <- ggplot(p05_res_reduced, aes(x=weightFisher,y=reorder
 #save plot 
 ggsave(interaction_enrich_plot1, filename="figures/rna_seq/topGO/interaction_enrichment.png", width=10, height=20)
 ```
-
-
-
-
-
-
 

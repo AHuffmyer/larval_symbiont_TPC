@@ -7,8 +7,6 @@ editor_options:
   chunk_output_type: console
 ---
 
-Next steps: Add an analysis using pairwise group model with Wald test to see if DEGs are the same as those detected with interactive effect model. Look for DEGs at 33°C between B and NB that are not present at 27°C. 
-
 Analysis of RNAseq Differential Gene Expression (DEG).  
 
 ```{r setup, include=FALSE}
@@ -270,7 +268,6 @@ test$sample<-rownames(test)
 test$temperature<-metadata$temperature[match(test$sample, metadata$sample)]
 test$parent<-metadata$parent[match(test$sample, metadata$sample)]
 test$code<-metadata$code[match(test$sample, metadata$sample)]
-
 ```
 
 Build PERMANOVA model for all genes in the dataset.  
@@ -315,7 +312,7 @@ percentVar <- round(100*attr(gPCAdata, "percentVar")) #plot PCA of samples with 
 
 allgenesfilt_PCA <- ggplot(gPCAdata, aes(PC1, PC2, color=parent, shape=temperature)) + 
   geom_point(size=3) + 
-  ggtitle(expression(bold("All genes (24,005 genes)")))+
+  ggtitle(expression(bold("All genes (24,464 genes)")))+
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) +
   scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
@@ -363,8 +360,8 @@ resultsNames(DEG_T)
 #The interaction terms temperature33.parentBleached and temperature33.parentNonbleached give the difference between the parental effect for a given temperature and the parental effect for the reference parent (Wildtype)
 
 temp30_deg<-results(DEG_T, contrast=c("temperature","30","27"))
-temp30_deg <- as.data.frame(subset(temp30_deg, padj<0.01))
-temp30_deg <- as.data.frame(subset(temp30_deg, abs(log2FoldChange)>1.5))
+temp30_deg <- as.data.frame(subset(temp30_deg, padj<0.05))
+#temp30_deg <- as.data.frame(subset(temp30_deg, abs(log2FoldChange)>1.5))
 temp30_deg$contrast <- c("30vs27")
 temp30_deg$gene <- rownames(temp30_deg)
 rownames(temp30_deg) <- NULL
@@ -372,8 +369,8 @@ rownames(temp30_deg) <- NULL
 dim(temp30_deg)
 
 temp33_deg<-results(DEG_T, contrast=c("temperature","33","27"))
-temp33_deg <- as.data.frame(subset(temp33_deg, padj<0.01))
-temp33_deg <- as.data.frame(subset(temp33_deg, abs(log2FoldChange)>1.5))
+temp33_deg <- as.data.frame(subset(temp33_deg, padj<0.05))
+#temp33_deg <- as.data.frame(subset(temp33_deg, abs(log2FoldChange)>1.5))
 temp33_deg$contrast <- c("33vs27")
 temp33_deg$gene <- rownames(temp33_deg)
 rownames(temp33_deg) <- NULL
@@ -381,8 +378,8 @@ rownames(temp33_deg) <- NULL
 dim(temp33_deg)
 
 temp30vs33_deg<-results(DEG_T, contrast=c("temperature","33","30"))
-temp30vs33_deg <- as.data.frame(subset(temp30vs33_deg, padj<0.01))
-temp30vs33_deg <- as.data.frame(subset(temp30vs33_deg, abs(log2FoldChange)>1.5))
+temp30vs33_deg <- as.data.frame(subset(temp30vs33_deg, padj<0.05))
+#temp30vs33_deg <- as.data.frame(subset(temp30vs33_deg, abs(log2FoldChange)>1.5))
 temp30vs33_deg$contrast <- c("33vs30")
 temp30vs33_deg$gene <- rownames(temp30vs33_deg)
 rownames(temp30vs33_deg) <- NULL
@@ -390,7 +387,7 @@ rownames(temp30vs33_deg) <- NULL
 dim(temp30vs33_deg)
 ```
 
-There are 24 genes differentially expressed between 27 and 30°C. There are 914 genes differentially expressed between 27 and 33°C. There are 224 genes differentially expressed between 30 and 33°C. In these contrasts, positive fold changes indicate higher expression in the first listed contrast.  
+There are 991 genes differentially expressed between 27 and 30°C. There are 6517 genes differentially expressed between 27 and 33°C. There are 3637 genes differentially expressed between 30 and 33°C. In these contrasts, positive fold changes indicate higher expression in the first listed contrast.  
 
 Combine this list of DEGs into one dataframe. 
 
@@ -399,7 +396,7 @@ DEG_temperature<-rbind(temp30_deg, temp33_deg, temp30vs33_deg)
 dim(DEG_temperature)
 length(unique(DEG_temperature$gene))
 ```
-There are 1,182 total genes and 936 unique genes, indicating that some are shared in the contrasts. 
+There are 11,145 total genes and 6,849 unique genes, indicating that some are shared in the contrasts. 
 
 Get a VST normalized gene count matrix for these DEGs. 
 ```{r}
@@ -435,6 +432,8 @@ plot(ven, type = "upset")
 dev.off()
 ```
 
+Most DEGs are those that are differentially expressed at 33°C (27 vs 33°C and 30 vs 33°C). There are far fewer that are differential between 27 and 30°C. 
+
 ### Plot a volcano plot for these comparisons.   
 
 27 vs 30°C
@@ -446,8 +445,8 @@ volcano_plot_27vs30<-EnhancedVolcano(res,
     x = 'log2FoldChange',
     y = 'pvalue',
     title = '30 vs 27°C',
-    pCutoff = 0.01,
-    FCcutoff = 1.5,
+    pCutoff = 0.05,
+    FCcutoff = 0,
     pointSize = 3.0,
     labSize = 0.0, 
     legendPosition = 'none');volcano_plot_27vs30
@@ -462,8 +461,8 @@ volcano_plot_27vs33<-EnhancedVolcano(res,
     x = 'log2FoldChange',
     y = 'pvalue',
     title = '33 vs 27°C',
-    pCutoff = 0.01,
-    FCcutoff = 1.5,
+    pCutoff = 0.05,
+    FCcutoff = 0,
     pointSize = 3.0,
     labSize = 0.0, 
     legendPosition = 'none');volcano_plot_27vs33
@@ -478,8 +477,8 @@ volcano_plot_30vs33<-EnhancedVolcano(res,
     x = 'log2FoldChange',
     y = 'pvalue',
     title = '33 vs 30°C',
-    pCutoff = 0.01,
-    FCcutoff = 1.5,
+    pCutoff = 0.05,
+    FCcutoff = 0,
     pointSize = 3.0,
     labSize = 0.0, 
     legendPosition = 'none');volcano_plot_30vs33
@@ -521,6 +520,8 @@ dev.off()
 
 Sample R93 looks like it has different expression from the others in the same group. It was not resequenced and has very high read depth (31+ million reads). Does not appear to be an outlier due to technical differences. No record of anything weird happening with this sample during collection in online or physical notebook. No recorded problems with extraction, concentrations of RNA were in mid to upper range.
 
+May need to remove.  
+
 ### Run a PERMANOVA and plot a PCA for temperature comparisons.  
 
 Conduct PERMANOVA by parent and temperature 
@@ -540,11 +541,11 @@ Build PERMANOVA model for DEG's that are different between temperatures.
 ```{r}
 dim(test_DEG_temp)
 
-scaled_test_DEG_temp <-prcomp(test_DEG_temp[c(1:936)], scale=TRUE, center=TRUE)
+scaled_test_DEG_temp <-prcomp(test_DEG_temp[c(1:6849)], scale=TRUE, center=TRUE)
 fviz_eig(scaled_test_DEG_temp)
 
 # scale data
-vegan_DEG_temp <- scale(test_DEG_temp[c(1:936)])
+vegan_DEG_temp <- scale(test_DEG_temp[c(1:6849)])
 
 # PerMANOVA 
 permanova_DEG<-adonis2(vegan_DEG_temp ~ parent*temperature, data = test_DEG_temp, method='eu')
@@ -559,11 +560,11 @@ Number of permutations: 999
 
 adonis2(formula = vegan_DEG_temp ~ parent * temperature, data = test_DEG_temp, method = "eu")
                    Df SumOfSqs      R2       F Pr(>F)    
-parent              2     3587 0.07231  5.4969  0.002 ** 
-temperature         2    29516 0.59498 45.2292  0.001 ***
-parent:temperature  4     1822 0.03672  1.3958  0.172    
-Residual           45    14683 0.29598                   
-Total              53    49608 1.00000                   
+parent              2    37221 0.10254  5.8984  0.001 ***
+temperature         2   166961 0.45995 26.4582  0.001 ***
+parent:temperature  4    16832 0.04637  1.3336  0.136    
+Residual           45   141983 0.39114                   
+Total              53   362997 1.00000                   
 
 Temperature is significant as expected because we are analyzing temperature DEGs. Parent is also significant. This makes sense because in our global gene expression PERMANOVA and PCA above we see that global expression is different between parental phenotypes. This shows that parental separation is present in differentially expressed genes between temperatures. We will look into this further below.  
 
@@ -574,14 +575,14 @@ percentVar_DEG_temp <- round(100*attr(gPCAdata_DEG_temp, "percentVar")) #plot PC
 
 DEG_PCA_temp <- ggplot(gPCAdata_DEG_temp, aes(PC1, PC2, color=parent, shape=temperature)) + 
   geom_point(size=3) + 
-  ggtitle(expression(bold("DEGs: temperature (936 genes)")))+
+  ggtitle(expression(bold("DEGs: temperature (6,849 genes)")))+
   xlab(paste0("PC1: ",percentVar_DEG_temp[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar_DEG_temp[2],"% variance")) +
   scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
   scale_shape_manual(name="Temperature", values=c(19,17,15))+
-  geom_text(x=0, y=-8, label="p[Parent]=0.002", color="black")+
-  geom_text(x=0, y=-9.5, label="p[Temperature]=0.001", color="black")+
-  geom_text(x=0, y=-11, label="p[Interaction]=0.183", color="darkgray")+
+  geom_text(x=0, y=-5, label="p[Parent]=0.001", color="black")+
+  geom_text(x=0, y=-6.5, label="p[Temperature]=0.001", color="black")+
+  geom_text(x=0, y=-8, label="p[Interaction]=0.136", color="darkgray")+
   theme_classic() + #Set background color
   theme(panel.border = element_blank(), # Set border
                      #panel.grid.major = element_blank(), #Set major gridlines 
@@ -598,7 +599,6 @@ From this we can see very clear separation by temperature with high variance exp
 ## 2. View DEG's by Parent 
 
 ```{r, message = FALSE}
-#DEG_P <- DESeq(gdds, test="LRT", full=~temperature+parent+temperature:parent, reduced=~temperature)
 DEG_P <- DESeq(gdds, test="Wald")
 ```
 
@@ -680,6 +680,8 @@ plot(ven_parent, type = "upset")
 dev.off()
 ```
 
+There are a large number of DEGs (>400) for each comparison. There are 324 DEGs between WT and both B and NB, which I expect may be due to population/genetic effects. There are 320 DEGs between B and all other groups and 256 DEGs between NB and all other groups. 
+
 ### Plot a volcano plot for these comparisons.   
 
 B vs WT
@@ -691,8 +693,8 @@ volcano_plot_BvsWT<-EnhancedVolcano(res,
     x = 'log2FoldChange',
     y = 'pvalue',
     title = 'Bleached vs Wildtype',
-    pCutoff = 0.01,
-    FCcutoff = 1.5,
+    pCutoff = 0.05,
+    FCcutoff = 0,
     pointSize = 3.0,
     labSize = 0.0, 
     legendPosition = 'none');volcano_plot_BvsWT
@@ -707,8 +709,8 @@ volcano_plot_NBvsWT<-EnhancedVolcano(res,
     x = 'log2FoldChange',
     y = 'pvalue',
     title = 'Nonbleached vs Wildtype',
-    pCutoff = 0.01,
-    FCcutoff = 1.5,
+    pCutoff = 0.05,
+    FCcutoff = 0,
     pointSize = 3.0,
     labSize = 0.0, 
     legendPosition = 'none');volcano_plot_NBvsWT
@@ -723,8 +725,8 @@ volcano_plot_NBvsB<-EnhancedVolcano(res,
     x = 'log2FoldChange',
     y = 'pvalue',
     title = 'Nonbleached vs Bleached',
-    pCutoff = 0.01,
-    FCcutoff = 1.5,
+    pCutoff = 0.05,
+    FCcutoff = 0,
     pointSize = 3.0,
     labSize = 0.0, 
     legendPosition = 'none');volcano_plot_NBvsB
@@ -763,6 +765,8 @@ pdf("figures/rna_seq/DEG_heatmap_parent.pdf", width=15, height=20)
 pheatmap(assay(DEG_parent_vst), cluster_rows=TRUE, show_rownames=FALSE, color=inferno(10), show_colnames=TRUE, fontsize_row=3, scale="row", cluster_cols=TRUE, annotation_col=df, annotation_colors = ann_colors, labels_col=legend_names_col)
 dev.off()
 ```
+
+It may be worth examining sample R93 as an outlier. 
 
 ### Run a PERMANOVA and plot a PCA for parent comparisons.  
 
@@ -824,7 +828,7 @@ DEG_PCA_parent <- ggplot(gPCAdata_DEG_parent, aes(PC1, PC2, color=parent, shape=
   scale_shape_manual(name="Temperature", values=c(19,17,15))+
   geom_text(x=0, y=10, label="p[Parent]=0.001", color="black")+
   geom_text(x=0, y=8, label="p[Temperature]=0.001", color="black")+
-  geom_text(x=0, y=6, label="p[Interaction]=0.011", color="black")+
+  geom_text(x=0, y=6, label="p[Interaction]=0.013", color="black")+
   theme_classic() + #Set background color
   theme(panel.border = element_blank(), # Set border
                      #panel.grid.major = element_blank(), #Set major gridlines 
@@ -836,13 +840,12 @@ ggsave("figures/rna_seq/pca_DEG_parent.pdf", DEG_PCA_parent, width=8, height=4)
 ggsave("figures/rna_seq/pca_DEG_parent.png", DEG_PCA_parent, width=8, height=4)
 ```
 
-From this we can see very clear separation by parent with high variance explained by PC1 separating parent. There is significant separation between temperatures within parent with 33°C being especially different, as expected from temperature DEGs. Interestingly, gene expression of wildtype parents at 27-30°C is separated from the other parental phenotypes.  
+From this we can see very clear separation by parent driven by separation of the B group. 
 
 ## 3. View DEG's differential between parents at elevated temperatures.  
 
 Run differential expression test using LRT testing for significant genes by parent by removing the effect of temperature:parent and comparing the significance of genes in the full model (`parent + temperature + parent:temperature`) to the reduced model removing the interactive effect.   
 ```{r, message = FALSE}
-#DEG_I <- DESeq(gdds, test="LRT", full=~temperature+parent+temperature:parent, reduced=~temperature+parent)
 DEG_I <- DESeq(gdds, test="Wald")
 ```
 
@@ -850,7 +853,7 @@ Next, view genes that are uniquely differentially expressed between parental typ
 
 To do this, I will use contrast DEGs between `temperature30.parentNonbleached`  and `temperature30.parentBleached` or `temperature33.parentNonbleached`  and `temperature33.parentBleached` in the DESeq2 results. This will examine the differential effect of parental treatment at 30°C and 33°C. Each of the NB and B parental groups have been compared to the wildtype group as a reference, so, this will contrast the comparisons of wildtype-NB and wildtype-B at the 30°C/33°C treatment. This will provide us with DEG's between parent groups at temperature. This will produce a list of genes that contribute to interactive effects.   
 
-I am changing the p-value to 0.05 and the fold change to >1 for this test. This is because we have far fewer genes detected in the interaction.  
+I am changing the p-value to 0.05 for this test. 
 
 Create dataframe for each comparison and add a column for the specific contrast.  
 ```{r}
@@ -885,7 +888,7 @@ DEG_interaction<-rbind(NBvsB_30_deg, NBvsB_33_deg)
 dim(DEG_interaction)
 length(unique(DEG_interaction$gene))
 ```
-There are 102 total genes and 101 unique genes, indicating that only one is shared between 30°C and 33°C.   
+There are 102 total genes and 101 unique genes, indicating that only one is shared between B and NB at the 30°C and 33°C temperature contrasts.   
 
 ```{r}
 #DEG_interaction_unique <- anti_join(DEG_interaction, DEG_parent, by = "gene")
@@ -927,7 +930,7 @@ pdf("figures/rna_seq/upset_interaction.pdf", width=8, height=6)
 plot(upset_interaction, type = "upset")
 dev.off()
 ```
-There are 48 DEGs at 33°C and 6 at 30°C with 1 shared between the contrasts.   
+There are 94 DEGs at 33°C and 6 at 30°C with 1 shared between the contrasts.   
 
 ### Plot a volcano plot for these comparisons.   
 
@@ -1051,14 +1054,14 @@ percentVar_DEG_interaction <- round(100*attr(gPCAdata_DEG_interaction, "percentV
 
 DEG_PCA_interaction <- ggplot(gPCAdata_DEG_interaction, aes(PC1, PC2, color=parent, shape=temperature)) + 
   geom_point(size=3) + 
-  ggtitle(expression(bold("DEGs: NB vs B at 30-33°C (55 genes)")))+
+  ggtitle(expression(bold("DEGs: NB vs B at 30-33°C (101 genes)")))+
   xlab(paste0("PC1: ",percentVar_DEG_parent[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar_DEG_parent[2],"% variance")) +
   scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
   scale_shape_manual(name="Temperature", values=c(19,17,15))+
-  geom_text(x=1, y=-2.5, label="p[Parent]=0.001", color="black")+
-  geom_text(x=1, y=-3, label="p[Temperature]=0.001", color="black")+
-  geom_text(x=1, y=-3.5, label="p[Interaction]=0.001", color="black")+
+  geom_text(x=0, y=-1.5, label="p[Parent]=0.001", color="black")+
+  geom_text(x=0, y=-2, label="p[Temperature]=0.001", color="black")+
+  geom_text(x=0, y=-2.5, label="p[Interaction]=0.001", color="black")+
   theme_classic() + #Set background color
   theme(panel.border = element_blank(), # Set border
                      #panel.grid.major = element_blank(), #Set major gridlines 
@@ -1070,7 +1073,7 @@ ggsave("figures/rna_seq/pca_DEG_interaction.pdf", DEG_PCA_interaction, width=8, 
 ggsave("figures/rna_seq/pca_DEG_interaction.png", DEG_PCA_interaction, width=8, height=4)
 ```
 
-From this we can see very clear separation by parent at 33°C with little separation and higher variability in other groups/temperatures. This is what we expected to see with DEGs that are different at elevated temperatures between parent types. 
+From this we can see very clear separation by parent at 33°C with less separation and higher variability in the other groups especially at 27°C. This is what we expected to see with DEGs that are different at elevated temperatures between parent types. 
 
 # Save lists of gene counts and DEG information 
 
@@ -1137,7 +1140,7 @@ write_csv(deg_interaction_counts, "output/rna_seq/NBvsB_30-33_deg_counts.csv")
 
 ## All genes detected 
 
-List of all genes in the dataset (gvst) = 24005 genes which will serve as a reference for functional enrichment.   
+List of all genes in the dataset (gvst) - genes which will serve as a reference for functional enrichment.   
 
 ```{r}
 dim(gvst)

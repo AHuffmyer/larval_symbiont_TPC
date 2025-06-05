@@ -14,33 +14,32 @@ editor_options:
   chunk_output_type: console
 ---
 
-NEED TO CALCULATE ALL AS PERCENT CHANGE IN METRIC FROM START TO FINISH OF EACH PHASE 
-
-ADD LOW LIGHT RECOVERY FROM RLC 
-
-
-
+NEXT: Normalize NPQ in gradient to startin value? Also visualize between phases? 
 
 1. Dark 26°C  
-- Respiration (O2 Fm)
+- Respiration (O2 Fm) *we will not be using these data as they were not reliable*  
 - QY (relative quantum yield)
 - NPQ (non photochemical quenching under dark)
 
 2. Sub saturating Light 26°C 
-- Net Photosynthesis (O2 Fm)
-- Gross Photosynthesis (Net P + Respiration from Dark 26°C) (O2 Fm)
+- Net Photosynthesis (O2 Fm) *we will not be using these data as they were not reliable*  
+- Gross Photosynthesis (Net P + Respiration from Dark 26°C) (O2 Fm) *we will not be using these data as they were not reliable*  
 - NPQ (non photochemical quenching under light)
 
 3. Dark at temperature gradient 
-- Respiration (O2 Fm) under temperatures in dark 
+- Respiration (O2 Fm) under temperatures in dark *we will not be using these data as they were not reliable*  
 - QY (relative quantum yield) under temperatures in dark
 - NPQ (non photochemical quenching under dark) under temperatures in dark
 
+3. Low light recovery from RLC
+- QY (relative quantum yield)
+- NPQ (non photochemical quenching under dark)
+
 Use the last 5 min averaged for O2, QY and NPQ to give final value reached in each phase. 
 
-O2 - Fm = measured after saturating pulse. Use this metric for O2, it is measured under standardized light pulse consistent light. Lower flourescence = more O2; Higher fluorescence = less O2. O2 quenches the fluorescence. Will calculate this as the inverse to be intuitive for analyses. 
+O2 - Fm = measured after saturating pulse. Use this metric for O2, it is measured under standardized light pulse consistent light. Lower flourescence = more O2; Higher fluorescence = less O2. O2 quenches the fluorescence. Will calculate this as the inverse to be intuitive for analyses. We will not be using the O2 data due to variability and reliability.  
 
-Analyze within a protocol - shifts between phases are meaningless. 
+Analyze within a protocol - shifts between phases are not meaningful.   
 
 # Setup  
 
@@ -124,7 +123,6 @@ c_cold$Plate<-"C-Cold"
 ```
 
 ## C Warm Plate
-
 
 Read in data files for C Warm plate 
 ```{r}
@@ -322,7 +320,7 @@ Normalize each O2 observation to the first measurement at Time 0 for each well. 
 ```{r}
 df<-df%>%
   group_by(Plate, well)%>%
-  mutate(O2_Fm_norm=O2_Fm_raw-first(O2_Fm_raw))%>%
+  mutate(O2_Fm_norm=O2_Fm_raw-dplyr::first(O2_Fm_raw))%>%
   mutate(O2_Fm_norm=-1*O2_Fm_norm)
 ```
 
@@ -702,9 +700,9 @@ df<-df%>%
   dplyr::select(Plate, well, code, Time, Light, Gradient_Temperature, Symbiont, O2_Fm_norm, NPQ_norm, QY, Phase)
 ```
 
-## 1. Dark 26°C: Dark respiration, NPQ, and QY ~ Phenotype 
+## 1. Dark 26°C: NPQ, and QY ~ Phenotype 
 
-### Respiration - O2 Fm
+### Respiration - O2 Fm - we wont be analyzing these data
 
 Plot the data from the first phase (dark respiration at 26°C) faceted by parent type. 
 
@@ -964,19 +962,15 @@ Create a new master data frame to populate and add in dark NPQ data.
 master<-left_join(master, NPQ_dark26)
 ```
 
-
 ### Plot all for this phase together 
 ```{r}
-dark26_grid<-plot_grid(dark_26c_plot2, dark_26c_QY_plot2, dark_26c_NPQ_plot2, 
-                    ncol=3, nrow=1, align="vh", axis = "lr")
+dark26_grid<-plot_grid(dark_26c_QY_plot2, dark_26c_NPQ_plot2, 
+                    ncol=2, nrow=1, align="vh", axis = "lr")
 
-ggsave(filename="figures/phenoplate/1_dark_26c_metrics.jpeg", dark26_grid, width=15, height=5)
+ggsave(filename="figures/phenoplate/1_dark_26c_metrics.jpeg", dark26_grid, width=10, height=5)
 ```
 
-
-
-
-## 2. Light 26°C: Net photosynthesis, Gross photosynthesis, NPQ, and QY ~ Phenotype
+## 2. Light 26°C: NPQ, and QY ~ Phenotype
 
 ### Net photosynthesis - O2 Fm
 
@@ -1223,13 +1217,13 @@ master<-left_join(master, NPQ_light26)
 
 ### Plot all for this phase together 
 ```{r}
-light26_grid<-plot_grid(light_26c_plot2, light_26c_QY_plot2, light_26c_NPQ_plot2, 
-                    ncol=3, nrow=1, align="vh", axis = "lr")
+light26_grid<-plot_grid(light_26c_QY_plot2, light_26c_NPQ_plot2, 
+                    ncol=2, nrow=1, align="vh", axis = "lr")
 
-ggsave(filename="figures/phenoplate/2_light_26c_metrics.jpeg", light26_grid, width=15, height=5)
+ggsave(filename="figures/phenoplate/2_light_26c_metrics.jpeg", light26_grid, width=10, height=5)
 ```
 
-## 3. Dark [Temperature Gradient]: Light enhanced respiration, NPQ, and QY ~ Temperature and phenotype
+## 3. Dark [Temperature Gradient]: NPQ, and QY ~ Temperature and phenotype
 
 ### Respiration (light enhanced) - O2 Fm
 
@@ -1451,7 +1445,7 @@ NPQ_gradient_plot2<-NPQ_gradient%>%
   geom_smooth(aes(group=Symbiont, fill=Symbiont, color=Symbiont), linewidth=2, alpha=0.1)+
   xlab("Temperature")+
   ylab(expression(bold(paste("Non-Photochemical Quenching"))))+
-  ggtitle(expression(bold(paste("NPQ Temp. Gradient"))))+
+  ggtitle(expression(bold(paste("NPQ Dark Temp. Gradient"))))+
   geom_text(x=30, y=0.75, label="p[temp]<0.001", size=6, color="black")+
   geom_text(x=30, y=0.70, label="p[parent]<0.001", size=6, color="black")+
   geom_text(x=30, y=0.65, label="p[interaction]<0.001", size=6, color="black")+
@@ -1493,16 +1487,135 @@ master<-left_join(master, NPQ_gradient)
 
 ### Plot all for this phase together 
 ```{r}
-gradient_grid<-plot_grid(LEDR_gradient_plot2, QY_gradient_plot2, NPQ_gradient_plot2, 
-                    ncol=3, nrow=1, axis = "lr", rel_widths=c(1,1,1.25))
+gradient_grid<-plot_grid(QY_gradient_plot2, NPQ_gradient_plot2, 
+                    ncol=2, nrow=1, axis = "lr", rel_widths=c(1,1,1.25))
 
 ggsave(filename="figures/phenoplate/3_dark_gradient_metrics.jpeg", gradient_grid, width=15, height=5)
 ```
 
-# Output master dataframe
+## 4. Low light recovery at 26°C: NPQ, and QY ~ Phenotype 
+
+### Relative quantum yield - QY
+
+Plot the data from the low light recovery phase (at 26°C) faceted by parent type. 
+
 ```{r}
+low_light_26c_QY_plot2<-df%>%
+  filter(Phase=="Low Light 26C")%>%
+  group_by(Symbiont)%>%
+  summarise(mean=mean(QY, na.rm=TRUE), se=sd(QY, na.rm=TRUE)/sqrt(length(QY)))%>%
+  
+  ggplot(aes(x=Symbiont, y=mean, colour=Symbiont, fill=Symbiont))+
+  geom_point(size=4)+
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.1)+
+  xlab("Parental Phenotype")+
+  ylab(expression(bold(paste("Relative Quantum Yield"))))+
+  ggtitle(expression(bold(paste("QY Low Light 26°C"))))+
+  geom_text(x=2, y=0.2, label="p=0.751", size=6, color="black")+
+  #geom_text(x=1, y=0.66, label="b", size=6, color="black")+
+  #geom_text(x=2, y=0.65, label="b", size=6, color="black")+
+  #geom_text(x=3, y=0.625, label="a", size=6, color="black")+
+  scale_colour_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
+  scale_fill_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
+  scale_x_discrete(labels=c("Bleached", "Nonbleached", "Wildtype"))+
+  ylim(0.1, 0.5)+
+  theme_classic()+
+  theme(legend.position="none", 
+        text=element_text(size=14, color="black"), 
+        axis.title=element_text(size=12, color="black", face="bold"), 
+        title = element_text(size=12, color="black", face="bold")); low_light_26c_QY_plot2
+```
+
+Run ANOVA model on these values. 
+```{r}
+model<-df%>%
+  filter(Phase=="Low Light 26C")%>%
+  
+  aov(QY~Symbiont, data=.)
+
+summary(model)
+
+emm<-emmeans(model, ~Symbiont)
+pairs(emm)
+cld(emm, Letters=letters)
+```
+
+### Non-photochemical quenching (NPQ)
+
+Plot the data from the low light recovery phase (at 26°C) faceted by parent type. 
+
+```{r}
+low_light_26c_NQY_plot2<-df%>%
+  filter(Phase=="Low Light 26C")%>%
+  group_by(Symbiont)%>%
+  summarise(mean=mean(NPQ_norm, na.rm=TRUE), se=sd(NPQ_norm, na.rm=TRUE)/sqrt(length(NPQ_norm)))%>%
+  
+  ggplot(aes(x=Symbiont, y=mean, colour=Symbiont, fill=Symbiont))+
+  geom_point(size=4)+
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.1)+
+  xlab("Parental Phenotype")+
+  ylab(expression(bold(paste("Non-Photochemical Quenching"))))+
+  ggtitle(expression(bold(paste("NPQ Low Light 26°C"))))+
+  geom_text(x=2, y=0.2, label="p=0.001", size=6, color="black")+
+  geom_text(x=1, y=0.66, label="ab", size=6, color="black")+
+  geom_text(x=2, y=0.8, label="b", size=6, color="black")+
+  geom_text(x=3, y=0.55, label="a", size=6, color="black")+
+  scale_colour_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
+  scale_fill_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
+  scale_x_discrete(labels=c("Bleached", "Nonbleached", "Wildtype"))+
+  ylim(0.1, 0.9)+
+  theme_classic()+
+  theme(legend.position="none", 
+        text=element_text(size=14, color="black"), 
+        axis.title=element_text(size=12, color="black", face="bold"), 
+        title = element_text(size=12, color="black", face="bold")); low_light_26c_NQY_plot2
+```
+
+Run ANOVA model on these values. 
+```{r}
+model<-df%>%
+  filter(Phase=="Low Light 26C")%>%
+  
+  aov(NPQ_norm~Symbiont, data=.)
+
+summary(model)
+
+emm<-emmeans(model, ~Symbiont)
+pairs(emm)
+cld(emm, Letters=letters)
+```
+
+Create a new master data frame to populate and add in dark QY data. 
+```{r}
+low_light<-df%>%
+  filter(Phase=="Low Light 26C")%>%
+  group_by(Plate, well, code, Symbiont, Gradient_Temperature)%>%
+  rename(QYlowlight26=QY, NPQlowlight26=NPQ_norm)%>%
+  dplyr::select(!O2_Fm_norm)
+
+master<-left_join(master, low_light)
+```
+
+### Plot all for this phase together 
+```{r}
+lowlight26_grid<-plot_grid(low_light_26c_QY_plot2, low_light_26c_NQY_plot2, 
+                    ncol=2, nrow=1, align="vh", axis = "lr")
+
+ggsave(filename="figures/phenoplate/4_lowlight_26c_metrics.jpeg", lowlight26_grid, width=10, height=5)
+```
+
+# Output master dataframe
+
+Remove oxygen data, since we are not using these data.  
+
+```{r}
+master<-master%>%
+  dplyr::select(!c(Rdark26, LEDRgradient, NPlight26))
+
 write_csv(file="output/phenoplate/metrics_master.csv", master)
 ```
+
+
 
 
 
