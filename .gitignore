@@ -62,3 +62,6 @@ output/pr_sdr/PhotosynthesisPlots
 #raw data files that are too big for Git 
 data/lipids_metabolites/lipidomics/raw-data
 data/its2/sequences
+
+#large photos
+data/size_cells/images
