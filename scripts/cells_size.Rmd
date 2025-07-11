@@ -13,7 +13,7 @@ output:
 editor_options: 
   chunk_output_type: console
 ---
-This script analyzes and plots data for symbiont cell counts. 
+This script analyzes and plots data for symbiont cell counts and larval size. 
 
 # Set up 
 
@@ -154,4 +154,74 @@ summary(model)
 qqPlot(residuals(model))
 ```
 
-No significant difference in cell density by parent over time.     
+No significant difference in cell density by parent over time.  
+
+# Larval Size 
+
+```{r}
+size <- read_csv("data/size_cells/larval_size.csv")%>%select(!Notes)%>%select(!Larvae.ID)
+```
+
+Calculate size as prolate spheroid (Huffmyer et al. 2025). 
+
+V = 4 𝜋𝑎^2𝑏, where a is 1/2 width and b is 1/2 length
+
+```{r}
+size$volume <- 4 * pi * (0.5*size$Width.mm)^2 * (0.5 * size$Length.mm)
+```
+
+```{r}
+hist(size$volume)
+```
+
+Values are in the same range as Huffmyer et al. 2025 for larval stages.    
+
+Summarise as a mean for each tube. 
+
+```{r}
+size<-size%>%
+  group_by(Tube.ID)%>%
+  dplyr::summarise(volume = mean(volume))
+```
+
+Merge into data frame. 
+
+```{r}
+merged<-left_join(df_cells, size)
+```
+
+Plot size. 
+
+```{r}
+plot2<-merged %>%
+  ggplot(aes(x = as.character(Date), y = volume, color = Parent)) +
+  labs(x = "Date",y = "Larval Volume") +
+  scale_color_manual(values=c("orange", "red4", "darkgray"))+
+  geom_jitter(width = 0.05) + # Plot all points
+  geom_smooth(aes(group=1), method="lm", colour="black", se=TRUE)+
+  theme_classic();plot2
+
+ggsave(plot2, filename="figures/cells_size/volume_larvae.png", width=6, height=5)
+```
+
+# Size normalize cell densities 
+
+Size normalize cell density to larval size. 
+
+```{r}
+merged$cells.mm3<-merged$cells.larvae/merged$volume
+```
+
+Plot size normalized densities. 
+
+```{r}
+plot3<-merged %>%
+  ggplot(aes(x = as.character(Date), y = cells.mm3, color = Parent)) +
+  labs(x = "Date",y = "Size-Normalized Cell Density (cells mm3)") +
+  scale_color_manual(values=c("orange", "red4", "darkgray"))+
+  geom_jitter(width = 0.05) + # Plot all points
+  geom_smooth(aes(group=1), method="lm", colour="black", se=TRUE)+
+  theme_classic();plot3
+
+ggsave(plot3, filename="figures/cells_size/cells_volume.png", width=6, height=5)
+```
