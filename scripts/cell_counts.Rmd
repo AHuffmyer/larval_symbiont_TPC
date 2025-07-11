@@ -1,0 +1,157 @@
+---
+title: Cell density analysis
+author: "AS Huffmyer"
+date: '2025'
+output:
+  html_document:
+    code_folding: hide
+    toc: yes
+    toc_depth: 6
+    toc_float: yes
+  pdf_document:
+    keep_tex: yes
+editor_options: 
+  chunk_output_type: console
+---
+This script analyzes and plots data for symbiont cell counts. 
+
+# Set up 
+
+```{r}
+if (!require("dplyr")) install.packages("dplyr")
+if (!require("readr")) install.packages("readr")
+if (!require("stringr")) install.packages("stringr")
+if (!require("gridExtra")) install.packages("gridExtra")
+if (!require("grid")) install.packages("grid")
+if (!require("ggplot2")) install.packages("ggplot2")
+if (!require("lattice")) install.packages("lattice")
+if (!require("Rmisc")) install.packages("Rmisc")
+if (!require("ggpubr")) install.packages("ggpubr")
+if (!require("lsmeans")) install.packages("lsmeans")
+if (!require("tidyverse")) install.packages("tidyverse")
+if (!require("car")) install.packages("car")
+if (!require("ggpubr")) install.packages("ggpubr")
+if (!require("kableExtra")) install.packages("kableExtra")
+if (!require("ggcorrplot")) install.packages("ggcorrplot")
+if (!require("corrr")) install.packages("corrr")
+if (!require("GGally")) install.packages("GGally")
+if (!require("cowplot")) install.packages("cowplot")
+
+library(dplyr)
+library(readr)
+library(stringr)
+library(gridExtra)
+library(grid)
+library(ggplot2)
+library(lattice)
+library(Rmisc)
+library(ggpubr)
+library(lsmeans)
+library(car)
+library(kableExtra)
+library(ggcorrplot)
+library(corrr)
+library(GGally)
+library(cowplot)
+library(tidyverse)
+```
+
+# Cell Density 
+
+## Load data 
+
+Import data  
+```{r}
+sym_counts <- read_csv("data/size_cells/cell-density.csv")%>%select(!Notes)
+numbers <- read_csv("data/size_cells/larval_counts.csv")
+
+data <- left_join(sym_counts, numbers)
+head(data)
+```
+
+## Calculations 
+
+Calculate total cells.  
+```{r}
+# Calculate mean counts for each sample
+df_cells <- data %>%
+  dplyr::select(Tube.ID, Squares_counted, Resuspension.Vol.uL, Number.Larvae, Parent, Date,  matches("Count[1-6]")) %>%
+  gather("rep", "count", -Tube.ID, -Squares_counted, -Resuspension.Vol.uL, -Number.Larvae, -Date, -Parent) %>%
+  group_by(Tube.ID, Squares_counted, Number.Larvae, Parent, Date, Resuspension.Vol.uL) %>%
+  dplyr::summarise(mean_count = mean(count, na.rm = TRUE))
+
+# Normalize counts by homogenate volume (ul)
+df_cells <- df_cells %>%
+  mutate(cells.mL = (mean_count * 10000) / Squares_counted,
+         cells = cells.mL * (Resuspension.Vol.uL/1000))
+```
+
+This generated the total number of cells in each tube. 
+
+## Normalize to number of larvae 
+
+Divide the total number of cells by the resuspension volume to obtain cells per uL 
+
+```{r}
+df_cells$cells.larvae=df_cells$cells/df_cells$Number.Larvae
+```
+
+## Visualize data   
+
+Plot cells per unit protein data with mean and standard error.   
+
+```{r}
+plot1<-df_cells %>%
+  ggplot(aes(x = as.character(Date), y = cells.larvae, color = Parent)) +
+  labs(x = "Date",y = "Symbiont Cells per Larva") +
+  scale_color_manual(values=c("orange", "red4", "darkgray"))+
+  geom_jitter(width = 0.05) + # Plot all points
+  geom_smooth(aes(group=1), method="lm", colour="black", se=TRUE)+
+  theme_classic();plot1
+
+ggsave(plot1, filename="figures/cells_size/cell_density_larva.png", width=6, height=5)
+```
+
+Values are within range of Huffmyer et al. 2025 (Current Biology) for cells per individual in Montipora capitata at similar ages.  
+
+Present means and standard error of each group in a table.  
+
+```{r}
+df_cells%>%
+  group_by(Parent, Date)%>%
+  dplyr::summarise(n=length(cells.larvae),
+            Mean=format(round(mean(cells.larvae), 0), 0), 
+            SE=format(round(sd(cells.larvae)/sqrt(length(cells.larvae)),0),0))%>%
+  kbl(caption="Descriptive statistics of Symbiodiniaceae cell densities per larva")%>%
+  kable_classic(full_width=FALSE, html_font="Arial")%>%
+  row_spec(0, bold = TRUE) 
+```
+
+Plot with mean and standard errors.  
+
+```{r}
+df_cells %>%
+  group_by(Parent, Date)%>%
+  dplyr::summarise(mean=mean(cells.larvae), se=(sd(cells.larvae)/sqrt(length(cells.larvae))))%>%
+  
+  ggplot(aes(x = Date, y = mean, color = Parent)) +
+  labs(x = "",y = "Cell Density per Larva") +
+  scale_color_manual(values=c("orange", "red4", "darkgray"))+
+  geom_point()+
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.1)+
+  theme_classic()
+```
+
+Variable over time but with a general increase in densities. 
+
+## Statistical analysis  
+
+Run anova on cells per larvae by parent and date    
+```{r}
+model<-aov(cells.larvae ~ Parent * Date, data=df_cells)
+summary(model)
+
+qqPlot(residuals(model))
+```
+
+No significant difference in cell density by parent over time.     
