@@ -179,6 +179,24 @@ Values are in the same range as Huffmyer et al. 2025 for larval stages.
 Summarise as a mean for each tube. 
 
 ```{r}
+size<-left_join(size, numbers)
+```
+
+Plot individual sizes. 
+```{r}
+plot2<-size %>%
+  ggplot(aes(x = as.character(Date), y = volume, color = Parent)) +
+  labs(x = "Date",y = "Larval Volume") +
+  scale_color_manual(values=c("orange", "red4", "darkgray"))+
+  geom_boxplot(aes(group=Parent))+
+  geom_point(position=position_jitterdodge(0.5))+
+  geom_smooth(aes(group=Parent), method="lm", colour="black", se=FALSE)+
+  theme_classic();plot2
+
+ggsave(plot2, filename="figures/cells_size/volume_larvae.png", width=6, height=5)
+```
+
+```{r}
 size<-size%>%
   group_by(Tube.ID)%>%
   dplyr::summarise(volume = mean(volume))
@@ -193,15 +211,13 @@ merged<-left_join(df_cells, size)
 Plot size. 
 
 ```{r}
-plot2<-merged %>%
+plot2b<-merged %>%
   ggplot(aes(x = as.character(Date), y = volume, color = Parent)) +
   labs(x = "Date",y = "Larval Volume") +
   scale_color_manual(values=c("orange", "red4", "darkgray"))+
   geom_jitter(width = 0.05) + # Plot all points
   geom_smooth(aes(group=1), method="lm", colour="black", se=TRUE)+
-  theme_classic();plot2
-
-ggsave(plot2, filename="figures/cells_size/volume_larvae.png", width=6, height=5)
+  theme_classic();plot2b
 ```
 
 # Size normalize cell densities 
@@ -225,3 +241,6 @@ plot3<-merged %>%
 
 ggsave(plot3, filename="figures/cells_size/cells_volume.png", width=6, height=5)
 ```
+
+
+
