@@ -208,7 +208,7 @@ Merge into data frame.
 merged<-left_join(df_cells, size)
 ```
 
-Plot size. 
+Plot size summarized by mean for each tube. 
 
 ```{r}
 plot2b<-merged %>%
