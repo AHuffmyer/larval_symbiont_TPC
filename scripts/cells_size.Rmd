@@ -94,6 +94,8 @@ Divide the total number of cells by the resuspension volume to obtain cells per 
 
 ```{r}
 df_cells$cells.larvae=df_cells$cells/df_cells$Number.Larvae
+
+df_cells$Date<-as.character(df_cells$Date)
 ```
 
 ## Visualize data   
@@ -105,8 +107,9 @@ plot1<-df_cells %>%
   ggplot(aes(x = as.character(Date), y = cells.larvae, color = Parent)) +
   labs(x = "Date",y = "Symbiont Cells per Larva") +
   scale_color_manual(values=c("orange", "red4", "darkgray"))+
-  geom_jitter(width = 0.05) + # Plot all points
-  geom_smooth(aes(group=1), method="lm", colour="black", se=TRUE)+
+  geom_boxplot(aes(group=interaction(Date,Parent)), position=position_dodge())+
+  geom_point(position=position_jitterdodge())+
+  #geom_smooth(aes(group=Parent), method="lm", se=FALSE)+
   theme_classic();plot1
 
 ggsave(plot1, filename="figures/cells_size/cell_density_larva.png", width=6, height=5)
@@ -148,13 +151,13 @@ Variable over time but with a general increase in densities.
 
 Run anova on cells per larvae by parent and date    
 ```{r}
-model<-aov(cells.larvae ~ Parent * Date, data=df_cells)
+model<-aov(sqrt(cells.larvae) ~ Parent * Date, data=df_cells)
 summary(model)
 
 qqPlot(residuals(model))
 ```
 
-No significant difference in cell density by parent over time.  
+p=0.05 for parent x date, no effect of parent on cells per larvae
 
 # Larval Size 
 
@@ -180,12 +183,14 @@ Summarise as a mean for each tube.
 
 ```{r}
 size<-left_join(size, numbers)
+
+size$Date<-as.character(size$Date)
 ```
 
 Plot individual sizes. 
 ```{r}
 plot2<-size %>%
-  ggplot(aes(x = as.character(Date), y = volume, color = Parent)) +
+  ggplot(aes(x = Date, y = volume, color = Parent)) +
   labs(x = "Date",y = "Larval Volume") +
   scale_color_manual(values=c("orange", "red4", "darkgray"))+
   geom_boxplot(aes(group=interaction(Date,Parent)), position=position_dodge())+
@@ -195,6 +200,16 @@ plot2<-size %>%
 
 ggsave(plot2, filename="figures/cells_size/volume_larvae.png", width=6, height=5)
 ```
+
+Analyze size effects. 
+```{r}
+model<-aov(sqrt(volume) ~ Parent * Date, data=size)
+summary(model)
+
+qqPlot(residuals(model))
+```
+
+There is a significant effect of parent x date. 
 
 ```{r}
 size<-size%>%
@@ -206,18 +221,6 @@ Merge into data frame.
 
 ```{r}
 merged<-left_join(df_cells, size)
-```
-
-Plot size summarized by mean for each tube. 
-
-```{r}
-plot2b<-merged %>%
-  ggplot(aes(x = as.character(Date), y = volume, color = Parent)) +
-  labs(x = "Date",y = "Larval Volume") +
-  scale_color_manual(values=c("orange", "red4", "darkgray"))+
-  geom_jitter(width = 0.05) + # Plot all points
-  geom_smooth(aes(group=1), method="lm", colour="black", se=TRUE)+
-  theme_classic();plot2b
 ```
 
 # Size normalize cell densities 
@@ -232,15 +235,23 @@ Plot size normalized densities.
 
 ```{r}
 plot3<-merged %>%
-  ggplot(aes(x = as.character(Date), y = cells.mm3, color = Parent)) +
-  labs(x = "Date",y = "Size-Normalized Cell Density (cells mm3)") +
+  ggplot(aes(x = Date, y = cells.mm3, color = Parent)) +
+  labs(x = "Date",y = "Size-Normalized Cell Density (cells mm -3") +
   scale_color_manual(values=c("orange", "red4", "darkgray"))+
-  geom_jitter(width = 0.05) + # Plot all points
-  geom_smooth(aes(group=1), method="lm", colour="black", se=TRUE)+
+  geom_boxplot(aes(group=interaction(Date,Parent)), position=position_dodge())+
+  geom_point(position=position_jitterdodge())+
+  #geom_smooth(aes(group=Parent), method="lm", se=FALSE)+
   theme_classic();plot3
 
 ggsave(plot3, filename="figures/cells_size/cells_volume.png", width=6, height=5)
 ```
 
+Analyze size-normalized cell density effects. 
+```{r}
+model<-aov(sqrt(cells.mm3) ~ Parent * Date, data=merged)
+summary(model)
 
+qqPlot(residuals(model))
+```
 
+Effect of date only, no effect of parent on symbiont densities. Stable symbiont densities. 
