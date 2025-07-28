@@ -105,10 +105,11 @@ Plot cells per unit protein data with mean and standard error.
 ```{r}
 plot1<-df_cells %>%
   ggplot(aes(x = as.character(Date), y = cells.larvae, color = Parent)) +
-  labs(x = "Date",y = "Symbiont Cells per Larva") +
+  labs(x = "Date") +
+  ylab(expression(paste("Symbiont cell density (cells larva" ^-1, ")")))+
   scale_color_manual(values=c("orange", "red4", "darkgray"))+
-  geom_boxplot(aes(group=interaction(Date,Parent)), position=position_dodge())+
-  geom_point(position=position_jitterdodge())+
+  geom_boxplot(aes(group=interaction(Date,Parent)), position=position_dodge(0.8))+
+  geom_point(position=position_jitterdodge(0.1))+
   #geom_smooth(aes(group=Parent), method="lm", se=FALSE)+
   theme_classic();plot1
 
@@ -193,12 +194,12 @@ plot2<-size %>%
   ggplot(aes(x = Date, y = volume, color = Parent)) +
   labs(x = "Date",y = "Larval Volume") +
   scale_color_manual(values=c("orange", "red4", "darkgray"))+
-  geom_boxplot(aes(group=interaction(Date,Parent)), position=position_dodge())+
-  geom_point(position=position_jitterdodge())+
+  geom_boxplot(aes(group=interaction(Date,Parent)), position=position_dodge(0.8))+
+  geom_point(position=position_jitterdodge(0.1))+
   #geom_smooth(aes(group=Parent), method="lm", se=FALSE)+
   theme_classic();plot2
 
-ggsave(plot2, filename="figures/cells_size/volume_larvae.png", width=6, height=5)
+ggsave(plot2, filename="figures/cells_size/volume_larvae.png", width=7, height=5)
 ```
 
 Analyze size effects. 
@@ -210,6 +211,12 @@ qqPlot(residuals(model))
 ```
 
 There is a significant effect of parent x date. 
+
+```{r}
+emm<-emmeans(model, ~Parent|Date)
+pairs(emm)
+```
+
 
 ```{r}
 size<-size%>%
@@ -236,10 +243,11 @@ Plot size normalized densities.
 ```{r}
 plot3<-merged %>%
   ggplot(aes(x = Date, y = cells.mm3, color = Parent)) +
-  labs(x = "Date",y = "Size-Normalized Cell Density (cells mm -3") +
+  labs(x = "Date") +
+  ylab(expression(paste("Symbiont cell density (cells mm" ^-3, ")")))+
   scale_color_manual(values=c("orange", "red4", "darkgray"))+
-  geom_boxplot(aes(group=interaction(Date,Parent)), position=position_dodge())+
-  geom_point(position=position_jitterdodge())+
+  geom_boxplot(aes(group=interaction(Date,Parent)), position=position_dodge(0.8))+
+  geom_point(position=position_jitterdodge(0.1))+
   #geom_smooth(aes(group=Parent), method="lm", se=FALSE)+
   theme_classic();plot3
 
