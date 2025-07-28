@@ -177,12 +177,14 @@ temp_plot2a<-tidbits%>%
   
   filter(DateTime < as.POSIXct("2023-06-24 19:45:00"))%>%
   
+  mutate(DateTime = DateTime + (3 * 60 * 60))%>%
+  
   ggplot(aes(x=DateTime, y=temp.C, colour=group))+
   geom_point()+
-  scale_colour_manual(values=c("red", "blue", "lightblue"), name="Temperature")+
+  scale_colour_manual(values=c("darkred", "red", "blue"), name="Temperature")+
   ylab("Temperature (°C)")+
   xlab("Time")+
-  ylim(26,34)+
+  ylim(23,35)+
   ggtitle("2023-06-24")+
   theme_classic()+
   theme(
@@ -200,18 +202,20 @@ temp_plot2b<-tidbits%>%
   filter(DateTime > as.POSIXct("2023-06-24 13:00:00"))%>%
   filter(!c(DateTime > as.POSIXct("2023-06-24 19:45:00") & DateTime < as.POSIXct("2023-06-27 8:00:00")))%>%
   
-  filter(DateTime > as.POSIXct("2023-06-27 08:00:00"))%>%
+  filter(DateTime > as.POSIXct("2023-06-27 09:00:00") & DateTime < as.POSIXct("2023-06-27 15:00:00"))%>%
+  
+  mutate(DateTime = DateTime + (3 * 60 * 60))%>%
   
   ggplot(aes(x=DateTime, y=temp.C, colour=group))+
   geom_point()+
-  scale_colour_manual(values=c("red", "blue", "lightblue"), name="Temperature")+
+  scale_colour_manual(values=c("darkred", "red", "blue"), name="Temperature")+
   ylab("Temperature (°C)")+
   xlab("Time")+
-  ylim(26,34)+
+  ylim(22,35)+
   ggtitle("2023-06-27")+
   theme_classic()+
   theme(
-    axis.text=element_text(color="black", size=11),
+    axis.text=element_text(color="black", size=11, angle=45, hjust=1),
     axis.title=element_text(color="black", size=14),
     legend.position="none"
   ); temp_plot2b
@@ -221,12 +225,10 @@ Combine the plots from each day.
 ```{r}
 incubation_plots<-plot_grid(temp_plot2a, temp_plot2b, align="vh")
 
-ggsave("figures/environmental/incubation_temps.png", incubation_plots, width=8, height=4, dpi=300)
+ggsave("figures/environmental/incubation_temps.png", temp_plot2b, width=5, height=4, dpi=300)
 ```
 
-
-
-Calculate mean temperature for each treatment      
+Calculate mean temperature for each treatment from final incubation.      
 ```{r}
 tidbits %>%
   filter(project=="larvae_cd")%>%
@@ -235,9 +237,11 @@ tidbits %>%
   filter(DateTime > as.POSIXct("2023-06-24 13:00:00"))%>%
   filter(!c(DateTime > as.POSIXct("2023-06-24 19:45:00") & DateTime < as.POSIXct("2023-06-27 8:00:00")))%>%
   
+  filter(DateTime > as.POSIXct("2023-06-27 09:00:00") & DateTime < as.POSIXct("2023-06-27 15:00:00"))%>%
+  
   mutate(day = floor_date(DateTime, "day")) %>%
            group_by(tank, group) %>%
-           summarise(mean = mean(temp.C))#%>%
+           summarise(mean = mean(temp.C), se=sd(temp.C)/sqrt(3))#%>%
          # group_by(group) %>%
           # summarise(mean=mean(mean))
 ```

@@ -137,8 +137,8 @@ daily_treatment_summary<-daily_calc.long %>%
   filter(group %in% c("Cladocopium", "Mixed", "Wildtype"))%>%
   
   ggplot(aes(x=group, y=value, colour=group))+
-  geom_point()+
   geom_boxplot()+
+    geom_point()+
   scale_colour_manual(name="Parental \nPhenotype", values=c("orange", "brown4", "gray"), labels=c("Bleached", "Nonbleached", "Wildtype")) +
   scale_x_discrete(name="Parental Phenotype", labels=c("Bleached", "Nonbleached", "Wildtype")) +
   xlab("Date")+
