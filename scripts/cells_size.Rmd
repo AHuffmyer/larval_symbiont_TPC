@@ -156,6 +156,10 @@ model<-aov(sqrt(cells.larvae) ~ Parent * Date, data=df_cells)
 summary(model)
 
 qqPlot(residuals(model))
+leveneTest(sqrt(cells.larvae) ~ Parent*Date, data=df_cells)
+
+kruskal.test(sqrt(cells.larvae) ~ Parent, data=df_cells)
+kruskal.test(sqrt(cells.larvae) ~ Date, data=df_cells)
 ```
 
 p=0.05 for parent x date, no effect of parent on cells per larvae
@@ -208,6 +212,7 @@ model<-aov(sqrt(volume) ~ Parent * Date, data=size)
 summary(model)
 
 qqPlot(residuals(model))
+leveneTest(sqrt(volume) ~ Parent*Date, data=size)
 ```
 
 There is a significant effect of parent x date. 
@@ -260,6 +265,7 @@ model<-aov(sqrt(cells.mm3) ~ Parent * Date, data=merged)
 summary(model)
 
 qqPlot(residuals(model))
+leveneTest(sqrt(cells.mm3) ~ Parent*Date, data=merged)
 ```
 
 Effect of date only, no effect of parent on symbiont densities. Stable symbiont densities. 

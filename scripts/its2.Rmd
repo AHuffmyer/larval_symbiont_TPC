@@ -1,0 +1,622 @@
+---
+title: ITS2 sequence analysis
+author: "AS Huffmyer"
+date: '2025'
+output:
+  html_document:
+    toc: yes
+    toc_depth: 6
+    toc_float: yes
+  pdf_document:
+    keep_tex: yes
+editor_options: 
+  chunk_output_type: console
+---
+
+Set up workspace, set options, and load required packages.    
+```{r}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+ITS2 strain variation data analysis based on scripts from Shayle Matsuda, Shedd Aquarium.   
+
+```{r}
+if (!require("tidyverse")) install.packages("tidyverse")
+if (!require("readxl")) install.packages("readxl")
+if (!require("phyloseq")) BiocManager::install("phyloseq")
+if (!require("janitor")) install.packages("janitor")
+if (!require("writexl")) install.packages("writexl")
+#if (!require("microViz")) BiocManager::install("microViz")
+
+library("readxl")
+library("phyloseq")
+library("janitor")
+library("writexl")
+library("ggplot2")
+library('cowplot')
+library("janitor")
+library("car")
+library("phyloseq")
+library("stringr")
+library("ape")
+library("DESeq2")
+library("microViz")
+library("vegan")
+library("ComplexHeatmap")
+library("tidyverse")
+library("dplyr")
+library(emmeans)
+library(readxl)
+```
+
+# **Prepare data**  
+
+Load metadata.  
+```{r}
+#create metadata and load
+metadata <- read.csv("data/rna_seq/sample_rnaseq_metadata.csv", header = TRUE, sep = ",")%>%dplyr::select(sample, temperature, parent)
+
+keep<-c("R55", "R56", "R60", "R57", "R58", "R59", "R65", "R72", "R71", "R68", "R70", "R69", "R67", "R63", "R66", "R62", "R64", "R61")
+
+metadata <- metadata %>%
+  filter(sample %in% keep)
+
+rownames(metadata) <- metadata$sample
+
+metadata <- as.matrix(metadata)
+metadata <- sample_data(data.frame(metadata))
+```
+
+Load the data for strain level information.  
+
+```{r}
+#gather the taxonomy names  
+taxnames <- read_tsv(
+  file  = "data/its2/symportal/20240708T094517_huffmar1_20240709/post_med_seqs/486_20240709T012802_DBV_20240709T110145.seqs.absolute.abund_only.txt",
+  n_max = 0) %>%
+  select(-1) %>%
+  names(.)
+
+#extract clade letter  
+tax0 <- data_frame(
+  DIV = taxnames,
+  clade = str_extract(DIV, "[A-Z]")
+)
+
+tax1 <- as.matrix(tax0)
+rownames(tax1) <- tax0$DIV
+tax <- tax_table(tax1)
+
+otu0 <- read_tsv(
+  file  = "data/its2/symportal/20240708T094517_huffmar1_20240709/post_med_seqs/486_20240709T012802_DBV_20240709T110145.seqs.absolute.abund_and_meta.txt") %>%
+  select(-1, )
+
+otu1 <- as.matrix(otu0[, 39:116])
+rownames(otu1) <- otu0$sample_name
+otu <- otu_table(otu1, taxa_are_rows = FALSE)
+
+coralDIV <- phyloseq(otu, tax, metadata)
+coralDIV
+```
+
+# **Build DIV Data**  
+
+View the number of sequence counts in our dataset.   
+```{r}
+samps<-read_tsv(file  = "data/its2/symportal/20240708T094517_huffmar1_20240709/post_med_seqs/486_20240709T012802_DBV_20240709T110145.seqs.absolute.abund_and_meta.txt")%>%select(post_taxa_id_absolute_symbiodiniaceae_seqs, sample_name)
+
+hist(samps$post_taxa_id_absolute_symbiodiniaceae_seqs, breaks=20)
+
+samps
+```
+We have >20,000 sequences for all of our samples except one (R70) which is at 3,000. We may remove this sample in the analysis.  
+
+Plot tree.  
+```{r}
+random_tree = rtree(ntaxa(coralDIV), rooted=TRUE, tip.label=taxa_names(coralDIV))
+plot(random_tree)
+```
+
+Merge phyloseq data. 
+```{r}
+phylo_coral_DIV = merge_phyloseq(coralDIV, metadata, random_tree)
+phylo_coral_DIV
+```
+
+Filter out samples with low numbers in groups (n=1 per group) from phyloseq object.  
+```{r}
+phylo_coral_DIV<-ps_filter(phylo_coral_DIV, sample != "R70")
+phylo_coral_DIV<-ps_arrange(phylo_coral_DIV, parent)
+```
+
+We now have 17 samples. 
+
+Now build a tree with the combined data.  
+```{r}
+plot_tree(phylo_coral_DIV, color="parent", label.tips="taxa_names", ladderize="left", plot.margin=0.3)
+```
+
+Plot a heatmap.  
+
+```{r}
+plot_heatmap(phylo_coral_DIV, "NMDS", "bray", "parent", low="#66CCFF", high="#000033", na.value="white")
+```
+
+Assign object to a shorter name. 
+
+```{r}
+GP1 = phylo_coral_DIV
+GP1
+```
+
+Display smaple sequencing depth. 
+```{r}
+min(sample_sums(GP1))
+```
+
+Transform to relative abundance and subsample to even sampling depth to minimum count in dataset (13,163).  
+```{r}
+GP1_rare<-rarefy_even_depth(GP1, sample.size = min(sample_sums(GP1)),
+  rngseed = TRUE, replace = TRUE, trimOTUs = TRUE, verbose = TRUE)
+```
+
+View sample sequencing depth again after subsampling. 
+```{r}
+sample_sums(GP1_rare)
+```
+
+All samples are now at 13,163 sequences. No OTU's removed. 
+
+Now transform counts to relative abundance expressed as a proportion.    
+
+```{r}
+#GP1_rare = transform_sample_counts(GP1_rare, function(x) 100 * x/sum(x))
+GP1_rare = transform_sample_counts(GP1_rare, function(x) x/sum(x))
+```
+
+View tree and heatmap after subsampling.   
+```{r}
+plot_tree(GP1_rare, color="parent", label.tips="taxa_names", ladderize="left", plot.margin=0.3)
+plot_heatmap(GP1_rare, "NMDS", "bray", "parent", low="#66CCFF", high="#000033", na.value="white")
+```
+
+# **DIV Ordinations: NMDS** 
+
+View NMDS ordination by OTU.    
+```{r}
+GP.ord <- ordinate(GP1_rare, "NMDS", "bray")
+ordinate(GP1_rare, "NMDS", "bray")
+p1 = plot_ordination(GP1_rare, GP.ord, type="taxa", title="taxa")
+p1
+```
+
+Plot with samples now.  
+```{r}
+p2 = plot_ordination(GP1_rare, GP.ord, type="samples", color="parent") 
+p2_geom<- p2 + geom_polygon(aes(fill=parent)) + geom_point(size=4) + ggtitle("samples")
+p2_geom
+```
+
+View PCoA by OTU.  
+```{r}
+GP.ordb.pcoa <- ordinate(GP1_rare, "PCoA", "bray")
+p1b = plot_ordination(GP1_rare, GP.ordb.pcoa, type="taxa", title="taxa")
+p1b
+```
+
+Plot with samples now.  
+```{r}
+p2b = plot_ordination(GP1_rare, GP.ord, type="samples", color="parent"); p2b 
+```
+
+Output NMDS plot for visualization.  
+```{r}
+p2b_viz<-p2  + 
+  geom_point(aes(colour=parent), size=4) + 
+  ggtitle("NMDS")+
+  scale_colour_manual(name="Parent", values=c("orange", "darkred", "darkgray")) + 
+  theme_classic() + 
+  theme(
+    panel.background=element_blank()
+  ); p2b_viz
+
+ggsave(plot=p2b_viz, "figures/its2/nmds_its2_div.jpeg", h=5, w=8)
+```
+
+Conduct a permanova in the vegan package.  
+
+```{r}
+metadata <- as(sample_data(GP1_rare), "data.frame")
+
+perm1<-adonis2(phyloseq::distance(GP1_rare, method="bray") ~ parent,
+       data = metadata)
+
+perm1
+```
+
+Permanova suggests there is significant separation by parent in ITS2 profiles (p=0.001).  
+
+adonis2(formula = phyloseq::distance(GP1_rare, method = "bray") ~ parent, data = metadata)
+         Df SumOfSqs      R2      F Pr(>F)    
+parent    2  0.39588 0.81064 29.967  0.001 ***
+Residual 14  0.09248 0.18936                  
+Total    16  0.48836 1.00000     
+
+# **Plot heat map of ITS2 DIVs**  
+
+Draw with Phyloseq.  
+
+Filter out taxa that comprise <1% mean relative abundance across samples. 
+
+There were 76 OTU's before filtering and 15 after filtering. This indicates there were many rare taxa.   
+```{r}
+GP1_rare
+
+GP1_prune = filter_taxa(GP1_rare, function(x) mean(x) > 0.01, TRUE)
+GP1_prune 
+
+sample_order<-c("R55", "R56", "R57", "R58", "R59", "R60", "R61", "R62", "R63", "R64", "R65", "R66", "R67", "R68", "R69", "R71", "R72")
+
+p<-plot_heatmap(GP1_prune, sample.label="parent", low="#66CCFF", high="#000033", na.value="white", taxa.label="DIV", sample.order = sample_order)
+p$scales$scales[[1]]$name <- "Parent"
+
+print(p)
+
+#ggplot2::ggsave("Mcap2020/Figures/ITS2/div_heatmap.jpg", p, width = 6, height = 6)
+```
+
+Run the NMDS visualization again with the dataset with rare samples removed. Run a PERMANOVA.  
+
+```{r}
+GP.ordb.filt <- ordinate(GP1_prune, "NMDS", "bray")
+
+p3b = plot_ordination(GP1_prune, GP.ordb.filt, type="samples", color="parent"); p3b 
+
+p3b_viz_filt<-p3b  + 
+  geom_point(aes(colour=parent), size=4) + 
+  ggtitle("NMDS")+
+  scale_colour_manual(name="Parent", values=c("orange", "darkred","darkgray")) + 
+  theme_classic() + 
+  theme(
+    panel.background=element_blank()
+  ); p3b_viz_filt
+
+ggsave(plot=p3b_viz_filt, "figures/its2/nmds_its2_div_filtered.jpeg", h=5, w=8)
+```
+
+Run PERMANOVA on filtered data set. 
+```{r}
+metadata_filt <- as(sample_data(GP1_prune), "data.frame")
+
+perm2_filt<-adonis2(phyloseq::distance(GP1_prune, method="bray") ~ parent,
+       data = metadata_filt)
+
+perm2_filt
+```
+
+There is significant variation of dominant taxa by parent.  
+
+adonis2(formula = phyloseq::distance(GP1_prune, method = "bray") ~ parent, data = metadata_filt)
+         Df SumOfSqs    R2      F Pr(>F)    
+parent    2  0.31304 0.857 41.953  0.001 ***
+Residual 14  0.05223 0.143                  
+Total    16  0.36527 1.000  
+
+Bleached samples have less D1, D4, and D6 than nonbleached and wildtype. 
+
+Draw by parent with Complex Heatmap.  
+```{r}
+library(dendsort)
+library(WGCNA)
+library(circlize)
+
+table<-as.matrix(t(otu_table(GP1_prune)))
+                 
+row_dend = dendsort(hclust(dist(table)))
+col_dend = dendsort(hclust(dist(t(table))))
+
+#col_fun = colorRamp2(c(0, 50, 100), c("white", "darkgray", "black"))
+col_fun = colorRamp2(c(0, .1, .25, .5), hcl_palette = "Blue-Red 3")
+
+pdf(file = "figures/its2/DIV-ComplexHeatmap.pdf", height = 7, width = 7)
+ComplexHeatmap::Heatmap(table, name = "Relative \nAbundance", row_title = "DIV", column_title = "ITS2 DIV Relative Abundance (>1%)", 
+        col = col_fun, 
+        row_names_side = "left", 
+        row_dend_side = "left",
+        width = unit(4, "in"), 
+        height = unit(4, "in"), 
+        column_dend_height = unit(.5, "in"),
+        row_dend_width = unit(.5, "in"),
+        column_dend_reorder = FALSE,
+        row_dend_reorder = TRUE,
+        row_gap = unit(2.5, "mm"),
+        clustering_distance_rows = "euclidean",
+        clustering_method_rows = "complete",
+        border = TRUE, 
+        column_names_gp =  gpar(fontsize = 12, border=FALSE),
+        column_names_rot = 35,
+        cluster_rows = row_dend, 
+        cluster_columns = col_dend,
+        column_order = sample_order, 
+        row_names_gp = gpar(fontsize = 12, alpha = 0.75, border = FALSE))
+dev.off()
+
+```
+
+# **Alpha Diversity**  
+
+Calculate diversity of those that have more than 1 sequence (no singletons).
+```{r}
+GP1_rare_untransformed<-rarefy_even_depth(GP1, sample.size = min(sample_sums(GP1)),
+  rngseed = TRUE, replace = TRUE, trimOTUs = TRUE, verbose = TRUE)
+
+GP2 <- prune_taxa(taxa_sums(GP1_rare_untransformed) > 1, GP1_rare_untransformed)
+```
+
+Plot all richness metrics.  
+```{r}
+plot_richness(GP2)
+```
+
+Plot the two most commonly used - Shannon and Inverse Simpson.  
+```{r}
+alpha1<-plot_richness(GP2, measures=c("InvSimpson", "Shannon"), x="parent", color="parent", nrow=1)
+
+alpha1_plot <- alpha1 + geom_boxplot() + geom_point(size=3) + theme_classic() + scale_color_manual() + scale_color_manual(name="Parent", values=c("orange", "darkred", "darkgray"))+
+  theme(axis.text.x=element_text(angle=45, hjust=1, color="black")) + 
+  theme(axis.title.x=element_blank())+
+  theme(legend.position="none");alpha1_plot
+
+ggsave(plot=alpha1_plot, file="figures/its2/alpha_rare.png", width=7, height=5)
+```
+
+Test for differences in alpha diversity.  
+```{r}
+metadata <- as(sample_data(GP2), "data.frame")
+metadata$sample<-rownames(metadata)
+
+alpha_rare<-estimate_richness(GP2, measures=c("InvSimpson", "Shannon", "Chao1"))
+alpha_rare$sample<-rownames(alpha_rare)
+
+alpha_rare<-full_join(metadata, alpha_rare, by="sample")
+
+summary(aov(Shannon~parent, data=alpha_rare))
+summary(aov(InvSimpson~parent, data=alpha_rare))
+summary(aov(Chao1~parent, data=alpha_rare))
+```
+
+There is a difference in alpha diversity in all metrics with bleached corals showing lower alpha diversity.    
+
+# **Plot profile level information** 
+
+Load profile level data.  
+```{r}
+#create metadata and load
+metadata <- read.csv("data/rna_seq/sample_rnaseq_metadata.csv", header = TRUE, sep = ",")%>%dplyr::select(sample, temperature, parent)
+
+keep<-c("R55", "R56", "R60", "R57", "R58", "R59", "R65", "R72", "R71", "R68", "R70", "R69", "R67", "R63", "R66", "R62", "R64", "R61")
+
+metadata <- metadata %>%
+  filter(sample %in% keep)
+
+rownames(metadata) <- metadata$sample
+
+metadata <- as.matrix(metadata)
+metadata <- sample_data(data.frame(metadata))
+
+#load data for taxonomy
+tax0 <- read_tsv(
+  file  = "data/its2/symportal/20240708T094517_huffmar1_20240709/its2_type_profiles/486_20240709T012802_DBV_20240709T110145.profiles.absolute.abund_and_meta.txt", n_max = 6) %>%
+  dplyr::select(-2) %>% 
+  gather(uid, value, -1) %>% 
+  spread(1, value) %>%
+  clean_names()
+
+tax1 <- as.matrix(tax0[, -1], dimnames = list(tax0$uid, colnames(tax0[-1])))
+rownames(tax1) <- tax0$uid
+tax <- tax_table(tax1)
+
+#load data for count matrix 
+otu0 <- read_tsv(
+  file  = "data/its2/symportal/20240708T094517_huffmar1_20240709/its2_type_profiles/486_20240709T012802_DBV_20240709T110145.profiles.absolute.abund_and_meta.txt", col_names = TRUE) 
+
+list<-c("UID", "sample", "797700", "799603", "798782", "798780", "798578", "798776")
+colnames(otu0)<-list
+
+otu0<-otu0%>%
+  select(-1) %>%
+  dplyr::slice(7:24) %>%
+  mutate_at(2:ncol(.), as.numeric)
+
+otu1 <- as.matrix(otu0[, -1])
+rownames(otu1) <- otu0$sample
+otu <- otu_table(otu1, taxa_are_rows = FALSE)
+
+taxa_names(otu)
+taxa_names(tax)
+
+#combine to phyloseq object
+coral <- phyloseq(otu, tax, metadata)
+coral
+```
+
+Create tree.  
+```{r}
+random_tree_profile = rtree(ntaxa(coral), rooted=TRUE, tip.label=taxa_names(coral))
+```
+
+Merge phyloseq data. 
+```{r}
+phylo_coral = merge_phyloseq(coral, metadata, random_tree_profile)
+phylo_coral
+```
+
+Filter out samples with low numbers in groups from phyloseq object.  
+```{r}
+phylo_coral<-ps_filter(phylo_coral, sample != "R70")
+
+phylo_coral<-ps_arrange(phylo_coral, parent)
+```
+
+Now build a tree with the combined data.  
+```{r}
+plot_tree(phylo_coral, color="parent", label.tips="taxa_names", ladderize="left", plot.margin=0.3)
+```
+
+Plot a heatmap.  
+
+```{r}
+plot_heatmap(phylo_coral, "NMDS", "bray", "parent", low="#66CCFF", high="#000033", na.value="white")
+```
+
+Plot ordinations.  
+
+```{r}
+GP1_profile = phylo_coral
+GP1_profile
+```
+
+Subsample to minimum sampling depth of 10826.  
+```{r}
+min(sample_sums(GP1_profile))
+
+GP1_rare_profile<-rarefy_even_depth(GP1_profile, sample.size = min(sample_sums(GP1_profile)),
+  rngseed = TRUE, replace = TRUE, trimOTUs = TRUE, verbose = TRUE)
+
+sample_sums(GP1_rare_profile)
+```
+All samples now have 10826 sequences. 
+
+Transform to relative abundance as a proportion. 
+```{r}
+GP1_rare_profile = transform_sample_counts(GP1_rare_profile, function(x) x/sum(x))
+```
+
+View tree and heatmap after subsampling  
+```{r}
+plot_tree(GP1_rare_profile, color="parent", label.tips="taxa_names", ladderize="left", plot.margin=0.3)
+plot_heatmap(GP1_rare_profile, "NMDS", "bray", "parent", low="#66CCFF", high="#000033", na.value="white")
+```
+
+Plot abundance of each profile across lifestages.  
+```{r}
+t<-plot_bar(GP1_rare_profile, fill="its2_type_profile")
+t$data$Sample <- factor(t$data$Sample, levels = sample_order)
+
+t_plot<-t + scale_fill_manual(name="ITS2 Profile", values=c("red4", "red3", "blue2","blue4", "lightblue")) + geom_hline(yintercept=0.5, linetype="dashed", color = "black", size=1) + facet_grid(~parent, scales = "free", space = "free", labeller = label_wrap_gen(width=10)) + ylab("Relative Abundance (%)") + theme(strip.text.x = element_text(size = 5, face="bold"))+theme_classic(); t_plot
+
+rel_abund_data<-t$data
+
+ggsave("figures/its2/profile_plot.png", t_plot, width=11, height=6)
+```
+
+Calculate the average percent abundance for each taxa in each lifestage.  
+```{r}
+means <- rel_abund_data %>%
+  group_by(its2_type_profile, parent) %>%
+  # Add abundances within each profile and lifestage
+  summarize_at("Abundance", mean)%>%
+  spread(its2_type_profile, Abundance);means
+```
+
+Use ANOVA to test for differences in relative abundance of profiles across lifestages.  
+
+D1/D4-D6-D1ab-D17d-D17j - More in nonbleached and wildtype, not present in bleached
+C31-C17d-C21-C31.1-C31a-C17e-C21ac-C31.10 = Makes up basically 100% of bleached, less seen in nonbleached and wildtype
+C31/C17d-C21-C21ac-C31a-C17e-C31.9-C17f = Not present in bleached, seen in nonbleached and wildtype 
+
+Are different by parent type. 
+
+```{r}
+model<-rel_abund_data %>% 
+  select(its2_type_profile, Abundance, parent, Sample)%>%
+  spread(its2_type_profile, Abundance)%>%
+  aov(`C31-C17d-C21-C31.1-C31a-C17e-C21ac-C31.10`~parent, data=.);summary(model)
+```
+
+C31-C17d-C21-C31.1-C31a-C17e-C21ac-C31.10
+
+              Df Sum Sq Mean Sq F value   Pr(>F)    
+parent       2  2.341  1.1704    14.5 0.000387 ***
+Residuals   14  1.130  0.0807  
+
+
+```{r}
+model<-rel_abund_data %>% 
+  select(its2_type_profile, Abundance, parent, Sample)%>%
+  spread(its2_type_profile, Abundance)%>%
+  aov(`C31/C17d-C21-C21ac-C31a-C17e-C31.9-C17f`~parent, data=.);summary(model)
+```
+
+C31/C17d-C21-C21ac-C31a-C17e-C31.9-C17f
+
+            Df Sum Sq Mean Sq F value Pr(>F)  
+parent       2 0.9202  0.4601   5.636  0.016 *
+Residuals   14 1.1429  0.0816 
+
+
+```{r}
+model<-rel_abund_data %>% 
+  select(its2_type_profile, Abundance, parent, Sample)%>%
+  spread(its2_type_profile, Abundance)%>%
+  aov(`D1/D4-D6-D1ab-D17d-D17j`~parent, data=.);summary(model)
+```
+
+D1/D4-D6-D1ab-D17d-D17j
+
+            Df Sum Sq Mean Sq F value  Pr(>F)   
+parent       2 0.2117 0.10585   8.241 0.00431 **
+Residuals   14 0.1798 0.01284  
+
+```{r}
+model<-rel_abund_data %>% 
+  select(its2_type_profile, Abundance, parent, Sample)%>%
+  spread(its2_type_profile, Abundance)%>%
+  aov(`D1/D4/D1ab-D6-D4d`~parent, data=.);summary(model)
+```
+
+D1/D4/D1ab-D6-D4d
+            Df  Sum Sq  Mean Sq F value Pr(>F)
+parent       2 0.03325 0.016623   2.232  0.144
+Residuals   14 0.10426 0.007447 
+
+```{r}
+model<-rel_abund_data %>% 
+  select(its2_type_profile, Abundance, parent, Sample)%>%
+  spread(its2_type_profile, Abundance)%>%
+  aov(`D1/D6-D4-D17d`~parent, data=.);summary(model)
+```
+
+D1/D6-D4-D17d
+
+            Df    Sum Sq   Mean Sq F value Pr(>F)
+parent       2 4.130e-06 2.065e-06   0.906  0.427
+Residuals   14 3.192e-05 2.280e-06  
+
+## Plot relative abundance mean values  
+
+```{r}
+rel_abund_plot<-rel_abund_data%>%
+  dplyr::select(its2_type_profile, Abundance, parent, Sample)%>%
+  group_by(its2_type_profile, parent)%>%
+  dplyr::summarise(mean=mean(Abundance, na.rm=TRUE), se=sd(Abundance, na.rm=TRUE)/sqrt(length(Abundance)))%>%
+  
+  ggplot(aes(x=parent, y=mean, color=its2_type_profile))+
+  facet_wrap(~its2_type_profile, nrow=1)+
+  geom_point(position=position_dodge(0.2))+
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.1, position=position_dodge(0.2))+
+  ylab("Mean Relative Abundance")+
+  ylim(0,1)+
+  xlab("Parent Phenotype")+
+  scale_color_manual(name="ITS2 Type Profile", values=c("red4", "red3", "blue2","blue4", "lightblue"))+
+  theme_classic()+
+  theme(
+    legend.position="bottom",
+    text=element_text(color="black", size=12), 
+    axis.text=element_text(color="black", size=11), 
+    axis.text.x=element_text(angle=45, hjust=1, vjust=1), 
+    axis.title=element_text(face="bold")
+  );rel_abund_plot
+
+ggsave("figures/its2/profile_plot_means.png", plot=rel_abund_plot, width=16, height=4)
+```
