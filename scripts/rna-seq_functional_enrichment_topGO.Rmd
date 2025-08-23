@@ -312,7 +312,7 @@ p05_res_reduced <- p05_res_reduced %>% group_by(ParentTerm) %>% mutate("N_in_Par
 length(unique(p05_res_reduced$ParentTerm))
 ```
 
-The reduced list of terms is 32 terms that falls under 32 parent terms.
+The reduced list of terms is 76 terms that falls under 32 parent terms.
 
 ```{r}
 write.csv(p05_res_reduced, "output/rna_seq/topGO/parent_topGO_results.csv")
@@ -334,11 +334,68 @@ parent_enrich_plot1 <- ggplot(p05_res_reduced, aes(x=weightFisher,y=reorder(Term
   theme(axis.text.y = element_text(size = 8), 
               axis.title = element_text(size = 8), 
               plot.title = element_text(hjust = 0.5, size = 8));parent_enrich_plot1
-
-#save plot 
-ggsave(parent_enrich_plot1, filename="figures/rna_seq/topGO/parent_enrichment.png", width=10, height=40)
 ```
 
+Try some different plots. 
+```{r}
+p05_res_reduced$GeneRatio <- p05_res_reduced$Significant / p05_res_reduced$Annotated
+
+parent_enrich_plot3 <- ggplot(p05_res_reduced, 
+       aes(x = GeneRatio, 
+           y = reorder(Term, GeneRatio), 
+           color = -log10(weightFisher))) +
+  geom_point(size=1) +
+  geom_segment(aes(x=0, xend=GeneRatio, y=Term, yend=Term), color="grey70") +
+  scale_color_gradient(low="lightblue", high="darkblue", name="-log10(weightFisher)") +
+  theme_classic(base_size=10) +
+  labs(x="Gene Ratio", y="GO Term") +
+  theme(axis.text.y = element_text(size=8),
+        axis.title = element_text(size=9),
+        plot.title = element_text(hjust=0.5, size=10));parent_enrich_plot3
+
+ggsave(parent_enrich_plot3, filename="figures/rna_seq/topGO/parent_enrichment_individual_terms.png", width=10, height=11)
+
+#summarize by parent term
+parent_summary <- p05_res_reduced %>%
+  group_by(ParentTerm) %>%
+  summarise(
+    maxLogP = max(-log10(weightFisher)),
+    meanGeneRatio = mean(Significant/Annotated),
+    nTerms = length(maxLogP)
+  ) %>%
+  arrange(desc(maxLogP))
+
+parent_enrich_plot4<-ggplot(parent_summary, aes(x = meanGeneRatio, y = reorder(ParentTerm, meanGeneRatio), color = maxLogP, size = nTerms)) +
+  geom_point(size=2) +
+  scale_color_gradient(low = "lightblue", high = "darkblue", name="Max -log10(weightFisher)") +
+  scale_size_continuous(name="Number of Terms") +
+  theme_classic(base_size=10) +
+  labs(x="Mean Gene Ratio", y="Parent GO Term");parent_enrich_plot4
+
+ggsave(parent_enrich_plot4, filename="figures/rna_seq/topGO/parent_enrichment_parent_terms.png", width=10, height=7)
+```
+
+Try subsetting anything related to lipid or fatty acid metabolism/activity. 
+
+```{r}
+parent_enrich_plot5 <- p05_res_reduced%>%
+  filter(str_detect(Term, regex("lipid|fatty acid", ignore_case = TRUE)))%>%
+  
+  ggplot(., 
+       aes(x = GeneRatio, 
+           y = reorder(Term, GeneRatio), 
+           color = -log10(weightFisher))) +
+  geom_point(size=1) +
+  geom_segment(aes(x=0, xend=GeneRatio, y=Term, yend=Term), color="grey70") +
+  scale_color_gradient(low="lightblue", high="darkblue", name="-log10(weightFisher)") +
+  theme_classic(base_size=10) +
+  labs(x="Gene Ratio", y="GO Term") +
+  theme(axis.text.y = element_text(size=8),
+        axis.title = element_text(size=9),
+        plot.title = element_text(hjust=0.5, size=10));parent_enrich_plot5
+
+ggsave(parent_enrich_plot5, filename="figures/rna_seq/topGO/parent_lipid_terms.png", width=7, height=5)
+```
 
 ## Temperature enrichment 
 
@@ -364,7 +421,7 @@ GOdata
 numSigGenes(GOdata)
 sum(feasible(GOdata))
 
-#321 sig genes
+#3238 sig genes
 #8237 genes used in analysis 
 ```
 
@@ -373,12 +430,12 @@ Run fisher test.
 resultFisher <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
 resultFisher
 hist(score(resultFisher), 50, xlab = "p-values")
-#269 terms with p<0.01
+#358 terms with p<0.01
 
 resultWeight <- runTest(GOdata, algorithm = "weight01", statistic = "fisher")
 resultWeight
 hist(score(resultWeight), 50, xlab = "p-values")
-#89 terms with p<0.01
+#118 terms with p<0.01
 ```
 
 Which test should be used? 
@@ -427,7 +484,7 @@ reducedTerms <- reduceSimMatrix(simMatrix,
                                 orgdb="org.Ce.eg.db")
 dim(reducedTerms)
 ```
-131 terms at p<0.05
+267 terms at p<0.05
 
 ```{r}
 #keep only the goterms from the reduced list
@@ -443,7 +500,7 @@ p05_res_reduced <- p05_res_reduced %>% group_by(ParentTerm) %>% mutate("N_in_Par
 length(unique(p05_res_reduced$ParentTerm))
 ```
 
-The reduced list of terms is 131 terms that falls under 35 parent terms.
+The reduced list of terms is 267 terms that falls under 55 parent terms.
 
 ```{r}
 write.csv(p05_res_reduced, "output/rna_seq/topGO/temperature_topGO_results.csv")
@@ -465,12 +522,70 @@ temperature_enrich_plot1 <- ggplot(p05_res_reduced, aes(x=weightFisher,y=reorder
   theme(axis.text.y = element_text(size = 8), 
               axis.title = element_text(size = 8), 
               plot.title = element_text(hjust = 0.5, size = 8));temperature_enrich_plot1
-
-#save plot 
-ggsave(temperature_enrich_plot1, filename="figures/rna_seq/topGO/temperature_enrichment.png", width=10, height=40)
 ```
 
-## Interaction enrichment 
+Try some different plots. 
+```{r}
+p05_res_reduced$GeneRatio <- p05_res_reduced$Significant / p05_res_reduced$Annotated
+
+temp_enrich_plot3 <- ggplot(p05_res_reduced, 
+       aes(x = GeneRatio, 
+           y = reorder(Term, GeneRatio), 
+           color = -log10(weightFisher))) +
+  geom_point(size=1) +
+  geom_segment(aes(x=0, xend=GeneRatio, y=Term, yend=Term), color="grey70") +
+  scale_color_gradient(low="lightblue", high="darkblue", name="-log10(weightFisher)") +
+  theme_classic(base_size=10) +
+  labs(x="Gene Ratio", y="GO Term") +
+  theme(axis.text.y = element_text(size=8),
+        axis.title = element_text(size=9),
+        plot.title = element_text(hjust=0.5, size=10));temp_enrich_plot3
+
+ggsave(temp_enrich_plot3, filename="figures/rna_seq/topGO/temperature_enrichment_individual_terms.png", width=10, height=25)
+
+#summarize by parent term
+parent_summary <- p05_res_reduced %>%
+  group_by(ParentTerm) %>%
+  summarise(
+    maxLogP = max(-log10(weightFisher)),
+    meanGeneRatio = mean(Significant/Annotated),
+    nTerms = length(maxLogP)
+  ) %>%
+  arrange(desc(maxLogP))
+
+temp_enrich_plot4<-ggplot(parent_summary, aes(x = meanGeneRatio, y = reorder(ParentTerm, meanGeneRatio), color = maxLogP, size = nTerms)) +
+  geom_point(size=2) +
+  scale_color_gradient(low = "lightblue", high = "darkblue", name="Max -log10(weightFisher)") +
+  scale_size_continuous(name="Number of Terms") +
+  theme_classic(base_size=10) +
+  labs(x="Mean Gene Ratio", y="Parent GO Term");temp_enrich_plot4
+
+ggsave(temp_enrich_plot4, filename="figures/rna_seq/topGO/temperature_enrichment_parent_terms.png", width=10, height=7)
+```
+
+Try subsetting anything related to lipid or fatty acid metabolism/activity. 
+
+```{r}
+temp_enrich_plot5 <- p05_res_reduced%>%
+  filter(str_detect(Term, regex("lipid|fatty acid", ignore_case = TRUE)))%>%
+  
+  ggplot(., 
+       aes(x = GeneRatio, 
+           y = reorder(Term, GeneRatio), 
+           color = -log10(weightFisher))) +
+  geom_point(size=1) +
+  geom_segment(aes(x=0, xend=GeneRatio, y=Term, yend=Term), color="grey70") +
+  scale_color_gradient(low="lightblue", high="darkblue", name="-log10(weightFisher)") +
+  theme_classic(base_size=10) +
+  labs(x="Gene Ratio", y="GO Term") +
+  theme(axis.text.y = element_text(size=8),
+        axis.title = element_text(size=9),
+        plot.title = element_text(hjust=0.5, size=10));temp_enrich_plot5
+
+ggsave(temp_enrich_plot5, filename="figures/rna_seq/topGO/temperature_lipid_terms.png", width=7, height=6)
+```
+
+## Interaction enrichment: NB vs B at elevated temperature  
 
 Test set of genes:  
 ```{r}
@@ -494,7 +609,7 @@ GOdata
 numSigGenes(GOdata)
 sum(feasible(GOdata))
 
-#44 sig genes
+#1266 sig genes
 #8237 genes used in analysis 
 ```
 
@@ -503,12 +618,12 @@ Run fisher test.
 resultFisher <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
 resultFisher
 hist(score(resultFisher), 50, xlab = "p-values")
-#35 terms with p<0.05
+#177 terms with p<0.05
 
 resultWeight <- runTest(GOdata, algorithm = "weight01", statistic = "fisher")
 resultWeight
 hist(score(resultWeight), 50, xlab = "p-values")
-#21 terms with p<0.05
+#44 terms with p<0.05
 ```
 
 Which test should be used? 
@@ -557,7 +672,7 @@ reducedTerms <- reduceSimMatrix(simMatrix,
                                 orgdb="org.Ce.eg.db")
 dim(reducedTerms)
 ```
-43 terms at p<0.05
+121 terms at p<0.05
 
 ```{r}
 #keep only the goterms from the reduced list
@@ -573,7 +688,7 @@ p05_res_reduced <- p05_res_reduced %>% group_by(ParentTerm) %>% mutate("N_in_Par
 length(unique(p05_res_reduced$ParentTerm))
 ```
 
-The reduced list of terms is 43 terms that falls under 19 parent terms.
+The reduced list of terms is 121 terms that falls under 42 parent terms.
 
 ```{r}
 write.csv(p05_res_reduced, "output/rna_seq/topGO/interaction_topGO_results.csv")
@@ -592,6 +707,83 @@ interaction_enrich_plot1 <- ggplot(p05_res_reduced, aes(x=weightFisher, y=reorde
               plot.title = element_text(hjust = 0.5, size = 8));interaction_enrich_plot1
 
 #save plot 
-ggsave(interaction_enrich_plot1, filename="figures/rna_seq/topGO/interaction_enrichment.png", width=10, height=20)
+```
+
+Try some different plots. 
+```{r}
+p05_res_reduced$GeneRatio <- p05_res_reduced$Significant / p05_res_reduced$Annotated
+
+interaction_enrich_plot3 <- ggplot(p05_res_reduced, 
+       aes(x = GeneRatio, 
+           y = reorder(Term, GeneRatio), 
+           color = -log10(weightFisher))) +
+  geom_point(size=1) +
+  geom_segment(aes(x=0, xend=GeneRatio, y=Term, yend=Term), color="grey70") +
+  scale_color_gradient(low="lightblue", high="darkblue", name="-log10(weightFisher)") +
+  theme_classic(base_size=10) +
+  labs(x="Gene Ratio", y="GO Term") +
+  theme(axis.text.y = element_text(size=8),
+        axis.title = element_text(size=9),
+        plot.title = element_text(hjust=0.5, size=10));interaction_enrich_plot3
+
+ggsave(interaction_enrich_plot3, filename="figures/rna_seq/topGO/interaction_enrichment_individual_terms.png", width=10, height=12)
+
+#summarize by parent term
+parent_summary <- p05_res_reduced %>%
+  group_by(ParentTerm) %>%
+  summarise(
+    maxLogP = max(-log10(weightFisher)),
+    meanGeneRatio = mean(Significant/Annotated),
+    nTerms = length(maxLogP)
+  ) %>%
+  arrange(desc(maxLogP))
+
+interaction_enrich_plot4<-ggplot(parent_summary, aes(x = meanGeneRatio, y = reorder(ParentTerm, meanGeneRatio), color = maxLogP, size = nTerms)) +
+  geom_point(size=2) +
+  scale_color_gradient(low = "lightblue", high = "darkblue", name="Max -log10(weightFisher)") +
+  scale_size_continuous(name="Number of Terms") +
+  theme_classic(base_size=10) +
+  labs(x="Mean Gene Ratio", y="Parent GO Term");interaction_enrich_plot4
+
+ggsave(interaction_enrich_plot4, filename="figures/rna_seq/topGO/interaction_enrichment_parent_terms.png", width=10, height=8)
+```
+Gene Ratio: 
+
+Proportion of the term represented in your DEGs:
+
+- A gene ratio of 0.5 means half of all genes associated with that GO term are differentially expressed.
+
+- A higher gene ratio usually indicates that this biological process is strongly affected in your experiment.
+
+Relative enrichment within the GO term:
+
+- Even if a GO term has a large p-value due to many genes, a high gene ratio signals that a large fraction of the genes in that category are responding.
+
+- Conversely, a term with low gene ratio but very low p-value might be significant only because the category has many genes; fewer are actually changing.
+
+Helps prioritize meaningful GO terms:
+
+- You can focus on terms with both strong statistical significance (low p-value) and high gene ratio — these are likely biologically impactful.
+
+Try subsetting anything related to lipid or fatty acid metabolism/activity. 
+
+```{r}
+interaction_enrich_plot5 <- p05_res_reduced%>%
+  filter(str_detect(Term, regex("lipid|fatty acid", ignore_case = TRUE)))%>%
+  
+  ggplot(., 
+       aes(x = GeneRatio, 
+           y = reorder(Term, GeneRatio), 
+           color = -log10(weightFisher))) +
+  geom_point(size=1) +
+  geom_segment(aes(x=0, xend=GeneRatio, y=Term, yend=Term), color="grey70") +
+  scale_color_gradient(low="lightblue", high="darkblue", name="-log10(weightFisher)") +
+  theme_classic(base_size=10) +
+  labs(x="Gene Ratio", y="GO Term") +
+  theme(axis.text.y = element_text(size=8),
+        axis.title = element_text(size=9),
+        plot.title = element_text(hjust=0.5, size=10));interaction_enrich_plot5
+
+ggsave(interaction_enrich_plot5, filename="figures/rna_seq/topGO/interaction_lipid_terms.png", width=7, height=5)
 ```
 

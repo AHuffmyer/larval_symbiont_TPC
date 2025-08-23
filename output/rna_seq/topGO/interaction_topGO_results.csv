@@ -1,44 +1,122 @@
 "","GO.ID","Term","Annotated","Significant","Expected","Rank in classicFisher","classicFisher","weightFisher","bh_adjust","bh_adjust_weight","ParentTerm","N_in_Parent"
-"1","GO:0000098","sulfur amino acid catabolic process",14,3,0.07,2,5e-05,5e-05,0.213025,0.391966,"sulfur amino acid catabolic process",4
-"2","GO:0046500","S-adenosylmethionine metabolic process",17,3,0.09,3,9.2e-05,9.2e-05,0.261310666666667,0.391966,"sulfur amino acid catabolic process",4
-"3","GO:0098700","neurotransmitter loading into synaptic v...",5,2,0.03,4,0.00028,0.00028,0.51126,0.795293333333333,"neurotransmitter loading into synaptic vesicle",3
-"4","GO:0009725","response to hormone",696,9,3.72,36,0.01004,0.00055,1,0.923108333333333,"response to hormone",2
-"5","GO:0009068","aspartate family amino acid catabolic pr...",18,2,0.1,19,0.00404,0.00404,1,1,"aspartate family amino acid catabolic process",4
-"6","GO:0050830","defense response to Gram-positive bacter...",63,3,0.34,21,0.00452,0.00452,1,1,"defense response to Gram-positive bacterium",2
-"7","GO:0007275","multicellular organism development",3638,22,19.43,792,0.26371,0.00523,1,1,"multicellular organism development",2
-"8","GO:0051289","protein homotetramerization",68,3,0.36,24,0.0056,0.0056,1,1,"protein homotetramerization",3
-"9","GO:0030207","chondroitin sulfate catabolic process",23,2,0.12,26,0.00657,0.00657,1,1,"sulfur amino acid catabolic process",4
-"10","GO:0045117","azole transmembrane transport",23,2,0.12,27,0.00657,0.00657,1,1,"azole transmembrane transport",1
-"11","GO:0051591","response to cAMP",73,3,0.39,28,0.00682,0.00682,1,1,"response to hormone",2
-"12","GO:0006555","methionine metabolic process",25,2,0.13,31,0.00774,0.00774,1,1,"aspartate family amino acid catabolic process",4
-"13","GO:0010888","negative regulation of lipid storage",26,2,0.14,34,0.00836,0.00836,1,1,"negative regulation of lipid storage",4
-"14","GO:1901576","organic substance biosynthetic process",4397,28,23.49,414,0.11152,0.01362,1,1,"organic substance biosynthetic process",1
-"15","GO:0043154","negative regulation of cysteine-type end...",35,2,0.19,42,0.01484,0.01484,1,1,"negative regulation of cysteine-type endopeptidase activity involved in apoptotic process",3
-"16","GO:0032259","methylation",228,3,1.22,453,0.1215,0.01651,1,1,"methylation",1
-"17","GO:0032608","interferon-beta production",42,2,0.22,58,0.02097,0.02082,1,1,"interferon-beta production",1
-"18","GO:0043086","negative regulation of catalytic activit...",393,5,2.1,210,0.05694,0.02266,1,1,"negative regulation of cysteine-type endopeptidase activity involved in apoptotic process",3
-"19","GO:0061844","antimicrobial humoral immune response me...",44,2,0.24,67,0.02289,0.02289,1,1,"defense response to Gram-positive bacterium",2
-"20","GO:0006102","isocitrate metabolic process",5,1,0.03,75,0.02643,0.02643,1,1,"isocitrate metabolic process",2
-"21","GO:0010265","SCF complex assembly",5,1,0.03,76,0.02643,0.02643,1,1,"protein homotetramerization",3
-"22","GO:0051031","tRNA transport",5,1,0.03,81,0.02643,0.02643,1,1,"negative regulation of lipid storage",4
-"23","GO:0070813","hydrogen sulfide metabolic process",5,1,0.03,82,0.02643,0.02643,1,1,"sulfur amino acid catabolic process",4
-"24","GO:0033138","positive regulation of peptidyl-serine p...",48,2,0.26,93,0.02693,0.02693,1,1,"positive regulation of peptidyl-serine phosphorylation",4
-"25","GO:0061014","positive regulation of mRNA catabolic pr...",96,2,0.51,344,0.09282,0.03126,1,1,"positive regulation of peptidyl-serine phosphorylation",4
-"26","GO:0019346","transsulfuration",6,1,0.03,102,0.03164,0.03164,1,1,"aspartate family amino acid catabolic process",4
-"27","GO:0042780","tRNA 3'-end processing",6,1,0.03,104,0.03164,0.03164,1,1,"tRNA 3'-end processing",2
-"28","GO:0046416","D-amino acid metabolic process",6,1,0.03,105,0.03164,0.03164,1,1,"aspartate family amino acid catabolic process",4
-"29","GO:0072327","vulval cell fate specification",6,1,0.03,108,0.03164,0.03164,1,1,"multicellular organism development",2
-"30","GO:0051589","negative regulation of neurotransmitter ...",21,2,0.11,23,0.00549,0.03605,1,1,"neurotransmitter loading into synaptic vesicle",3
-"31","GO:0045005","DNA-templated DNA replication maintenanc...",36,2,0.19,45,0.01566,0.03611,1,1,"DNA-templated DNA replication maintenance of fidelity",2
-"32","GO:0006272","leading strand elongation",7,1,0.04,123,0.03681,0.03681,1,1,"DNA-templated DNA replication maintenance of fidelity",2
-"33","GO:0060625","regulation of protein deneddylation",7,1,0.04,126,0.03681,0.03681,1,1,"positive regulation of peptidyl-serine phosphorylation",4
-"34","GO:0005984","disaccharide metabolic process",8,1,0.04,145,0.04196,0.04196,1,1,"disaccharide metabolic process",1
-"35","GO:0007190","activation of adenylate cyclase activity",8,1,0.04,146,0.04196,0.04196,1,1,"negative regulation of cysteine-type endopeptidase activity involved in apoptotic process",3
-"36","GO:0006614","SRP-dependent cotranslational protein ta...",63,2,0.34,155,0.04434,0.04434,1,1,"negative regulation of lipid storage",4
-"37","GO:0001682","tRNA 5'-leader removal",9,1,0.05,162,0.04708,0.04708,1,1,"tRNA 3'-end processing",2
-"38","GO:0040022","feminization of hermaphroditic germ-line",9,1,0.05,166,0.04708,0.04708,1,1,"feminization of hermaphroditic germ-line",1
-"39","GO:0042416","dopamine biosynthetic process",9,1,0.05,168,0.04708,0.04708,1,1,"isocitrate metabolic process",2
-"40","GO:0090309","positive regulation of DNA methylation-d...",9,1,0.05,171,0.04708,0.04708,1,1,"protein homotetramerization",3
-"41","GO:0097064","ncRNA export from nucleus",9,1,0.05,172,0.04708,0.04708,1,1,"negative regulation of lipid storage",4
-"42","GO:2000301","negative regulation of synaptic vesicle ...",9,1,0.05,173,0.04708,0.04708,1,1,"neurotransmitter loading into synaptic vesicle",3
-"43","GO:2000767","positive regulation of cytoplasmic trans...",9,1,0.05,174,0.04708,0.04708,1,1,"positive regulation of peptidyl-serine phosphorylation",4
+"1","GO:0061077","chaperone-mediated protein folding",58,23,8.91,6,6.2e-06,1.2e-05,0.0076689,0.059647,"chaperone-mediated protein folding",2
+"2","GO:0002181","cytoplasmic translation",115,39,17.68,2,5.5e-07,1.4e-05,0.002343275,0.059647,"cytoplasmic translation",5
+"3","GO:1903909","regulation of receptor clustering",5,5,0.77,15,8.5e-05,8.5e-05,0.0463329375,0.241428333333333,"regulation of receptor clustering",11
+"4","GO:0022900","electron transport chain",127,40,19.52,5,3.4e-06,0.00042,0.00579428,0.577534444444444,"electron transport chain",4
+"5","GO:0035864","response to potassium ion",22,8,3.38,198,0.01303,0.00055,0.530954764150943,0.577534444444444,"response to potassium ion",2
+"6","GO:0006413","translational initiation",144,41,22.13,12,3.9e-05,0.00061,0.02769325,0.577534444444444,"cytoplasmic translation",5
+"7","GO:0000463","maturation of LSU-rRNA from tricistronic...",9,6,1.38,31,0.00072,0.00072,0.197907096774194,0.59647,"maturation of LSU-rRNA from tricistronic rRNA transcript (SSU-rRNA, 5.8S rRNA, LSU-rRNA)",6
+"8","GO:0009068","aspartate family amino acid catabolic pr...",18,9,2.77,27,0.00061,0.00077,0.188679285714286,0.59647,"aspartate family amino acid catabolic process",3
+"9","GO:0099175","regulation of postsynapse organization",41,8,6.3,1973,0.28907,0.00137,1,0.904536923076923,"regulation of postsynapse organization",2
+"10","GO:0009100","glycoprotein metabolic process",305,48,46.88,2969,0.4531,0.00138,1,0.904536923076923,"glycoprotein metabolic process",2
+"11","GO:0042420","dopamine catabolic process",10,6,1.54,52,0.00157,0.00157,0.244785090909091,0.955569285714286,"dopamine catabolic process",4
+"12","GO:1901570","fatty acid derivative biosynthetic proce...",98,27,15.06,49,0.00134,0.00238,0.233023265306122,1,"fatty acid derivative biosynthetic process",1
+"13","GO:0000470","maturation of LSU-rRNA",23,13,3.54,7,6.3e-06,0.00247,0.0076689,1,"maturation of LSU-rRNA from tricistronic rRNA transcript (SSU-rRNA, 5.8S rRNA, LSU-rRNA)",6
+"14","GO:0042776","proton motive force-driven mitochondrial...",14,7,2.15,69,0.00253,0.00253,0.302320410958904,1,"proton motive force-driven mitochondrial ATP synthesis",6
+"15","GO:0042430","indole-containing compound metabolic pro...",32,6,4.92,2537,0.36796,0.00364,1,1,"indole-containing compound metabolic process",1
+"16","GO:0019751","polyol metabolic process",101,11,15.52,6801,0.92386,0.00369,1,1,"dopamine catabolic process",4
+"17","GO:0006614","SRP-dependent cotranslational protein ta...",63,18,9.68,114,0.00535,0.0057,0.374690547945205,1,"regulation of receptor clustering",11
+"18","GO:0042307","positive regulation of protein import in...",36,12,5.53,119,0.00572,0.00572,0.374690547945205,1,"regulation of receptor clustering",11
+"19","GO:0042149","cellular response to glucose starvation",32,11,4.92,128,0.00619,0.00619,0.374690547945205,1,"cellular response to glucose starvation",6
+"20","GO:0034975","protein folding in endoplasmic reticulum",16,7,2.46,133,0.00636,0.00636,0.374690547945205,1,"chaperone-mediated protein folding",2
+"21","GO:0072350","tricarboxylic acid metabolic process",49,11,7.53,967,0.12147,0.00642,1,1,"tricarboxylic acid metabolic process",5
+"22","GO:0006589","octopamine biosynthetic process",6,4,0.92,139,0.00642,0.00642,0.374690547945205,1,"dopamine catabolic process",4
+"23","GO:0009725","response to hormone",696,117,106.97,1090,0.14785,0.0068,1,1,"response to hormone",3
+"24","GO:0034976","response to endoplasmic reticulum stress",248,56,38.12,50,0.00149,0.0073,0.244785090909091,1,"cellular response to glucose starvation",6
+"25","GO:0045471","response to ethanol",195,40,29.97,378,0.03113,0.00779,0.701742671957672,1,"response to hormone",3
+"26","GO:1990542","mitochondrial transmembrane transport",69,20,10.61,77,0.00285,0.00786,0.310332716049383,1,"mitochondrial transmembrane transport",3
+"27","GO:0002218","activation of innate immune response",125,36,19.21,16,8.7e-05,0.00803,0.0463329375,1,"activation of innate immune response",5
+"28","GO:0006414","translational elongation",94,17,14.45,1855,0.27049,0.0085,1,1,"cytoplasmic translation",5
+"29","GO:1900026","positive regulation of substrate adhesio...",17,7,2.61,170,0.0094,0.0094,0.465003142857143,1,"positive regulation of substrate adhesion-dependent cell spreading",4
+"30","GO:0002230","positive regulation of defense response ...",21,8,3.23,172,0.00955,0.00955,0.465003142857143,1,"positive regulation of defense response to virus by host",3
+"31","GO:0051130","positive regulation of cellular componen...",900,139,138.33,3207,0.48972,0.00956,1,1,"regulation of postsynapse organization",2
+"32","GO:0036503","ERAD pathway",88,22,13.53,194,0.01225,0.01005,0.530954764150943,1,"cellular response to glucose starvation",6
+"33","GO:0002224","toll-like receptor signaling pathway",64,18,9.84,136,0.0064,0.01074,0.374690547945205,1,"activation of innate immune response",5
+"34","GO:0051036","regulation of endosome size",15,6,2.31,260,0.01875,0.0109,0.602900943396226,1,"regulation of endosome size",2
+"35","GO:0032535","regulation of cellular component size",338,48,51.95,5324,0.75064,0.0112,1,1,"regulation of endosome size",2
+"36","GO:0016310","phosphorylation",1272,194,195.5,3571,0.56462,0.01169,1,1,"proton motive force-driven mitochondrial ATP synthesis",6
+"37","GO:0042273","ribosomal large subunit biogenesis",70,28,10.76,1,5e-07,0.01227,0.002343275,1,"maturation of LSU-rRNA from tricistronic rRNA transcript (SSU-rRNA, 5.8S rRNA, LSU-rRNA)",6
+"38","GO:0000184","nuclear-transcribed mRNA catabolic proce...",86,21,13.22,253,0.01841,0.01247,0.602900943396226,1,"nuclear-transcribed mRNA catabolic process, nonsense-mediated decay",3
+"39","GO:0032608","interferon-beta production",42,14,6.46,79,0.00293,0.01268,0.310332716049383,1,"interferon-beta production",2
+"40","GO:0061097","regulation of protein tyrosine kinase ac...",60,11,9.22,2187,0.31167,0.01284,1,1,"regulation of protein tyrosine kinase activity",2
+"41","GO:0010955","negative regulation of protein processin...",28,9,4.3,269,0.02036,0.01285,0.635485567765568,1,"negative regulation of protein processing",2
+"42","GO:1904262","negative regulation of TORC1 signaling",22,8,3.38,200,0.01303,0.01303,0.530954764150943,1,"negative regulation of TORC1 signaling",3
+"43","GO:0042592","homeostatic process",1227,189,188.59,3281,0.50016,0.01308,1,1,"homeostatic process",1
+"44","GO:0002084","protein depalmitoylation",7,4,1.08,202,0.01317,0.01317,0.530954764150943,1,"protein depalmitoylation",4
+"45","GO:0036500","ATF6-mediated unfolded protein response",7,4,1.08,204,0.01317,0.01317,0.530954764150943,1,"cellular response to glucose starvation",6
+"46","GO:0051131","chaperone-mediated protein complex assem...",7,4,1.08,206,0.01317,0.01317,0.530954764150943,1,"maturation of LSU-rRNA from tricistronic rRNA transcript (SSU-rRNA, 5.8S rRNA, LSU-rRNA)",6
+"47","GO:0032786","positive regulation of DNA-templated tra...",32,7,4.92,1535,0.21177,0.0132,1,1,"positive regulation of substrate adhesion-dependent cell spreading",4
+"48","GO:0045005","DNA-templated DNA replication maintenanc...",36,7,5.53,2194,0.31214,0.01322,1,1,"DNA-templated DNA replication maintenance of fidelity",1
+"49","GO:0071287","cellular response to manganese ion",18,7,2.77,213,0.01337,0.01337,0.532363411214953,1,"response to potassium ion",2
+"50","GO:0006633","fatty acid biosynthetic process",133,28,20.44,490,0.04774,0.01424,0.80273479704797,1,"tricarboxylic acid metabolic process",5
+"51","GO:0001731","formation of translation preinitiation c...",11,5,1.69,242,0.01751,0.01751,0.59681084,1,"cytoplasmic translation",5
+"52","GO:0006108","malate metabolic process",11,5,1.69,243,0.01751,0.01751,0.59681084,1,"tricarboxylic acid metabolic process",5
+"53","GO:0006620","post-translational protein targeting to ...",11,5,1.69,244,0.01751,0.01751,0.59681084,1,"regulation of receptor clustering",11
+"54","GO:0016266","O-glycan processing",11,5,1.69,245,0.01751,0.01751,0.59681084,1,"glycoprotein metabolic process",2
+"55","GO:0050427","3'-phosphoadenosine 5'-phosphosulfate me...",11,5,1.69,246,0.01751,0.01751,0.59681084,1,"3'-phosphoadenosine 5'-phosphosulfate metabolic process",4
+"56","GO:1905952","regulation of lipid localization",121,33,18.6,23,0.00051,0.01764,0.1840536,1,"regulation of receptor clustering",11
+"57","GO:2001243","negative regulation of intrinsic apoptot...",74,17,11.37,549,0.05383,0.0183,0.80449581436077,1,"negative regulation of intrinsic apoptotic signaling pathway",3
+"58","GO:0098586","cellular response to virus",19,7,2.92,256,0.01842,0.01842,0.602900943396226,1,"positive regulation of defense response to virus by host",3
+"59","GO:0010888","negative regulation of lipid storage",26,8,4,406,0.03627,0.01843,0.734887165898617,1,"regulation of receptor clustering",11
+"60","GO:0048640","negative regulation of developmental gro...",142,17,21.82,6522,0.89755,0.01935,1,1,"nuclear-transcribed mRNA catabolic process, nonsense-mediated decay",3
+"61","GO:0043436","oxoacid metabolic process",863,163,132.64,57,0.00178,0.02079,0.266094385964912,1,"tricarboxylic acid metabolic process",5
+"62","GO:0006403","RNA localization",243,49,37.35,316,0.02491,0.02259,0.668453373134328,1,"regulation of receptor clustering",11
+"63","GO:0006835","dicarboxylic acid transport",53,13,8.15,572,0.05425,0.02303,0.806743891797557,1,"dicarboxylic acid transport",1
+"64","GO:0006123","mitochondrial electron transport, cytoch...",8,4,1.23,291,0.02317,0.02317,0.64731662295082,1,"electron transport chain",4
+"65","GO:0010286","heat acclimation",8,4,1.23,292,0.02317,0.02317,0.64731662295082,1,"cellular response to glucose starvation",6
+"66","GO:0016078","tRNA catabolic process",8,4,1.23,293,0.02317,0.02317,0.64731662295082,1,"protein depalmitoylation",4
+"67","GO:2000535","regulation of entry of bacterium into ho...",8,4,1.23,299,0.02317,0.02317,0.64731662295082,1,"positive regulation of defense response to virus by host",3
+"68","GO:2001242","regulation of intrinsic apoptotic signal...",127,26,19.52,647,0.07282,0.02343,0.899831270053476,1,"negative regulation of intrinsic apoptotic signaling pathway",3
+"69","GO:0007178","transmembrane receptor protein serine/th...",242,42,37.19,1550,0.21572,0.02349,1,1,"transmembrane receptor protein serine/threonine kinase signaling pathway",2
+"70","GO:0009147","pyrimidine nucleoside triphosphate metab...",8,4,1.23,300,0.02317,0.02357,0.64731662295082,1,"proton motive force-driven mitochondrial ATP synthesis",6
+"71","GO:0009223","pyrimidine deoxyribonucleotide catabolic...",8,3,1.23,906,0.1114,0.0236,1,1,"proton motive force-driven mitochondrial ATP synthesis",6
+"72","GO:0009081","branched-chain amino acid metabolic proc...",17,4,2.61,1806,0.25874,0.02362,1,1,"aspartate family amino acid catabolic process",3
+"73","GO:0098930","axonal transport",58,8,8.91,4682,0.68603,0.0237,1,1,"axonal transport",3
+"74","GO:0022904","respiratory electron transport chain",75,22,11.53,51,0.00152,0.02553,0.244785090909091,1,"electron transport chain",4
+"75","GO:0048026","positive regulation of mRNA splicing, vi...",16,6,2.46,327,0.02618,0.02618,0.668453373134328,1,"positive regulation of substrate adhesion-dependent cell spreading",4
+"76","GO:2000010","positive regulation of protein localizat...",12,5,1.84,332,0.02628,0.02628,0.668453373134328,1,"regulation of receptor clustering",11
+"77","GO:0046907","intracellular transport",1389,230,213.48,824,0.09636,0.02632,0.993982688679245,1,"axonal transport",3
+"78","GO:0006826","iron ion transport",53,10,8.15,1989,0.29152,0.02634,1,1,"iron ion transport",1
+"79","GO:0019748","secondary metabolic process",109,26,16.75,196,0.01282,0.02797,0.530954764150943,1,"secondary metabolic process",1
+"80","GO:0000103","sulfate assimilation",5,3,0.77,340,0.02841,0.02841,0.672448916666667,1,"3'-phosphoadenosine 5'-phosphosulfate metabolic process",4
+"81","GO:0006032","chitin catabolic process",5,3,0.77,342,0.02841,0.02841,0.672448916666667,1,"protein depalmitoylation",4
+"82","GO:0006102","isocitrate metabolic process",5,3,0.77,343,0.02841,0.02841,0.672448916666667,1,"tricarboxylic acid metabolic process",5
+"83","GO:0006226","dUMP biosynthetic process",5,3,0.77,344,0.02841,0.02841,0.672448916666667,1,"proton motive force-driven mitochondrial ATP synthesis",6
+"84","GO:0070813","hydrogen sulfide metabolic process",5,3,0.77,351,0.02841,0.02841,0.672448916666667,1,"3'-phosphoadenosine 5'-phosphosulfate metabolic process",4
+"85","GO:0071035","nuclear polyadenylation-dependent rRNA c...",5,3,0.77,352,0.02841,0.02841,0.672448916666667,1,"protein depalmitoylation",4
+"86","GO:0060967","negative regulation of gene silencing by...",15,4,2.31,1405,0.18873,0.02844,1,1,"positive regulation of substrate adhesion-dependent cell spreading",4
+"87","GO:0052548","regulation of endopeptidase activity",176,28,27.05,2965,0.453,0.02849,1,1,"negative regulation of protein processing",2
+"88","GO:0051606","detection of stimulus",234,39,35.97,2207,0.31502,0.02938,1,1,"detection of stimulus",1
+"89","GO:0031324","negative regulation of cellular metaboli...",1787,279,274.66,2620,0.38616,0.02974,1,1,"nuclear-transcribed mRNA catabolic process, nonsense-mediated decay",3
+"90","GO:0000027","ribosomal large subunit assembly",30,9,4.61,380,0.03175,0.03175,0.711648871391076,1,"maturation of LSU-rRNA from tricistronic rRNA transcript (SSU-rRNA, 5.8S rRNA, LSU-rRNA)",6
+"91","GO:0010883","regulation of lipid storage",70,18,10.76,232,0.0167,0.0318,0.59681084,1,"regulation of receptor clustering",11
+"92","GO:0009949","polarity specification of anterior/poste...",21,7,3.23,384,0.03223,0.03223,0.713329428571429,1,"polarity specification of anterior/posterior axis",1
+"93","GO:0002697","regulation of immune effector process",196,40,30.12,390,0.03352,0.03381,0.730806173469388,1,"activation of innate immune response",5
+"94","GO:0050778","positive regulation of immune response",300,66,46.11,44,0.00122,0.03501,0.230777083333333,1,"activation of innate immune response",5
+"95","GO:0002082","regulation of oxidative phosphorylation",26,7,4,811,0.09212,0.03667,0.963134380368098,1,"electron transport chain",4
+"96","GO:0001682","tRNA 5'-leader removal",9,4,1.38,409,0.03671,0.03671,0.734887165898617,1,"tRNA 5'-leader removal",3
+"97","GO:0035435","phosphate ion transmembrane transport",9,4,1.38,413,0.03671,0.03671,0.734887165898617,1,"mitochondrial transmembrane transport",3
+"98","GO:0045579","positive regulation of B cell differenti...",9,4,1.38,415,0.03671,0.03671,0.734887165898617,1,"activation of innate immune response",5
+"99","GO:2000301","negative regulation of synaptic vesicle ...",9,4,1.38,419,0.03671,0.03671,0.734887165898617,1,"negative regulation of TORC1 signaling",3
+"100","GO:1903008","organelle disassembly",95,17,14.6,1956,0.28576,0.03673,1,1,"organelle disassembly",1
+"101","GO:0051220","cytoplasmic sequestering of protein",20,5,3.07,1376,0.1828,0.03678,1,1,"regulation of receptor clustering",11
+"102","GO:0000460","maturation of 5.8S rRNA",37,14,5.69,30,0.00072,0.03682,0.197907096774194,1,"tRNA 5'-leader removal",3
+"103","GO:0051348","negative regulation of transferase activ...",207,30,31.82,4611,0.66804,0.03715,1,1,"regulation of protein tyrosine kinase activity",2
+"104","GO:0032509","endosome transport via multivesicular bo...",32,9,4.92,488,0.04694,0.0373,0.80273479704797,1,"axonal transport",3
+"105","GO:0044272","sulfur compound biosynthetic process",169,29,25.97,1969,0.28745,0.03742,1,1,"3'-phosphoadenosine 5'-phosphosulfate metabolic process",4
+"106","GO:0034605","cellular response to heat",98,25,15.06,123,0.00603,0.03997,0.374690547945205,1,"cellular response to glucose starvation",6
+"107","GO:0032728","positive regulation of interferon-beta p...",22,7,3.38,448,0.0412,0.0412,0.774585176211454,1,"interferon-beta production",2
+"108","GO:0046034","ATP metabolic process",189,41,29.05,193,0.01214,0.04289,0.530954764150943,1,"proton motive force-driven mitochondrial ATP synthesis",6
+"109","GO:0042981","regulation of apoptotic process",951,158,146.17,1058,0.13957,0.04334,1,1,"negative regulation of intrinsic apoptotic signaling pathway",3
+"110","GO:0006418","tRNA aminoacylation for protein translat...",27,8,4.15,469,0.04484,0.04484,0.80273479704797,1,"aspartate family amino acid catabolic process",3
+"111","GO:0042572","retinol metabolic process",27,8,4.15,470,0.04484,0.04484,0.80273479704797,1,"dopamine catabolic process",4
+"112","GO:0051384","response to glucocorticoid",126,24,19.37,1138,0.15179,0.04555,1,1,"response to hormone",3
+"113","GO:0015698","inorganic anion transport",109,22,16.75,860,0.10485,0.046,1,1,"mitochondrial transmembrane transport",3
+"114","GO:0043603","amide metabolic process",844,173,129.72,10,1.5e-05,0.04608,0.0127815,1,"cytoplasmic translation",5
+"115","GO:1905477","positive regulation of protein localizat...",62,12,9.53,1738,0.23655,0.04644,1,1,"regulation of receptor clustering",11
+"116","GO:0006396","RNA processing",785,138,120.65,455,0.04144,0.04876,0.776066461538461,1,"tRNA 5'-leader removal",3
+"117","GO:1901796","regulation of signal transduction by p53...",107,18,16.45,2602,0.37744,0.04879,1,1,"negative regulation of TORC1 signaling",3
+"118","GO:0006898","receptor-mediated endocytosis",160,25,24.59,3254,0.49822,0.04909,1,1,"receptor-mediated endocytosis",1
+"119","GO:0045746","negative regulation of Notch signaling p...",68,16,10.45,500,0.04975,0.04975,0.80273479704797,1,"transmembrane receptor protein serine/threonine kinase signaling pathway",2
+"120","GO:0051289","protein homotetramerization",68,16,10.45,501,0.04975,0.04975,0.80273479704797,1,"maturation of LSU-rRNA from tricistronic rRNA transcript (SSU-rRNA, 5.8S rRNA, LSU-rRNA)",6
+"121","GO:0042303","molting cycle",149,31,22.9,468,0.04474,0.04976,0.80273479704797,1,"molting cycle",1
