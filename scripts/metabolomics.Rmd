@@ -790,49 +790,38 @@ model_data<- filtered_data%>%
   select(!area_corrected)%>%
   select(!area)%>%
   select(!core_name)
-  
-model<-aov(log(1+area_normalized) ~ Name * temperature * parent, data=model_data)
 
-qqPlot(residuals(model))
+str(model_data)
 
-summary(model)
-
-emm<-emmeans(model, ~temperature |Name)
-pairs(emm)
-posthocs1<-print(pairs(emm))
-
-emm<-emmeans(model, ~parent |Name)
-pairs(emm)
-posthocs2<-print(pairs(emm))
-
-emm<-emmeans(model, ~parent:temperature |Name)
-posthocs3<-print(pairs(emm))
+# Run ANOVA for each metabolite
+metabolite_results <- model_data %>%
+  group_by(Name) %>%
+  nest() %>%
+  mutate(
+    model = purrr::map(data, ~ lm(area_normalized ~ temperature * parent, data = .x)),
+    anova = purrr::map(model, ~ broom::tidy(anova(.x)))
+  ) %>%
+  select(-data, -model) %>%
+  unnest(anova)%>%
+  filter(!term=="Residuals")
 ```
 
-For temp significant: 
-Propionic acid
-Butryic acid
+Correct for multiple comparisons. 
+```{r}
+metabolite_results <- metabolite_results %>%
+  group_by(term) %>%
+  mutate(p.adj = p.adjust(p.value, method = "BH")) %>%
+  ungroup()
 
-For parent significant: 
-None
-
-For temp x parent significant: 
-Propionic acid
-Butryic acid
-
-Plot these two acids. 
+significant_metabolites <- metabolite_results %>%
+  filter(p.adj < 0.05)
+```
 
 ```{r}
-plot1<-filtered_data%>%
-  filter(Name %in% c("Propionic acid", "Butyric acid-TMS"))%>%
-  
-  
-  ggplot(aes(x=paste(temperature, parent), y=area_normalized))+
-  facet_wrap(~Name, scales="free")+
-  geom_boxplot()+
-  theme_classic()+
-  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1));plot1
+significant_metabolites
 ```
+
+There are no significant metabolites. 
 
 # Plot metabolites of interest 
 
@@ -851,59 +840,4 @@ plot2<-filtered_data%>%
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1));plot2
 
 ggsave(plot2, filename="figures/metabolites/test_metabolites.jpeg", width=12, height=8)
-```
-
-```{r}
-model<-filtered_data%>%
-  filter(Name=="Glucose-meto-5TMS(1)")%>%
-  
-  aov(log(1+area_normalized) ~ temperature * parent, data=.)
-
-summary(model)
-```
-
-```{r}
-model<-filtered_data%>%
-  filter(Name=="Urea-2TMS")%>%
-  
-  aov(log(1+area_normalized) ~ temperature * parent, data=.)
-
-summary(model)
-```
-
-```{r}
-model<-filtered_data%>%
-  filter(Name=="Docosahexaenoic acid-TMS")%>%
-  
-  aov(log(1+area_normalized) ~ temperature * parent, data=.)
-
-summary(model)
-```
-
-```{r}
-model<-filtered_data%>%
-  filter(Name=="Inositol-6TMS(2)-myo")%>%
-  
-  aov(log(1+area_normalized) ~ temperature * parent, data=.)
-
-summary(model)
-```
-
-```{r}
-model<-filtered_data%>%
-  filter(Name=="Inositol-6TMS(3)-Scyllo")%>%
-  
-  aov(log(1+area_normalized) ~ temperature * parent, data=.)
-
-summary(model)
-```
-Parent effect 
-
-```{r}
-model<-filtered_data%>%
-  filter(Name=="Glutaric acid-2TMS")%>%
-  
-  aov(log(1+area_normalized) ~ temperature * parent, data=.)
-
-summary(model)
 ```
