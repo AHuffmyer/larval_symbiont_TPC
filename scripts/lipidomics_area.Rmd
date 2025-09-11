@@ -12,8 +12,6 @@ editor_options:
   chunk_output_type: console
 ---
 
-NEED TO PROCEED WITH SAM MODELS 
-
 # Set Up    
 
 ```{r setup, include=FALSE}
@@ -44,6 +42,7 @@ library(genefilter)
 library(UpSetR)
 library(emmeans)
 library(car)
+library(limma)
 
 conflict_prefer("select", winner = "dplyr", quiet = FALSE)
 conflict_prefer("filter", winner = "dplyr", quiet = FALSE)
@@ -692,7 +691,7 @@ pca4<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="parent", loadi
         axis.title = element_text(size=14,  face="bold"));pca4
 ```
 
-# Supervised PLS-DA analysis  
+# Supervised PLS-DA analysis:parent and temperature effects  
 
 Script modified from the following tutorial: https://mixomicsteam.github.io/Bookdown/plsda.html
 
@@ -797,7 +796,7 @@ parent_vip_list<-parent_VIP_1%>%
 ```
 There are 237 VIPs. 
 
-Plot heatmap of z score of lipids across life stages.  
+Plot heatmap of z score of VIP lipids across life stages.  
 
 ```{r}
 # Filter data for VIP metabolites
@@ -1210,269 +1209,141 @@ pca_temperature3<-ggplot2::autoplot(scaled.pca, data=test_wide_data, frame.colou
 ggsave(pca_temperature3, filename="figures/lipids/pca_all_groups_temperatureVIP.jpeg", width=8, height=6)
 ```
 
-## PLS-DA for the effect of parent x temperature 
+# limma Analysis 
 
-Generate a PLS-DA and plot.  
-```{r, results=FALSE}
-#assigning datasets 
-X <- wide_data
-
-levels(as.factor(X$parent))
-levels(as.factor(X$temperature))
-
-X$code<-paste(X$parent, X$temperature)
-
-levels(as.factor(X$code))
-
-Y <- as.factor(X$code) #select treatment names
-Y
-
-levels(Y)
-
-X<-X%>%select(where(is.numeric)) #pull only data columns
-
-# run PLSDA 
-MyResult.plsda <- plsda(X,Y, ncomp=5) # 1 Run the method with ncomp = groups -1
-plotIndiv(MyResult.plsda)    # 2 Plot the samples
-
-cols<-c("orange", "orange3", "orange4", "brown", "brown2", "brown4", "gray", "lightgray", "darkgray") 
-
-pdf("figures/lipids/PLSDA_interaction.pdf", width=9, height=6)
-plotIndiv(MyResult.plsda, col=cols, ind.names = FALSE, legend=TRUE, legend.title = "Temperature", ellipse = FALSE, title="", style = "graphics", centroid=FALSE, point.lwd = 2, cex=2)
-dev.off() 
-
-plotIndiv(MyResult.plsda, col=cols, ind.names = FALSE, legend=TRUE, legend.title = "Temperature", ellipse = FALSE, title="", style = "graphics", centroid=FALSE, point.lwd = 2, cex=2)
-```
-
-View classification plot. 
+Limma analysis will be used to run a linear model per lipid and conduct multiple comparison corrections. This will allow us to examine interactive effects more effectively than a PLSDA. 
 
 ```{r}
-perf.plsda <- perf(MyResult.plsda, validation = 'Mfold', folds = 2, 
-                  progressBar = FALSE,  # Set to TRUE to track progress
-                  nrepeat = 50)         # We suggest nrepeat = 50
-
-plot(perf.plsda, sd = TRUE, legend.position = 'horizontal')
+str(wide_data)
 ```
-
-Set model to determine VIPs.  
-
-```{r, message=FALSE}
-MyResult.plsda_interaction <- plsda(X,Y, ncomp=5) 
-
-#view plsda model again
-plotIndiv(MyResult.plsda_interaction, col=cols, ind.names = FALSE, legend=TRUE, legend.title = "Parent x Temperature", ellipse = TRUE, title="", style = "graphics", centroid=FALSE, point.lwd = 2, cex=2)
-```
-
-Extract VIP scores 
-
-View the lipids that are most highly differentiating lipids     
 
 ```{r}
-#extract
-interaction_VIP <- PLSDA.VIP(MyResult.plsda_interaction, graph=TRUE)
+# --- 1. Prepare expression matrix (lipids only, samples as columns) ---
+expr_mat <- t(as.matrix(wide_data[ , -(1:3)]))  # transpose so rows = lipids, cols = samples
+rownames(expr_mat) <- colnames(wide_data)[-(1:3)]   # lipid names
+colnames(expr_mat) <- wide_data$sample              # sample IDs
 
-interaction_VIP_DF <- as.data.frame(interaction_VIP[["tab"]])
-interaction_VIP_DF
+# --- 2. Define factors ---
+temperature <- factor(wide_data$temperature)
+parent <- factor(wide_data$parent)
 
-# Converting row names to column
-interaction_VIP_table <- rownames_to_column(interaction_VIP_DF, var = "Lipid")
+# --- 3. Build design matrix with interaction ---
+design <- model.matrix(~ parent * temperature)
 
-#filter for VIP > 1
-interaction_VIP_1 <- interaction_VIP_table %>% 
-  filter(VIP >= 1)
+# Check design
+print(colnames(design))
 
-write_csv(interaction_VIP_1, "output/lipids_metabolites/lipids/Overall_Interaction_VIPs.csv")
+# --- 4. Fit limma model ---
+fit <- lmFit(expr_mat, design)
+fit <- eBayes(fit)
 
-#plot
-interaction_VIP_1 %>%
-  arrange(VIP) %>%
-  ggplot( aes(x = VIP, y = reorder(Lipid,VIP,sum))) +
-  geom_point() +
-  ylab("Lipid") +
-  xlab("VIP Score") +
-  ggtitle("Parent x Temperature VIP") +
-  theme_bw() + theme(panel.border = element_rect(linetype = "solid", color = "black"), panel.grid.major = element_blank(), #Makes background theme white
-                     panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
+# --- 5. Extract results ---
+# parent main effect(s)
+res_parent <- topTable(fit, coef=grep("^parent", colnames(fit$coefficients)), number=Inf, adjust="BH")
 
+# temperature main effect(s)
+res_temperature <- topTable(fit, coef=grep("^temperature", colnames(fit$coefficients)), number=Inf, adjust="BH")
 
-pdf("figures/lipids/Interaction_VIP.pdf", width=10, height=35)
-interaction_VIP_1 %>%
-  arrange(VIP) %>%
-  ggplot( aes(x = VIP, y = reorder(Lipid,VIP,sum))) +
-  geom_point() +
-  ylab("Lipid") +
-  xlab("VIP Score") +
-  ggtitle("Interaction VIP > 1") +
-  theme_bw() + theme(panel.border = element_rect(linetype = "solid", color = "black"), panel.grid.major = element_blank(), #Makes background theme white
-                     panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
-dev.off() 
-```
+# interaction effect(s)
+res_interaction <- topTable(fit, coef=grep("parent.*:temperature|temperature.*:parent", 
+                                           colnames(fit$coefficients)), 
+                            number=Inf, adjust="BH")
 
-These lists represent VIPs that drive separation between parent x temperature groups.  
-
-Make a list of vips. 
-```{r}
-interaction_vip_list<-interaction_VIP_1%>%
-  pull(Lipid)
-```
-There are 302 VIPs. 
-
-Plot heatmap of z score of lipids across groups.   
-
-```{r}
-# Filter data for VIP metabolites
-interaction_vip_data <- lipids_filtered %>% filter(lipid %in% interaction_vip_list)
-
-# Convert counts to Z-scores
-interaction_vip_data <- interaction_vip_data %>% 
-  mutate(code=paste(parent, temperature))%>%
-  group_by(lipid) %>% 
-  mutate(z_score = scale(area_normalized)) %>% 
-  group_by(code, lipid)%>%
-  summarise(z_score = mean(z_score, na.rm=TRUE))%>%
-  ungroup()
-
-
-interaction_vip_data$code<-factor(interaction_vip_data$code, levels=c("Bleached Ambient", "Bleached Moderate (+3)", "Bleached High (+6)", "Nonbleached Ambient", "Nonbleached Moderate (+3)", "Nonbleached High (+6)", "Wildtype Ambient", "Wildtype Moderate (+3)", "Wildtype High (+6)"))
-
-# Pivot data to have metabolites as rows and lifestage as columns
-heatmap_data <- interaction_vip_data %>% 
-  dplyr::select(lipid, code, z_score) %>%
-  spread(key = code, value = z_score)
-
-# Convert to matrix and set rownames
-heatmap_matrix <- as.matrix(column_to_rownames(heatmap_data, var = "lipid"))
-
-# Create the heatmap
-heatmap <- Heatmap(
-  heatmap_matrix,
-  name = "Z-score",
-  col = inferno(10),
-  cluster_rows = TRUE,
-  cluster_columns = FALSE,
-  show_row_names = FALSE,
-  show_column_names = TRUE,
-  #row_split=4,
-  row_title = "Lipid", 
-  column_names_gp =  gpar(fontsize = 12, border=FALSE),
-  column_names_rot = 45,
-  row_gap = unit(1, "mm"), 
-  border = TRUE,
-  row_names_gp = gpar(fontsize = 12, alpha = 0.75, border = FALSE)
+# --- 6. Optional: Combine into one summary table ---
+results_summary <- tibble(
+  lipid = rownames(expr_mat),
+  logFC_parent = res_parent$logFC,
+  FDR_parent   = res_parent$adj.P.Val,
+  logFC_temp   = res_temperature$logFC,
+  FDR_temp     = res_temperature$adj.P.Val,
+  logFC_int    = res_interaction$logFC,
+  FDR_int      = res_interaction$adj.P.Val
 )
 
-# Draw the heatmap
-draw(heatmap)
-
-dev.off()
-pdf("figures/lipids/VIP_heatmap_parentxtemperature.pdf", width=6, height=8)
-draw(heatmap)
-dev.off()
+# View results
+head(results_summary)
 ```
 
-View a PCA of these VIPs. 
+Subset lists of lipids significant by parent, temperature, and the interaction. 
+
+Parent
+```{r}
+limma_parent<-results_summary%>%filter(FDR_parent<0.05)
+dim(limma_parent)
+```
+77 lipids 
+
+Temperature
+```{r}
+limma_temperature<-results_summary%>%filter(FDR_temp<0.05)
+dim(limma_temperature)
+```
+65 lipids 
+
+Interaction
+```{r}
+limma_int<-results_summary%>%filter(FDR_int<0.05)
+dim(limma_int)
+```
+0 lipids 
 
 ```{r}
-vip_data_interaction<-lipids_filtered%>%
-  ungroup()%>%
-  select(!formula)%>%
-  select(!ontology)%>%
-  select(!type)%>%
-  filter(lipid %in% interaction_vip_list)%>%
-  pivot_wider(names_from=lipid, values_from=area_normalized)
+library(VennDiagram)
+
+sig_parent <- rownames(res_parent)[res_parent$adj.P.Val < 0.05]
+sig_temp <- rownames(res_temperature)[res_temperature$adj.P.Val < 0.05]
+sig_int <- rownames(res_interaction)[res_interaction$adj.P.Val < 0.05]
+
+venn.plot <- venn.diagram(
+  x = list(Parent = sig_parent,
+           Temperature = sig_temp,
+           Interaction = sig_int),
+  filename = NULL,
+  fill = c("red", "blue", "green"),
+  alpha = 0.5
+)
+
+grid::grid.draw(venn.plot)
 ```
 
+There are 60 uniquely differential lipids by parent, 48 unique by temperature, and 17 shared as differential in both parent and temperature. There are no lipids significantly influenced by interactive effects. Suggests strong parental effects across temperatures with a conserved temperature response. 
+
+Plot a heatmap of parental lipids. 
+
 ```{r}
-vip_data_interaction%>%
-    select_if(~ any(is.na(.)))
+# take lipids significant for parent 
+top_lipids <- rownames(res_parent)[res_parent$adj.P.Val < 0.05]
+
+# Subset expression matrix
+mat_top <- expr_mat[top_lipids, ]
+
+# Scale for visualization
+mat_scaled <- t(scale(t(mat_top)))
+
+# Heatmap (samples grouped by metadata)
+pheatmap(mat_scaled,
+         annotation_col = wide_data %>% select(parent, temperature),
+         show_rownames = FALSE,
+         main = "Differential Parent Lipids")
 ```
 
-No columns have NA's.  
+Plot a heatmap of temperature lipids. 
 
 ```{r}
-vip_data_interaction$temperature<-factor(vip_data_interaction$temperature, levels=c("Ambient", "Moderate (+3)", "High (+6)"))
+# take lipids significant for parent 
+top_lipids <- rownames(res_temperature)[res_temperature$adj.P.Val < 0.05]
 
-vip_data_interaction$parent<-factor(vip_data_interaction$parent, levels=c("Wildtype", "Bleached", "Nonbleached"))
-```
+# Subset expression matrix
+mat_top <- expr_mat[top_lipids, ]
 
-All characteristics are renamed.  
+# Scale for visualization
+mat_scaled <- t(scale(t(mat_top)))
 
-View scree plot. 
-
-```{r}
-scaled.pca<-prcomp(vip_data_interaction%>%select(where(is.numeric)), scale=TRUE, center=TRUE) 
-
-fviz_eig(scaled.pca)
-```
-
-Prepare a PCA plot
-```{r}
-# scale data
-vegan <- scale(vip_data_interaction%>%select(where(is.numeric)))
-
-# PerMANOVA 
-permanova<-adonis2(vegan ~ parent*temperature, data = vip_data_interaction, method='eu')
-permanova
-```
-
-adonis2(formula = vegan ~ parent * temperature, data = vip_data_interaction, method = "eu")
-                   Df SumOfSqs      R2      F Pr(>F)    
-parent              2   2779.5 0.18407 5.8640  0.001 ***
-temperature         2   1432.4 0.09486 3.0220  0.002 ** 
-parent:temperature  4    934.5 0.06189 0.9858  0.450    
-Residual           42   9953.7 0.65918                  
-Total              50  15100.0 1.00000    
-
-```{r}
-pca_vip_interaction1<-ggplot2::autoplot(scaled.pca, data=vip_data_interaction, frame.colour="parent", loadings=FALSE,  colour="parent", shape="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
-  scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
-  scale_fill_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
-  scale_shape_manual(name="Temperature", values=c(19,17,15))+
-  theme_classic()+
-   theme(legend.text = element_text(size=14), 
-         legend.position="right",
-        plot.background = element_blank(),
-        legend.title = element_text(size=14, face="bold"), 
-        axis.text = element_text(size=14), 
-        axis.title = element_text(size=14,  face="bold"));pca_vip_interaction1
-
-pca_vip_interaction2<-ggplot2::autoplot(scaled.pca, data=vip_data_interaction, frame.colour="temperature", loadings=FALSE,  colour="temperature", shape="parent", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
-  scale_color_manual(name="Temperature", values=c("blue", "orange", "red"))+
-  scale_fill_manual(name="Temperature", values=c("blue", "orange", "red"))+
-  scale_shape_manual(name="Parental Phenotype", values=c(19,17,15))+
-  theme_classic()+
-   theme(legend.text = element_text(size=14), 
-         legend.position="right",
-        plot.background = element_blank(),
-        legend.title = element_text(size=14, face="bold"), 
-        axis.text = element_text(size=14), 
-        axis.title = element_text(size=14,  face="bold"));pca_vip_interaction2
-
-pca_plots_interaction<-plot_grid(pca_vip_interaction1, pca_vip_interaction2, ncol=2, nrow=1)
-
-ggsave(pca_plots_interaction, filename="figures/lipids/pca_plots_interactionVIP.jpeg", width=12, height=4)
-```
-
-View a PCA with treatment code information. 
-```{r}
-test_wide_data<-vip_data_interaction%>%
-  mutate(code=paste(parent, temperature))
-
-levels(as.factor(test_wide_data$code))
-
-pca_interaction3<-ggplot2::autoplot(scaled.pca, data=test_wide_data, frame.colour="code", loadings=FALSE,  colour="code", shape="code", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
-  scale_color_manual(name="Group", values=c("orange", "orange", "orange", "brown4", "brown4", "brown4", "gray", "gray", "gray"))+
-  scale_fill_manual(name="Group", values=c("orange", "orange", "orange", "brown4", "brown4", "brown4", "gray", "gray", "gray"))+
-  scale_shape_manual(name="Group", values=c(19,17,15,19,17,15,19,17,15))+
-  theme_classic()+
-   theme(legend.text = element_text(size=14), 
-         legend.position="right",
-        plot.background = element_blank(),
-        legend.title = element_text(size=14, face="bold"), 
-        axis.text = element_text(size=14), 
-        axis.title = element_text(size=14,  face="bold"));pca_interaction3
-
-ggsave(pca_interaction3, filename="figures/lipids/pca_all_groups_interactionVIP.jpeg", width=8, height=6)
+# Heatmap (samples grouped by metadata)
+pheatmap(mat_scaled,
+         annotation_col = wide_data %>% select(parent, temperature),
+         show_rownames = FALSE,
+         main = "Differential Parent Lipids")
 ```
 
 # Output lists for LION 
