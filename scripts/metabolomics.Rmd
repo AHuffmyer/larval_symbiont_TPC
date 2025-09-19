@@ -587,10 +587,9 @@ pca1<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="parent", loadi
 ```
 
 ```{r}
-pca2<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="parent", loadings=FALSE,  colour="parent", shape="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
+pca2<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="parent", loadings=FALSE,  colour="parent", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
   scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
   scale_fill_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
-  scale_shape_manual(name="Temperature", values=c(19,17,15))+
   theme_classic()+
    theme(legend.text = element_text(size=14), 
          legend.position="right",
@@ -599,10 +598,9 @@ pca2<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="parent", loadi
         axis.text = element_text(size=14), 
         axis.title = element_text(size=14,  face="bold"));pca2
 
-pca2b<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="temperature", loadings=FALSE,  colour="temperature", shape="parent", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
+pca2b<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="temperature", loadings=FALSE,  colour="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
   scale_color_manual(name="Temperature", values=c("blue", "orange", "red"))+
   scale_fill_manual(name="Temperature", values=c("blue", "orange", "red"))+
-  scale_shape_manual(name="Parental Phenotype", values=c(19,17,15))+
   theme_classic()+
    theme(legend.text = element_text(size=14), 
          legend.position="right",
@@ -614,28 +612,6 @@ pca2b<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="temperature",
 pca_plots<-plot_grid(pca2, pca2b, ncol=2, nrow=1)
 
 ggsave(pca_plots, filename="figures/metabolites/pca_plots.jpeg", width=12, height=4)
-```
-
-View a PCA with treatment code information. 
-```{r}
-test_wide_data<-wide_data%>%
-  mutate(code=paste(parent, temperature))
-
-levels(as.factor(test_wide_data$code))
-
-pca3<-ggplot2::autoplot(scaled.pca, data=test_wide_data, frame.colour="code", loadings=FALSE,  colour="code", shape="code", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
-  scale_color_manual(name="Group", values=c("orange", "orange", "orange", "brown4", "brown4", "brown4", "gray", "gray", "gray"))+
-  scale_fill_manual(name="Group", values=c("orange", "orange", "orange", "brown4", "brown4", "brown4", "gray", "gray", "gray"))+
-  scale_shape_manual(name="Group", values=c(19,17,15,19,17,15,19,17,15))+
-  theme_classic()+
-   theme(legend.text = element_text(size=14), 
-         legend.position="right",
-        plot.background = element_blank(),
-        legend.title = element_text(size=14, face="bold"), 
-        axis.text = element_text(size=14), 
-        axis.title = element_text(size=14,  face="bold"));pca3
-
-ggsave(pca3, filename="figures/metabolites/pca_all_groups.jpeg", width=8, height=6)
 ```
 
 Plot heatmap of z scores of metabolites. 
@@ -744,7 +720,8 @@ test_heatmap <- filtered_data %>%
 # Pivot data to have metabolites as rows and sample as columns
 heatmap_data <- test_heatmap %>% 
   dplyr::select(Name, temperature, z_score) %>%
-  spread(key = temperature, value = z_score)
+  spread(key = temperature, value = z_score)%>%
+  select(Name, Ambient, `Moderate (+3)`, `High (+6)`)
 
 # Convert to matrix and set rownames
 heatmap_matrix <- as.matrix(column_to_rownames(heatmap_data, var = "Name"))
@@ -823,20 +800,21 @@ significant_metabolites
 
 There are no significant metabolites. 
 
-# Plot metabolites of interest 
+# Plot metabolites that have a trend for differences  
 
+Trend for differences between parents 
 ```{r}
 plot2<-filtered_data%>%
-  filter(Name %in% c("Glucose-meto-5TMS(1)", "Urea-2TMS", "Docosahexaenoic acid-TMS", "Inositol-6TMS(2)-myo", "Inositol-6TMS(3)-Scyllo", "Glutaric acid-2TMS"))%>%
+  filter(Name %in% c("Glucose-meto-5TMS(1)", "Urea-2TMS", "Docosahexaenoic acid-TMS", "Inositol-6TMS(2)-myo", "Inositol-6TMS(3)-Scyllo", "Glutaric acid-2TMS", "Palmitic acid-TMS"))%>%
+  mutate(temperature=factor(temperature, levels=c("Ambient", "Moderate (+3)", "High (+6)")))%>%
   
   
-  ggplot(aes(x=paste(parent, temperature), y=area_normalized, color=parent))+
+  ggplot(aes(x=temperature, y=area_normalized, color=parent))+
   facet_wrap(~Name, scales="free")+
   geom_boxplot(outliers=FALSE)+
-  geom_point()+
+  geom_point(position=position_dodge(0.75))+
   theme_classic()+
   scale_color_manual(values=c("orange", "darkred", "darkgray"))+
-  scale_x_discrete(limits=c("Bleached Ambient", "Bleached Moderate (+3)", "Bleached High (+6)", "Nonbleached Ambient", "Nonbleached Moderate (+3)", "Nonbleached High (+6)", "Wildtype Ambient", "Wildtype Moderate (+3)", "Wildtype High (+6)"))+
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1));plot2
 
 ggsave(plot2, filename="figures/metabolites/test_metabolites.jpeg", width=12, height=8)
