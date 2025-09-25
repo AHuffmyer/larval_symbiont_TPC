@@ -533,7 +533,7 @@ keep_list<-c(unique(test$lipid))
 
 hist(test$RSD)
 ```
-843 metabolites after 
+843 lipids after 
 
 Filter the filtered dataset to include the selected metabolites after RSD filtering.  
 ```{r}
@@ -601,9 +601,9 @@ permanova
 
 adonis2(formula = vegan ~ parent * temperature, data = wide_data, method = "eu")
                    Df SumOfSqs      R2      F Pr(>F)  
-parent              2     3925 0.09312 2.5252  0.024 *
-temperature         2     3346 0.07938 2.1525  0.050 *
-parent:temperature  4     2238 0.05309 0.7198  0.703  
+parent              2     3925 0.09312 2.5252  0.029 *
+temperature         2     3346 0.07938 2.1525  0.042 *
+parent:temperature  4     2238 0.05309 0.7198  0.727  
 Residual           42    32642 0.77441                
 Total              50    42150 1.00000      
 
@@ -627,7 +627,7 @@ pca2<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="parent", loadi
   scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
   scale_fill_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
   theme_classic()+
-  geom_text(x=0, y=-0.35, label="p=0.024", size=8)+
+  geom_text(x=0, y=-0.35, label="p=0.029", size=8)+
    theme(legend.text = element_text(size=14), 
          legend.position="right",
         plot.background = element_blank(),
@@ -639,7 +639,7 @@ pca2b<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="temperature",
   scale_color_manual(name="Temperature", values=c("blue", "orange", "red"))+
   scale_fill_manual(name="Temperature", values=c("blue", "orange", "red"))+
   theme_classic()+
-  geom_text(x=0, y=-0.35, label="p=0.050", size=8)+
+  geom_text(x=0, y=-0.35, label="p=0.042", size=8)+
    theme(legend.text = element_text(size=14), 
          legend.position="right",
         plot.background = element_blank(),
@@ -867,7 +867,7 @@ lolli_parent_plot<-lollipop_parent%>%
   geom_segment(aes(x = 2, xend = VIP, y = Lipid, yend = Lipid), linewidth = 0.8) +
   ylab("Lipid")+
   scale_color_manual(values = okabe_ito_12) +
-  xlim(2, 3)+
+  xlim(2, 2.8)+
   xlab("Variable Importance in Projection")+
   ggtitle("A")+
   theme_classic()+
@@ -875,9 +875,8 @@ lolli_parent_plot<-lollipop_parent%>%
     legend.title=element_blank()
   );lolli_parent_plot
 
-ggsave(lolli_parent_plot, filename="figures/lipids/VIP_scores_parent.png", width=10, height=5)
+ggsave(lolli_parent_plot, filename="figures/lipids/VIP_scores_parent.png", width=7, height=5)
 ```
-
 
 View a PCA of these VIPs. 
 
@@ -1118,15 +1117,15 @@ lolli_temp_plot<-lollipop_temp%>%
   geom_segment(aes(x = 2, xend = VIP, y = Lipid, yend = Lipid), linewidth = 0.8) +
   ylab("Lipid")+
   scale_color_manual(values = okabe_ito_12) +
-  xlim(2, 4.5)+
+  xlim(2, 4.2)+
   xlab("Variable Importance in Projection")+
-  ggtitle("B")+
+  ggtitle("C")+
   theme_classic()+
   theme(
     legend.title=element_blank()
   );lolli_temp_plot
 
-ggsave(lolli_temp_plot, filename="figures/lipids/VIP_scores_temperature.png", width=10, height=5)
+ggsave(lolli_temp_plot, filename="figures/lipids/VIP_scores_temperature.png", width=7, height=5)
 ```
 
 View a PCA of these VIPs. 
@@ -1443,6 +1442,17 @@ classes$prop_class<-(classes$class_area/classes$total_area)*100
 
 Most lipids (50-70%) are fatty acids. 
 
+Calculate mean of each class. 
+```{r}
+summary<-classes%>%
+  group_by(ontology)%>%
+  summarise(mean=mean(prop_class))%>%
+  arrange(desc(mean))%>%
+  
+  write.csv("output/lipids_metabolites/lipids/class_mean_percentage_composition.csv")
+```
+
+
 View percent lipids for each class. 
 
 Fatty acids
@@ -1559,6 +1569,9 @@ results_table_sign<-results_table%>%
 results_table_sign
 
 list<-c(results_table_sign$Ontology)
+
+#output
+write.csv(results_table, "output/lipids_metabolites/lipids/class_anova_results_table.csv")
 ```
 
      Ontology        term df        sumsq statistic      p.value  adj_pvalues
@@ -1577,6 +1590,23 @@ list<-c(results_table_sign$Ontology)
 13         SL      parent  2 0.0516161870 43.822892 5.251806e-11 1.134390e-08
 14         ST      parent  2 0.0060952440 14.666678 1.476010e-05 5.313635e-04
 
+Plot all classes 
+```{r}
+plot_sign1<-classes%>%
+  
+  ggplot(aes(x=temperature, y=prop_class, color=parent))+
+  facet_wrap(~ontology)+
+  geom_boxplot(outliers=FALSE)+
+  geom_point(position=position_dodge(0.75))+
+  theme_classic()+
+  ylab("Proportion Class Concentration")+
+  xlab("Temperature")+
+  theme(legend.position="none")+
+  scale_color_manual(values=c("orange", "darkred", "darkgray"))+
+  scale_x_discrete(limits=c("Ambient", "Moderate (+3)", "High (+6)"))+
+  theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1));plot_sign1
+```
+
 Plot AHexCAS (sign by temperature) - higher at high temperature.  
 
 ```{r}
@@ -1588,8 +1618,9 @@ plot_sign1<-classes%>%
   geom_boxplot(outliers=FALSE)+
   geom_point()+
   theme_classic()+
-  ylab("Proportion Class Concentration")+
+  ylab("% Class Composition")+
   xlab("Temperature")+
+  ylim(0,0.035)+
   theme(legend.position="none")+
   scale_color_manual(values=c("blue", "red", "orange"))+
   scale_x_discrete(limits=c("Ambient", "Moderate (+3)", "High (+6)"))+
@@ -1606,17 +1637,17 @@ plot_sign2<-classes%>%
   filter(!ontology=="AHexCAS")%>%
   
   ggplot(aes(x=paste(parent), y=prop_class, color=parent))+
-  facet_wrap(~ontology, scales="free")+
+  facet_wrap(~ontology, scales="free", nrow=3, ncol=5)+
   geom_boxplot(outliers=FALSE)+
   geom_point()+
   theme_classic()+
-    ylab("Proportion Class Concentration")+
+    ylab("% Class Composition")+
   xlab("Parent Phenotype")+
     theme(legend.position="none")+
   scale_color_manual(values=c("orange", "darkred", "darkgray"))+
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1));plot_sign2
 
-ggsave(plot_sign2, filename="figures/lipids/sign_classes_parent.jpeg", width=8, height=8)
+ggsave(plot_sign2, filename="figures/lipids/sign_classes_parent.jpeg", width=9, height=8)
 ```
 
 https://systemsomicslab.github.io/compms/msdial/lipidnomenclature.html
@@ -1719,7 +1750,7 @@ fa_plot2<-fa_pufa%>%
   scale_colour_manual(values=c("orange", "darkred", "darkgray"))+
   labs(x = "", y = "FFA 28:7 concentration") +
   ylim(0,0.028)+
-  ggtitle("A")+
+  ggtitle("F")+
   geom_text(inherit.aes=FALSE, x=2, y=0.025, label="p[parent]<0.001", size=4)+
   geom_text(inherit.aes=FALSE, x=2, y=0.023, label="p[temperature]<0.001", size=4)+
   theme_classic() +
@@ -1747,6 +1778,38 @@ parent              2 0.0008263 0.0004132  66.378 9.93e-14 ***
 temperature         2 0.0001176 0.0000588   9.450 0.000409 ***
 parent:temperature  4 0.0000654 0.0000163   2.626 0.047927 *  
 Residuals          42 0.0002614 0.0000062  
+
+Also plot the top VIP: ST 27:2;O
+```{r}
+st_plot<-lipids_filtered%>%
+  filter(lipid=="ST 27:2;O")%>%
+  mutate(temperature=factor(temperature, levels=c("Ambient", "Moderate (+3)", "High (+6)")))%>%
+  
+  ggplot(aes(x = temperature, y = area_normalized, colour = parent)) +
+  geom_boxplot()+
+  geom_point(position=position_dodge(0.75)) +
+  scale_colour_manual(values=c("orange", "darkred", "darkgray"))+
+  labs(x = "", y = "ST 27:2;O concentration") +
+  ylim(0,0.0015)+
+  ggtitle("E")+
+  geom_text(inherit.aes=FALSE, x=2, y=0.0012, label="p[parent]<0.001", size=4)+
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+        legend.title=element_blank(),
+        legend.position="right");st_plot
+
+ggsave(st_plot, filename="figures/lipids/ST27_2_ox_plot.png", width=5, height=5)
+```
+
+Run a model
+```{r}
+model<-lipids_filtered%>%
+  filter(lipid=="ST 27:2;O")%>%
+  
+  aov(area_normalized ~ parent * temperature, data=.)
+
+summary(model)
+```
 
 FAs - monounsaturated (":1")
 ```{r}
@@ -1925,7 +1988,7 @@ ratio_plot1<-epa_dha%>%
   ggplot(aes(x = temperature, y = mean, colour = parent)) +
   geom_point(position=position_dodge(0.75)) +
   geom_boxplot() + 
-  ggtitle("B")+
+  ggtitle("C")+
   labs(x = "Temperature", y = "EPA:DHA Ratio") +
   geom_text(inherit.aes=FALSE, x=2, y=3, label="p[parent]<0.001", size=4)+
   scale_colour_manual(values=c("orange", "darkred", "darkgray"))+

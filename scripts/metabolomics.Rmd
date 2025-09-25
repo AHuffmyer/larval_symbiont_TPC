@@ -129,6 +129,8 @@ Normalize area by dividing area by sorbitol internal standard  value for each sa
 ```{r}
 metabolites<-metabolites%>%
   mutate(area_corrected=area/area_sorbitol)
+
+length(unique(metabolites$Name))
 ```
 
 Filter to only keep metabolites that have a detectable value in every sample. 
@@ -186,6 +188,8 @@ filtered_data <- metabolites %>%
   group_by(Name) %>%
   filter(all(area_corrected > 0))
 
+length(unique(filtered_data$Name))
+
 # Find metabolites that were removed (i.e., have any value <= 0)
 removed_metabolites <- metabolites %>%
   filter(!(Name %in% filtered_data$Name)) %>%
@@ -222,6 +226,8 @@ unique_values
 length(unique(filtered_data2$Name))
 
 filtered_data<-filtered_data2
+
+length(unique(filtered_data$Name))
 ```
 
 66 metabolites are kept after 90% of samples >0 filtering, many were removed. This makes sense, the data frame kept all metabolites in the library so we expect far fewer to be retained.   
@@ -688,7 +694,7 @@ heatmap <- Heatmap(
   cluster_columns = FALSE,
   show_row_names = TRUE,
   show_column_names = TRUE,
-  row_split=3,
+  row_split=4,
   row_title = "Metabolite", 
   column_names_gp =  gpar(fontsize = 12, border=FALSE),
   column_names_rot = 45,
@@ -735,7 +741,7 @@ heatmap <- Heatmap(
   cluster_columns = FALSE,
   show_row_names = TRUE,
   show_column_names = TRUE,
-  row_split=3,
+  row_split=5,
   row_title = "Metabolite", 
   column_names_gp =  gpar(fontsize = 12, border=FALSE),
   column_names_rot = 45,
