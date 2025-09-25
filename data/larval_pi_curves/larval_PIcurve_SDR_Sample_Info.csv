@@ -1,4 +1,4 @@
-Date,TimeStart,TimeEnd,Sample.ID,Chamber.ID,SDR,Tank,Symbiont,Type,Salinity,Plate,Run,Volume,Org.Number,Notes
+Date,TimeStart,TimeEnd,Sample.ID,Well,SDR,Tank,Symbiont,Type,Salinity,Plate,Run,Volume,Org.Number,Notes
 20230621,1648,1948,1,A1,641,C,C,Sample,33,1,1,0.00008,5,
 20230621,1648,1948,7,B1,641,D,D,Sample,33,1,1,0.00008,5,
 20230621,1648,1948,13,C1,641,NA,NA,Blank,33,1,1,0.00008,NA,
