@@ -1,5 +1,5 @@
 ---
-title: "Larval PI Curve Plotting and Analysis - Hawaii 2023 - Temp x PI curve analysis" 
+title: "Larval PI Curve Plotting and Analysis - Hawaii 2023 - Temp x Light curve analysis" 
 author: "AS Huffmyer"
 date: '2023'
 output:
@@ -67,67 +67,60 @@ Format data.
 pi_temp_data<-pi_temp_data[!is.na(pi_temp_data$Type),]
 
 #format columns
-pi_temp_data$Tank<-as.factor(pi_temp_data$Tank)
 pi_temp_data$Symbiont<-as.factor(pi_temp_data$Symbiont)
 pi_temp_data$SDR<-as.factor(pi_temp_data$SDR)
 pi_temp_data$Plate<-as.factor(pi_temp_data$Plate)
 pi_temp_data$Temperature<-as.factor(pi_temp_data$Temperature)
 ```
 
-Remove plate that didnt work 
-
-Removing plate 13 at light 3 (100 PAR) for now, the data are super variable and weird due to probe issue. Need to revisit and trim this section. 
-
-NEED TO FIX THIS - ITS ASSIGNED AS PLATE 5 RATHER THAN 13
-
-```{r}
-#pi_temp_data<-pi_temp_data%>%
-#  filter(!c(Plate==5 & Light==3))
-```
-
 Look for outliers in the data.  
 
 ```{r}
-boxplot(pi_temp_data$P.nmol.org.min)
+boxplot(pi_temp_data$nmol.org.min)
 #pi_temp_data<-pi_temp_data%>%filter(P.nmol.org.min < 0.10)
 #boxplot(pi_temp_data$P.nmol.org.min)
 
-boxplot(pi_temp_data$P.nmol.org.min~pi_temp_data$PAR)
+boxplot(pi_temp_data$nmol.org.min~pi_temp_data$Light_Value)
 ```
 
 Set values at 0 for light runs if <0 indicating no photosynthesis occurred. Set values at 0 for dark runs if >0 indicating no respiration occurred. 
 ```{r}
 pi_temp_data<-pi_temp_data%>%
-  mutate(P.nmol.org.min=if_else(P.nmol.org.min<0 & PAR==50, 0, 
-                      if_else(P.nmol.org.min<0 & PAR==100, 0, 
-                              if_else(P.nmol.org.min<0 & PAR==500, 0, 
-                                      if_else(P.nmol.org.min>0 & PAR==0.1, 0, 
-                                              if_else(P.nmol.org.min>0 & PAR==0.2, 0, P.nmol.org.min))))))
+  mutate(nmol.org.min=if_else(nmol.org.min<0 & Light_Value==50, 0, 
+                      if_else(nmol.org.min<0 & Light_Value==100, 0, 
+                              if_else(nmol.org.min<0 & Light_Value==500, 0, 
+                                      if_else(nmol.org.min>0 & Light_Value==0.1, 0, 
+                                              if_else(nmol.org.min>0 & Light_Value==0.2, 0, nmol.org.min))))))
 
-boxplot(pi_temp_data$P.nmol.org.min~pi_temp_data$PAR)
+boxplot(pi_temp_data$nmol.org.min~pi_temp_data$Light_Value)
 ```
 
 Calculate mean temperature values for each run.    
 
 ```{r}
-pr.temps<-read.csv("output/temp_pi_curves/runs_temp.csv")
-pr.temps = subset(pr.temps, select = -c(X) ) #remove empty column
+pr.temps<-read.csv("output/temp_pi_curves/mean_temperature_by_plate_and_light_interval.csv")
 
-pi_temp_data$Plate<-as.integer(pi_temp_data$Plate)
+pr.temps$Plate <- as.integer(sub("(?i)^plate", "", pr.temps$Plate, perl = TRUE))  # removes leading "Plate"
+
+pr.temps<-pr.temps%>%
+  mutate(Plate=as.factor(Plate))
 ```
 
 Add temperature data to master data frame.  
 ```{r}
-pi_temp_data<-left_join(pi_temp_data,pr.temps)
+str(pi_temp_data)
+str(pr.temps)
+
+pi_temp_data$mean_temp<-pr.temps$Mean_T_internal_C[match(pi_temp_data$Plate, pr.temps$Plate)]
 
 #round to 0.1°C 
 pi_temp_data<-pi_temp_data%>%
-  mutate(Temp.C=round(Temp.C,1))
+  mutate(mean_temp=round(mean_temp,1))
 ```
 
 Reorder factor. 
 ```{r}
-pi_temp_data$PAR<-factor(pi_temp_data$PAR, levels=c("0.1", "50", "100", "500", "0.2"))
+pi_temp_data$PAR<-factor(pi_temp_data$Light_Value, levels=c("0.1", "50", "100", "500", "0.2"))
 ```
 
 # Plot and analyze 
@@ -136,7 +129,7 @@ Plot data with means
 ```{r}
 pi_temp_plot1<-pi_temp_data %>%
     group_by(PAR, Symbiont, Temperature)%>%
-    dplyr::summarise(mean=mean(P.nmol.org.min, na.rm=TRUE), sd=sd(P.nmol.org.min, na.rm=TRUE), N=length(P.nmol.org.min), se=sd/sqrt(N))%>%
+    dplyr::summarise(mean=mean(nmol.org.min, na.rm=TRUE), sd=sd(nmol.org.min, na.rm=TRUE), N=length(nmol.org.min), se=sd/sqrt(N))%>%
     
     ggplot(., aes(x = as.factor(PAR), y = mean, group=interaction(PAR, Symbiont))) +
     facet_wrap(~Temperature)+
@@ -163,7 +156,7 @@ Display with plate.
 ```{r}
 pi_temp_plot1a<-pi_temp_data %>%
     group_by(PAR, Symbiont, Plate)%>%
-    dplyr::summarise(mean=mean(P.nmol.org.min, na.rm=TRUE), sd=sd(P.nmol.org.min, na.rm=TRUE), N=length(P.nmol.org.min), se=sd/sqrt(N))%>%
+    dplyr::summarise(mean=mean(nmol.org.min, na.rm=TRUE), sd=sd(nmol.org.min, na.rm=TRUE), N=length(nmol.org.min), se=sd/sqrt(N))%>%
     
     ggplot(., aes(x = as.factor(PAR), y = mean, group=interaction(PAR, Symbiont))) +
     facet_wrap(~Plate)+
@@ -187,7 +180,7 @@ pi_temp_plot1a<-pi_temp_data %>%
 View by plate. 
 ```{r}
 pi_temp_plot2b<-pi_temp_data %>%
-    ggplot(., aes(x = as.factor(PAR), y = P.nmol.org.min, group=Symbiont)) +
+    ggplot(., aes(x = as.factor(PAR), y = nmol.org.min, group=Symbiont)) +
     facet_wrap(~Plate)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_smooth(aes(color=Symbiont, group=Symbiont), method="loess", alpha=0.4, se=FALSE)+
@@ -209,7 +202,7 @@ Plot data with dots
 ```{r}
 pi_temp_plot3<-pi_temp_data %>%
   
-    ggplot(., aes(x = as.factor(PAR), y = P.nmol.org.min, group=interaction(PAR, Symbiont))) +
+    ggplot(., aes(x = as.factor(PAR), y = nmol.org.min, group=interaction(PAR, Symbiont))) +
     facet_wrap(~Temperature)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_point(aes(group=interaction(PAR, Symbiont), color=Symbiont), size=3, fill="white", position = position_jitterdodge(0.4), shape=21) + 
@@ -235,7 +228,7 @@ ggsave("figures/temp_pi_curves/pi_temp_dots.png", pi_temp_plot3, dpi=300, w=7, h
 Run anova on values at each temperature
 ```{r}
 model<-pi_temp_data%>%
-  aov(P.nmol.org.min~PAR*Symbiont*Temperature, data=.)
+  aov(nmol.org.min~PAR*Symbiont*Temperature, data=.)
 
 summary(model)
 ```
@@ -245,7 +238,7 @@ Run model for 27
 ```{r}
 model<-pi_temp_data%>%
   filter(Temperature==27)%>%
-  aov(P.nmol.org.min~PAR*Symbiont, data=.)
+  aov(nmol.org.min~PAR*Symbiont, data=.)
 
 summary(model)
 ```
@@ -255,7 +248,7 @@ Run model for 30
 ```{r}
 model<-pi_temp_data%>%
   filter(Temperature==30)%>%
-  aov(P.nmol.org.min~PAR*Symbiont, data=.)
+  aov(nmol.org.min~PAR*Symbiont, data=.)
 
 summary(model)
 ```
@@ -265,7 +258,7 @@ Run model for 33
 ```{r}
 model<-pi_temp_data%>%
   filter(Temperature==33)%>%
-  aov(P.nmol.org.min~PAR*Symbiont, data=.)
+  aov(nmol.org.min~PAR*Symbiont, data=.)
 
 summary(model)
 ```
@@ -275,7 +268,7 @@ Run model for 36
 ```{r}
 model<-pi_temp_data%>%
   filter(Temperature==36)%>%
-  aov(P.nmol.org.min~PAR*Symbiont, data=.)
+  aov(nmol.org.min~PAR*Symbiont, data=.)
 
 summary(model)
 ```
@@ -286,8 +279,8 @@ There is an effect of light at 36C.
 Calculate gross photosynthesis and P:R ratio. 
 ```{r}
 pi_temp_data_calc<-pi_temp_data%>%
-  select(Date, Chamber.ID, Plate, Run, Temperature, Symbiont, PAR, P.nmol.org.min)%>%
-  pivot_wider(names_from=PAR, values_from=P.nmol.org.min)%>%
+  select(Date, Well, Plate, Run, Temperature, Symbiont, PAR, nmol.org.min)%>%
+  pivot_wider(names_from=PAR, values_from=nmol.org.min)%>%
   mutate(ler=`0.2`)%>%
   mutate(rd=`0.1`)%>%
   mutate(ler_inverse=ler*-1)%>%
@@ -387,6 +380,148 @@ metric_plot1_means<-pi_temp_data_calc%>%
 ggsave("figures/temp_pi_curves/pi_metrics_mean.png", metric_plot1_means, dpi=300, w=7, h=5, units="in")
 ```
 
+View P metrics by light and temp.  
+```{r}
+# 1) compute mean ± SE for each Symbiont × Metric × Temperature
+sum_df <- pi_temp_data_calc %>%
+  filter(Metric %in% c("p_gross_low", "p_gross_medium", "p_gross_high")) %>%
+  group_by(Symbiont, Metric, Temperature) %>%
+  summarise(
+    n    = n(),
+    mean = mean(Value, na.rm = TRUE),
+    se   = sd(Value, na.rm = TRUE) / sqrt(length(Value))
+  ) %>%
+  ungroup()
+
+# 2) plot: raw points (optional), then mean lines, mean points, and SE error bars
+metric_plot3 <- ggplot() +
+  facet_wrap(~ Symbiont) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black", size = 0.75) +
+
+  # raw points (optional, lightly jittered)
+  geom_point(
+    data = pi_temp_data_calc %>% 
+      filter(Metric %in% c("p_gross_low", "p_gross_medium", "p_gross_high")),
+    aes(x = Temperature, y = Value, fill = Metric),
+    shape = 21, size = 2.5, alpha = 0.1,
+    position = position_jitter(width = 0.2, height = 0)  # no dodging, just jitter
+  ) +
+
+  # connecting lines of group means, colored by light level (Metric)
+  geom_line(
+    data = sum_df,
+    aes(x = Temperature, y = mean, color = Metric, group = Metric),
+    linewidth = 1.2
+  ) +
+  # mean points
+  geom_point(
+    data = sum_df,
+    aes(x = Temperature, y = mean, color = Metric),
+    size = 3
+  ) +
+  # error bars: mean ± SE
+  geom_errorbar(
+    data = sum_df,
+    aes(x = Temperature, ymin = mean - se, ymax = mean + se, color = Metric),
+    width = 0.12
+  ) +
+
+  xlab("Temperature") +
+  scale_color_manual(
+    name = "PAR",
+    values = c("#253494", "#41B6C4", "#A1D99B"),
+    labels = c("50", "100", "500")
+  ) +
+  scale_fill_manual(  # keep raw points in the same palette as lines
+    name = "PAR",
+    values = c("#253494", "#41B6C4", "#A1D99B"),
+    labels = c("50", "100", "500")
+  ) +
+  ylab(expression(bold(paste(P[Gross]," (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+  theme_classic() +
+  theme(
+    legend.position = "right",
+    axis.title = element_text(face = "bold", size = 16),
+    axis.text = element_text(size = 12, color = "black"),
+    legend.title = element_text(face = "bold", size = 14),
+    legend.text = element_text(size = 12)
+  );metric_plot3
+
+ggsave("figures/temp_pi_curves/gross_photosynthesis_light_temp.png", metric_plot3, dpi=300, w=9, h=6, units="in")
+```
+
+View P metrics by light and temp.  
+```{r}
+# 1) compute mean ± SE for each Symbiont × Metric × Temperature
+sum_df <- pi_temp_data_calc %>%
+  filter(Metric %in% c("p_gross_low", "p_gross_medium", "p_gross_high")) %>%
+  group_by(Symbiont, Metric, Temperature) %>%
+  summarise(
+    n    = n(),
+    mean = mean(Value, na.rm = TRUE),
+    se   = sd(Value, na.rm = TRUE) / sqrt(length(Value))
+  ) %>%
+  ungroup()
+
+new_labels<-c("p_gross_low"="Low Light (50)","p_gross_medium"="Mod. Light (100)", "p_gross_high"="High Light (500)")
+
+# 2) plot: raw points (optional), then mean lines, mean points, and SE error bars
+metric_plot3 <- ggplot() +
+  facet_wrap(~ Metric, labeller = labeller(Metric = new_labels)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black", size = 0.75) +
+
+  # raw points (optional, lightly jittered)
+  geom_point(
+    data = pi_temp_data_calc %>% 
+      filter(Metric %in% c("p_gross_low", "p_gross_medium", "p_gross_high")),
+    aes(x = Temperature, y = Value, fill = Symbiont),
+    shape = 21, size = 2.5, alpha = 0.1,
+    position = position_jitter(width = 0.2, height = 0)  # no dodging, just jitter
+  ) +
+
+  # connecting lines of group means, colored by light level (Metric)
+  geom_line(
+    data = sum_df,
+    aes(x = Temperature, y = mean, color = Symbiont, group = Symbiont),
+    linewidth = 1.2
+  ) +
+  # mean points
+  geom_point(
+    data = sum_df,
+    aes(x = Temperature, y = mean, color = Symbiont),
+    size = 3
+  ) +
+  # error bars: mean ± SE
+  geom_errorbar(
+    data = sum_df,
+    aes(x = Temperature, ymin = mean - se, ymax = mean + se, color = Symbiont),
+    width = 0.12
+  ) +
+
+  xlab("Temperature") +
+  scale_color_manual(
+    name = "Parent",
+    values = c("orange", "darkred", "darkgray"), 
+    labels = c("Bleached", "Nonbleached", "Wildtype")
+  ) +
+  scale_fill_manual(  # keep raw points in the same palette as lines
+    name = "Parent",
+    values = c("orange", "darkred", "darkgray"), 
+    labels = c("Bleached", "Nonbleached", "Wildtype")
+  ) +
+  ylab(expression(bold(paste(P[Gross]," (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+  theme_classic() +
+  theme(
+    legend.position = "right",
+    axis.title = element_text(face = "bold", size = 16),
+    axis.text = element_text(size = 12, color = "black"),
+    legend.title = element_text(face = "bold", size = 14),
+    legend.text = element_text(size = 12)
+  );metric_plot3
+
+ggsave("figures/temp_pi_curves/gross_photosynthesis_symbiont_temp.png", metric_plot3, dpi=300, w=9, h=6, units="in")
+```
+
 View Rd and LER metrics. 
 ```{r}
 metric_plot1a<-pi_temp_data_calc%>%
@@ -442,6 +577,154 @@ metric_plot1a_means<-pi_temp_data_calc%>%
       ); metric_plot1a_means
 
 ggsave("figures/temp_pi_curves/pi_rd_ler_means.png", metric_plot1a_means, dpi=300, w=7, h=5, units="in")
+```
+
+View R metrics by light and temp  
+```{r}
+# Compute mean ± SE per Symbiont × Metric × Temperature
+sum_df5 <- pi_temp_data_calc %>%
+  filter(Metric %in% c("ler_inverse", "rd_inverse")) %>%
+  group_by(Symbiont, Metric, Temperature) %>%
+  summarise(
+    n    = n(),
+    mean = mean(Value, na.rm = TRUE),
+    se   = sd(Value, na.rm = TRUE) / sqrt(n),
+    .groups = "drop"
+  )
+
+
+
+metric_plot5 <- ggplot() +
+  facet_wrap(~ Symbiont) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black", size = 0.75) +
+
+  # Raw points (optional), lightly jittered
+  geom_point(
+    data = pi_temp_data_calc %>% filter(Metric %in% c("ler_inverse", "rd_inverse")),
+    aes(x = Temperature, y = Value, fill = Metric),
+    shape = 21, size = 2.5, alpha = 0.1,
+    position = position_jitter(width = 0.2, height = 0)
+  ) +
+
+  # Lines connecting group means across Temperature, colored by Metric
+  geom_line(
+    data = sum_df5,
+    aes(x = Temperature, y = mean, color = Metric, group = Metric),
+    linewidth = 1.2
+  ) +
+  # Mean points
+  geom_point(
+    data = sum_df5,
+    aes(x = Temperature, y = mean, color = Metric),
+    size = 3
+  ) +
+  # Error bars: mean ± SE
+  geom_errorbar(
+    data = sum_df5,
+    aes(x = Temperature, ymin = mean - se, ymax = mean + se, color = Metric),
+    width = 0.12
+  ) +
+
+  xlab("Temperature") +
+  ylab(expression(bold(paste("Respiration")))) +
+  theme_classic() +
+  theme(
+    legend.position = "right",
+    axis.title = element_text(face = "bold", size = 16),
+    axis.text = element_text(size = 12, color = "black"),
+    legend.title = element_text(face = "bold", size = 14),
+    legend.text = element_text(size = 12)
+  ) +
+
+  # Lock mapping: rd_inverse = "Dark Respiration" (black),
+  # ler_inverse = "Light Enhanced Respiration" (darkgray)
+  scale_color_manual(
+    name   = "PAR",
+    breaks = c("rd_inverse", "ler_inverse"),
+    values = c("rd_inverse" = "black", "ler_inverse" = "darkgray"),
+    labels = c("Dark Respiration", "Light Enhanced \nRespiration")
+  ) +
+  scale_fill_manual(
+    name   = "PAR",
+    breaks = c("rd_inverse", "ler_inverse"),
+    values = c("rd_inverse" = "black", "ler_inverse" = "darkgray"),
+    labels = c("Dark Respiration", "Light Enhanced \nRespiration")
+  );metric_plot5
+
+ggsave("figures/temp_pi_curves/resp_light_temp.png", metric_plot5, dpi=300, w=9, h=6, units="in")
+```
+
+View R metrics by symbiont and temp  
+```{r}
+# Compute mean ± SE per Symbiont × Metric × Temperature
+sum_df5 <- pi_temp_data_calc %>%
+  filter(Metric %in% c("ler_inverse", "rd_inverse")) %>%
+  group_by(Symbiont, Metric, Temperature) %>%
+  summarise(
+    n    = n(),
+    mean = mean(Value, na.rm = TRUE),
+    se   = sd(Value, na.rm = TRUE) / sqrt(n),
+    .groups = "drop"
+  )
+
+new_labels<-c("ler_inverse"="LEDR","rd_inverse"="R")
+
+metric_plot5 <- ggplot() +
+  facet_wrap(~ Metric, labeller = labeller(Metric = new_labels)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black", size = 0.75) +
+
+  # Raw points (optional), lightly jittered
+  geom_point(
+    data = pi_temp_data_calc %>% filter(Metric %in% c("ler_inverse", "rd_inverse")),
+    aes(x = Temperature, y = Value, fill = Symbiont),
+    shape = 21, size = 2.5, alpha = 0.1,
+    position = position_jitter(width = 0.2, height = 0)
+  ) +
+
+  # Lines connecting group means across Temperature, colored by Metric
+  geom_line(
+    data = sum_df5,
+    aes(x = Temperature, y = mean, color = Symbiont, group = Symbiont),
+    linewidth = 1.2
+  ) +
+  # Mean points
+  geom_point(
+    data = sum_df5,
+    aes(x = Temperature, y = mean, color = Symbiont),
+    size = 3
+  ) +
+  # Error bars: mean ± SE
+  geom_errorbar(
+    data = sum_df5,
+    aes(x = Temperature, ymin = mean - se, ymax = mean + se, color = Symbiont),
+    width = 0.12
+  ) +
+
+  xlab("Temperature") +
+  ylab(expression(bold(paste("Respiration (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+  theme_classic() +
+  theme(
+    legend.position = "right",
+    axis.title = element_text(face = "bold", size = 16),
+    axis.text = element_text(size = 12, color = "black"),
+    legend.title = element_text(face = "bold", size = 14),
+    legend.text = element_text(size = 12)
+  ) +
+
+  # Lock mapping: rd_inverse = "Dark Respiration" (black),
+  # ler_inverse = "Light Enhanced Respiration" (darkgray)
+  scale_color_manual(
+    name   = "Parent",
+    values = c("orange", "darkred", "darkgray"), 
+    labels= c("Bleached", "Nonbleached", "Wildtype")
+  ) +
+  scale_fill_manual(
+    name   = "Parent",
+    values = c("orange", "darkred", "darkgray"), 
+    labels= c("Bleached", "Nonbleached", "Wildtype")
+  );metric_plot5
+
+ggsave("figures/temp_pi_curves/resp_symbiont_temp.png", metric_plot5, dpi=300, w=7, h=6, units="in")
 ```
 
 View P:R metrics. 
@@ -501,43 +784,202 @@ metric_plot2_means<-pi_temp_data_calc%>%
 ggsave("figures/temp_pi_curves/pi_ratio_means.png", metric_plot2_means, dpi=300, w=7, h=5, units="in")
 ```
 
+View P:R metrics by light and temp only. 
+```{r}
+# 1) Summarize PR ratio by Symbiont × Metric × Temperature
+sum_df6 <- pi_temp_data_calc %>%
+  filter(Metric %in% c("ratio_low", "ratio_medium", "ratio_high")) %>%
+  filter(!is.infinite(Value)) %>%
+  filter(Value<10)%>%
+  group_by(Symbiont, Metric, Temperature) %>%
+  summarise(
+    n    = n(),
+    mean = mean(Value, na.rm = TRUE),
+    se   = sd(Value, na.rm = TRUE) / sqrt(n),
+    .groups = "drop"
+  )
+
+# (Optional) enforce Temperature order if needed
+# lvl <- c("18","22","26","30")  # example
+# sum_df6 <- sum_df6 %>% mutate(Temperature = factor(Temperature, levels = lvl))
+# pi_temp_data_calc <- pi_temp_data_calc %>%
+#   mutate(Temperature = factor(Temperature, levels = lvl))
+
+metric_plot6 <- ggplot() +
+  facet_wrap(~ Symbiont) +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "black", size = 0.75) +
+
+  # raw points (optional), lightly jittered
+  geom_point(
+    data = pi_temp_data_calc %>%
+      filter(Value<10)%>%
+      filter(Metric %in% c("ratio_low", "ratio_medium", "ratio_high"),
+             !is.infinite(Value)),
+    aes(x = Temperature, y = Value, fill = Metric),
+    shape = 21, size = 2.5, alpha = 0.1,
+    position = position_jitter(width = 0.2, height = 0)
+  ) +
+
+  # lines connecting group means across Temperature, colored by light (Metric)
+  geom_line(
+    data = sum_df6,
+    aes(x = Temperature, y = mean, color = Metric, group = Metric),
+    linewidth = 1.2
+  ) +
+  # mean points
+  geom_point(
+    data = sum_df6,
+    aes(x = Temperature, y = mean, color = Metric),
+    size = 3
+  ) +
+  # error bars: mean ± SE
+  geom_errorbar(
+    data = sum_df6,
+    aes(x = Temperature, ymin = pmax(0, mean - se), ymax = mean + se, color = Metric),
+    width = 0.12
+  ) +
+
+  xlab("Temperature") +
+  ylab(expression(bold(paste("P : R")))) +
+  #ylim(0, 8) +
+  theme_classic() +
+  theme(
+    legend.position = "right",
+    axis.title = element_text(face = "bold", size = 16),
+    axis.text  = element_text(size = 12, color = "black"),
+    legend.title = element_text(face = "bold", size = 14),
+    legend.text  = element_text(size = 12)
+  ) +
+  # lock label mapping to your "low/medium/high" lights
+  scale_color_manual(
+    name   = "PAR",
+    breaks = c("ratio_low", "ratio_medium", "ratio_high"),
+    values = c("#253494", "#41B6C4", "#A1D99B"),
+    labels = c("50", "100", "500")
+  ) +
+  scale_fill_manual(
+    name   = "PAR",
+    breaks = c("ratio_low", "ratio_medium", "ratio_high"),
+    values = c("#253494", "#41B6C4", "#A1D99B"),
+    labels = c("50", "100", "500")
+  );metric_plot6
+
+ggsave("figures/temp_pi_curves/PRratio_light_temp.png", metric_plot6, dpi=300, w=9, h=6, units="in")
+```
+
+View P:R metrics by symbiont and temp only. 
+```{r}
+# 1) Summarize PR ratio by Symbiont × Metric × Temperature
+sum_df6 <- pi_temp_data_calc %>%
+  filter(Metric %in% c("ratio_low", "ratio_medium", "ratio_high")) %>%
+  filter(!is.infinite(Value)) %>%
+  filter(Value<10)%>%
+  group_by(Symbiont, Metric, Temperature) %>%
+  summarise(
+    n    = n(),
+    mean = mean(Value, na.rm = TRUE),
+    se   = sd(Value, na.rm = TRUE) / sqrt(n),
+    .groups = "drop"
+  )
+
+new_labels<-c("ratio_low"="Low Light (50)","ratio_medium"="Mod. Light (100)", "ratio_high"="High Light (500)")
+
+metric_plot6 <- ggplot() +
+  facet_wrap(~ Metric, labeller = labeller(Metric = new_labels)) +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "black", size = 0.75) +
+
+  # raw points (optional), lightly jittered
+  geom_point(
+    data = pi_temp_data_calc %>%
+      filter(Value<10)%>%
+      filter(Metric %in% c("ratio_low", "ratio_medium", "ratio_high"),
+             !is.infinite(Value)),
+    aes(x = Temperature, y = Value, fill = Symbiont),
+    shape = 21, size = 2.5, alpha = 0.1,
+    position = position_jitter(width = 0.2, height = 0)
+  ) +
+
+  # lines connecting group means across Temperature, colored by light (Metric)
+  geom_line(
+    data = sum_df6,
+    aes(x = Temperature, y = mean, color = Symbiont, group = Symbiont),
+    linewidth = 1.2
+  ) +
+  # mean points
+  geom_point(
+    data = sum_df6,
+    aes(x = Temperature, y = mean, color = Symbiont),
+    size = 3
+  ) +
+  # error bars: mean ± SE
+  geom_errorbar(
+    data = sum_df6,
+    aes(x = Temperature, ymin = pmax(0, mean - se), ymax = mean + se, color = Symbiont),
+    width = 0.12
+  ) +
+
+  xlab("Temperature") +
+  ylab(expression(bold(paste("P : R")))) +
+  #ylim(0, 8) +
+  theme_classic() +
+  theme(
+    legend.position = "right",
+    axis.title = element_text(face = "bold", size = 16),
+    axis.text  = element_text(size = 12, color = "black"),
+    legend.title = element_text(face = "bold", size = 14),
+    legend.text  = element_text(size = 12)
+  ) +
+  # lock label mapping to your "low/medium/high" lights
+  scale_color_manual(
+    name   = "Parent",
+    values = c("orange", "darkred", "darkgrey"), 
+    labels = c("Bleached", "Nonbleached", "Wildtype")
+  ) +
+  scale_fill_manual(
+    name   = "Parent",
+    values = c("orange", "darkred", "darkgrey"), 
+    labels = c("Bleached", "Nonbleached", "Wildtype")
+  );metric_plot6
+
+ggsave("figures/temp_pi_curves/PRratio_symbiont_temp.png", metric_plot6, dpi=300, w=9, h=6, units="in")
+```
+
 # Run anova tests
 
 ```{r}
 model<-pi_temp_data_calc%>%
   filter(Metric=="ratio_high")%>%
   filter(Value>0)%>%
+  filter(Value<10)%>%
   aov(Value~Temperature*Symbiont, data=.)
 
 summary(model)
 
 TukeyHSD(model, c("Temperature"))
 ```
-Ratios are lower at 30, 33, and 36 C under high light as compared to 27C. 
 
 ```{r}
 model<-pi_temp_data_calc%>%
   filter(Metric=="ratio_medium")%>%
-  filter(Value>0)%>% 
+  filter(Value<10)%>% 
   aov(Value~Temperature*Symbiont, data=.)
 
 summary(model)
 
 TukeyHSD(model, c("Temperature"))
 ```
-Ratios decrease with temperature under medium light.  Lower at 33 and 36 than 27C.  
 
 ```{r}
 model<-pi_temp_data_calc%>%
   filter(Metric=="ratio_low")%>%
-  filter(Value>0)%>% 
+  filter(Value<10)%>%
   aov(Value~Temperature*Symbiont, data=.)
 
 summary(model)
 
-TukeyHSD(model, c("Temperature"))
+emm<-emmeans(model, ~Symbiont|Temperature)
+pairs(emm)
 ```
-Ratios decrease with temperature at low light. 33 and 36C are lower than 27C. 
 
 ```{r}
 model<-pi_temp_data_calc%>%
@@ -548,8 +990,13 @@ summary(model)
 
 TukeyHSD(model, c("Temperature"))
 TukeyHSD(model, c("Symbiont"))
+
+emm<-emmeans(model, ~ Temperature)
+pairs(emm)
+
+emm<-emmeans(model, ~ Symbiont)
+pairs(emm)
 ```
-LER is affected by temperature and symbiont. LER is lower at 30 and 33 degrees compared to 27 and lower at 36 than at 30 and 33 degrees. LER is higher in MIX than WT. There is a trend for lower LER in MIX larvae at 36 than the other groups. 
 
 ```{r}
 model<-pi_temp_data_calc%>%
@@ -560,8 +1007,13 @@ summary(model)
 
 TukeyHSD(model, c("Symbiont"))
 TukeyHSD(model, c("Temperature"))
+
+emm<-emmeans(model, ~ Temperature)
+pairs(emm)
+
+emm<-emmeans(model, ~ Symbiont)
+pairs(emm)
 ```
-Rd is affected by temperature and increases with temperature. Increases up to 33 and is not different between 30-33-36. 33 and 36 are higher than 27. 
 
 ```{r}
 model<-pi_temp_data_calc%>%
@@ -572,7 +1024,6 @@ summary(model)
 
 TukeyHSD(model, c("Temperature"))
 ```
-P gross decreases with temperature when at high light. 
 
 ```{r}
 model<-pi_temp_data_calc%>%
@@ -583,7 +1034,6 @@ summary(model)
 
 TukeyHSD(model, c("Temperature"))
 ```
-P gross is affected by temperature at medium light. Decreases with temperature. 
 
 ```{r}
 model<-pi_temp_data_calc%>%
@@ -594,7 +1044,6 @@ summary(model)
 
 TukeyHSD(model, c("Temperature"))
 ```
-P gross at low light decreases with temperature. Lower at 36 than 30C. Lower at 27 than 30C. Peaks in mid range temperatures. 
 
 ```{r}
 model<-pi_temp_data_calc%>%
@@ -605,7 +1054,6 @@ summary(model)
 
 TukeyHSD(model, c("Temperature"))
 ```
-P net at low light affected by temperature. 
 
 ```{r}
 model<-pi_temp_data_calc%>%
@@ -616,18 +1064,16 @@ summary(model)
 
 TukeyHSD(model, c("Temperature"))
 ```
-P net at medium light decreases with temperature. 
 
 ```{r}
 model<-pi_temp_data_calc%>%
   filter(Metric=="p_net_high")%>%
-  aov(Value~Symbiont*Temperature, data=.)
+  aov(Value~Temperature*Symbiont, data=.)
 
 summary(model)
 
 TukeyHSD(model, c("Temperature"))
 ```
-P net at high light decreases with temperature. 
 
 ## Test effect of light 
 
@@ -652,8 +1098,14 @@ pairs(emm)
 
 emm<-emmeans(model, ~ Symbiont | Temperature | Metric)
 pairs(emm)
+
+emm<-emmeans(model, ~ Metric)
+pairs(emm)
+
+emm<-emmeans(model, ~ Temperature)
+pairs(emm)
+
 ```
-There are light and temperature effects on PR ratios. 
 
 Test effect of light on P gross.  
 ```{r}
@@ -666,10 +1118,21 @@ summary(model)
 TukeyHSD(model, "Metric")
 TukeyHSD(model, "Temperature")
 
-emm<-emmeans(model, ~ Metric | Temperature)
+emm<-emmeans(model, ~ Symbiont | Temperature | Metric)
+pairs(emm)
+
+emm<-emmeans(model, ~ Symbiont | Temperature)
+pairs(emm)
+
+emm<-emmeans(model, ~ Metric)
+pairs(emm)
+
+emm<-emmeans(model, ~ Temperature)
+pairs(emm)
+
+emm<-emmeans(model, ~ Symbiont)
 pairs(emm)
 ```
-Interaction between light and temperature for P gross. 
 
 Test effect of light on P net.   
 ```{r}
@@ -685,5 +1148,4 @@ TukeyHSD(model, "Temperature")
 emm<-emmeans(model, ~ Metric | Temperature)
 pairs(emm)
 ```
-Interaction between temperature and light on P net. 
 
