@@ -272,50 +272,6 @@ PAR is significant, symbiont is just barely not significant.
 
 # Apply PI curve calculations and models 
 
-## Look for outliers 
-
-View and remove outliers.   
-```{r, warning=FALSE, message=FALSE}
-#identify outliers by Temperature and Treatment groups
-outlier.plot <- ggbetweenstats(pi_data, Light_Value, nmol.org.min, outlier.tagging = TRUE)
-outlier.plot
-
-ggsave("figures/larval_pi_curves/outliersbygroup.png", outlier.plot, dpi=300, w=8, h=8, units="in")
-
-#set quantile values
-q <- c(0.25, 0.75)
-
-# calculate quantile values by PAR and Treatment groups
-Quants <- pi_data %>%
-  dplyr::group_by(Light_Value, Symbiont)%>%
-  dplyr::summarise(quant25 = quantile(nmol.org.min, probs = q[1], na.rm=TRUE),
-            quant75 = quantile(nmol.org.min, probs = q[2], na.rm=TRUE),
-            IQRbyGroup=IQR(nmol.org.min, na.rm=TRUE))
-
-
-# add a group name by pasting PAR and Treatment
-Quants$group <-paste0(Quants$Light_Value,"_", Quants$Symbiont)
-
-#Calculate Quantile upper and lower ranges 
-Quants$upper <-  Quants$quant75+1.5*Quants$IQRbyGroup # Upper Range  
-Quants$lower <- Quants$quant25-1.5*Quants$IQRbyGroup # Lower Range
-
-#join outlier cutoffs with rate data
-pi_data <- left_join(pi_data, Quants)
-
-#remove outliers from rates
-pi_data <- pi_data %>%
-  filter(nmol.org.min < upper) %>%
-  filter(nmol.org.min > lower) #%>%
-  #filter(rate < 0.125)
-
-# Visualize data following outlier removal
-outlier.plot2 <- ggbetweenstats(pi_data, Light_Value, nmol.org.min, outlier.tagging = TRUE)
-outlier.plot2
-
-ggsave("figures/larval_pi_curves/removed_outliersbygroup.png", outlier.plot2, dpi=300, w=8, h=8, units="in")
-```
-
 ## Fitting PI Curves 
 
 Scripts for this section based on E5 PI curve analysis in the time series repository. 
@@ -504,19 +460,20 @@ Now plot parameters based on individual well calculations.
 Check for outliers. 
 ```{r}
 hist(test$Am) #remove <0
-hist(test$AQY) #remove upper outlier
+hist(test$AQY) 
 hist(test$Rd)
-hist(test$Ik) #rmeove two upper outliers 
+hist(test$Ik) #remove one upper outliers 
 hist(test$Ic) #remove upper and lower outlier
 ```
 
 Remove outliers
 ```{r}
 test<-test%>%
-  filter(Am>0)%>%
-  filter(AQY<0.001)%>%
-  filter(Ik<400)%>%
-  filter(Ic<60)
+  mutate(
+    Am = ifelse(Am > 0, Am, NA),
+    Ik = ifelse(Ik < 100, Ik, NA),
+    Ic = ifelse(Ic < 50 & Ic > 0, Ic, NA)
+  )
 
 hist(test$Am) 
 hist(test$AQY) 
@@ -610,7 +567,7 @@ Now view a mean plot for each symbiont type with error bars.
 ```{r}
 
 # 1. Create a PAR sequence for prediction
-par_seq <- seq(min(pi_data$Light_Value), max(pi_data$Light_Value), length.out = 100)
+par_seq <- pi_data$Light_Value
 
 # 2. Get model parameters per replicate
 param_df <- pi_data %>%
@@ -639,7 +596,8 @@ predicted_curves <- param_df %>%
     )
   })) %>%
   select(Symbiont, unique, preds) %>%
-  unnest(preds)
+  unnest(preds)%>%
+  unique()
 
 # 4. Summarize mean and SE
 summary_curves <- predicted_curves %>%
@@ -649,6 +607,17 @@ summary_curves <- predicted_curves %>%
     fit_se = sd(Pc_fit, na.rm = TRUE) / sqrt(n()),
     .groups = "drop"
   )
+
+str(summary_curves)
+
+# run model on PI curves# run model on PI curves
+model<-aov(fit_mean ~ Symbiont * Light_Value, data=summary_curves)
+summary(model)
+
+emm<-emmeans(model, ~Symbiont)
+pairs(emm)
+
+str(summary_curves)
 
 # 5. Plot mean ± SE ribbon
 curves_plot<-ggplot(summary_curves, aes(x = Light_Value, y = fit_mean, color = Symbiont, fill = Symbiont)) +
@@ -673,179 +642,3 @@ curves_plot<-ggplot(summary_curves, aes(x = Light_Value, y = fit_mean, color = S
   
 ggsave("figures/larval_pi_curves/pi_curves_individual_wells.png", curves_plot, width=6, height=5, dpi=300)
 ```
-
-# Apply PI curve with bootstrapping 
-
-```{r}
-#fit the NLS model and returns parameters
-fit_pi_model <- function(data, indices) {
-  d <- data[indices, ]  # resample
-  tryCatch({
-    model <- nls(Pc ~ (Am * ((AQY * Light_Value) / sqrt(Am^2 + (AQY * Light_Value)^2)) - Rd),
-                 data = d,
-                 start = list(Am = max(d$Pc) - min(d$Pc), AQY = 0.001, Rd = -min(d$Pc)))
-    params <- coef(model)
-    # Add derived parameters Ik and Ic
-    Ik <- params["Am"] / params["AQY"]
-    Ic <- (params["Am"] * params["Rd"]) / (params["AQY"] * sqrt(params["Am"]^2 - params["Rd"]^2))
-    c(params, Ik = Ik, Ic = Ic)
-  }, error = function(e) rep(NA, 5))  # return NA if model fails
-}
-```
-
-Bootstrap within each parental phenotype. 
-```{r}
-set.seed(123)  # reproducibility
-
-bootstrap_results <- pi_data %>%
-  group_by(Symbiont) %>%
-  group_map(~ {
-    boot_out <- boot(data = .x, statistic = fit_pi_model, R = 1000)
-    
-    # Check that boot_out$t has 5 columns
-    param_tbl <- if (ncol(boot_out$t) == 5) {
-      as_tibble(boot_out$t, .name_repair = ~ c("Am", "AQY", "Rd", "Ik", "Ic"))
-    } else {
-      warning(paste("Unexpected column count:", ncol(boot_out$t), "for Symbiont", .y$Symbiont))
-      as_tibble(boot_out$t)
-    }
-
-    tibble(
-      Symbiont = .y$Symbiont,
-      boot = list(boot_out),
-      params = list(param_tbl)
-    )
-  }) %>%
-  bind_rows()
-
-str(bootstrap_results)
-```
-
-Calculate mean and SE for parameters 
-```{r}
-all_summaries <- purrr::map2_dfr(
-  bootstrap_results$params,
-  bootstrap_results$Symbiont,
-  ~ {
-    # .x = one tibble of bootstrapped params
-    # .y = corresponding Symbiont factor level
-
-    # Select numeric columns and drop NA rows
-    df_num <- .x %>% select(where(is.numeric)) %>% drop_na()
-
-    # Calculate mean and SE for each parameter
-    summary_tbl <- df_num %>%
-      dplyr::summarise(across(everything(),
-                       list(mean = ~mean(.x, na.rm = TRUE),
-                            se = ~sd(.x, na.rm = TRUE) / sqrt(sum(!is.na(.x)))),
-                       .names = "{.col}_{.fn}"))
-
-    # Pivot longer to tidy format
-    summary_long <- summary_tbl %>%
-      pivot_longer(
-        cols = everything(),
-        names_to = c("parameter", ".value"),
-        names_sep = "_"
-      )
-
-    # Add Symbiont info
-    summary_long %>% mutate(Symbiont = .y)
-  }
-)
-
-# View combined summary table
-print(all_summaries)
-```
-
-Use bootstrap predictions. 
-```{r}
-# Generate predicted curves with bootstrap
-par_seq <- seq(min(pi_data$Light_Value), max(pi_data$Light_Value), length.out = 100)
-
-curve_boots <- bootstrap_results %>%
-  mutate(preds = map(params, ~ {
-    # .x is a tibble with 1000 bootstrap samples, each with parameters Am, AQY, Rd, etc.
-
-    # For each bootstrap sample, expand PAR and calculate Pc_fit:
-    .x %>%
-      # Add an ID to each bootstrap row so we can keep track
-      mutate(boot_id = row_number()) %>%
-      # Cross join with par_seq to get all combinations
-      tidyr::crossing(Light_Value = par_seq) %>%
-      # Calculate predicted Pc_fit
-      mutate(Pc_fit = Am * ((AQY * Light_Value) / sqrt(Am^2 + (AQY * Light_Value)^2)) - Rd) %>%
-      select(-boot_id)  # optional: remove boot_id if not needed
-  })) %>%
-  select(Symbiont, preds) %>%
-  unnest(preds)
-
-# Now summarize fit at each PAR and Symbiont
-curve_summary <- curve_boots %>%
-  group_by(Symbiont, Light_Value) %>%
-  dplyr::summarise(
-    fit_mean = mean(Pc_fit, na.rm = TRUE),
-    fit_se = sd(Pc_fit, na.rm = TRUE) / sqrt(n()),
-    .groups = "drop"
-  )
-```
-
-Plot bootstrap. 
-```{r}
-plot1boot<-ggplot() +
-  geom_point(data = pi_data, aes(x = Light_Value, y = Pc, color = Symbiont), alpha = 0.5) +
-  geom_line(data = curve_summary, aes(x = Light_Value, y = fit_mean, color = Symbiont), size = 1.5) +
-  geom_ribbon(data = curve_summary, aes(x = Light_Value, ymin = fit_mean - fit_se, ymax = fit_mean + fit_se, fill = Symbiont), alpha = 1) +
-  scale_color_manual(name="Parent", labels=c("Bleached", "Nonbleached", "Wildtype"), values = c("orange", "brown4", "gray")) +
-  scale_fill_manual(name="Parent", labels=c("Bleached", "Nonbleached", "Wildtype"), values = c("orange", "brown4", "gray")) +
-  theme_classic() +
-  labs(x = expression(paste('PAR (', mu, "mol photons m"^-2, 's'^-1,")")),
-               y = expression(paste('Photosynthetic rate (nmol larva'^-1, 'min'^-1,")")));plot1boot
-
-ggsave(plot1boot, filename="figures/larval_pi_curves/nls_curves_bootstrapped.png", width=6, height=6, dpi=500)
-```
-
-Plot parameters 
-
-```{r}
-metrics_plot1boot<-all_summaries%>%
-  mutate(Symbiont = fct_recode(Symbiont,
-                               Bleached = "C",
-                               Nonbleached = "MIX",
-                               Wildtype = "WT"))%>%
-  
-  ggplot(aes(x=Symbiont, y=mean, color=Symbiont))+
-    facet_wrap(~parameter, scales="free", ncol=3, nrow=2)+
-    geom_point(aes(), size=1) +
-    geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.1)+
-    scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
-    theme_classic()+
-    ylab("Parameter Value")+
-    xlab("")+
-    theme(legend.position="none", 
-          axis.text.x=element_blank());metrics_plot1boot
-
-ggsave("figures/larval_pi_curves/parameters_bootstrapping.png", metrics_plot1boot, width=6, height=5, dpi=300)
-```
-
-Test for significance in parameters. 
-
-```{r}
-params_long <- bootstrap_results %>%
-  select(Symbiont, params) %>%
-  unnest(params) %>%     # Unnest the tibble of parameter samples
-  pivot_longer(cols = -Symbiont,
-               names_to = "Parameter",
-               values_to = "Value")
-
-anova_results <- params_long %>%
-  group_by(Parameter) %>%
-  dplyr::summarise(
-    anova = list(aov(Value ~ Symbiont, data = cur_data())),
-    tidy_anova = list(broom::tidy(aov(Value ~ Symbiont, data = cur_data())))
-  ) %>%
-  unnest(tidy_anova) %>%
-  filter(term == "Symbiont") 
-
-anova_results
-```
-
