@@ -14,8 +14,6 @@ editor_options:
   chunk_output_type: console
 ---
 
-NEED TO REMOVE/QC OUTLIERS FOR ALL PLOTS 
-
 # Setup  
 
 Set up workspace, set options, and load required packages.    
@@ -56,12 +54,11 @@ library('broom')
 library('emmeans')
 ```
 
-
 # Data visualization and manipulation  
 
 Load data from LoLinR.    
 ```{r, warning=FALSE, message=FALSE}
-pr_data<-read.csv("output/pr_sdr/pr_calculated_normalized_photo_rates.csv") #load data
+pr_data<-read.csv("output/pr_sdr/PR_calculated_normalized_photo_rates.csv") #load data
 ```
 
 Format data. 
@@ -70,64 +67,62 @@ Format data.
 pr_data<-pr_data[!is.na(pr_data$Type),]
 
 #format columns
-pr_data$Tank<-as.factor(pr_data$Tank)
 pr_data$Symbiont<-as.factor(pr_data$Symbiont)
 pr_data$SDR<-as.factor(pr_data$SDR)
 pr_data$Plate<-as.factor(pr_data$Plate)
 pr_data$Temperature<-as.factor(pr_data$Temperature)
 ```
 
-Remove plate that didnt work 
-
-```{r}
-#pr_data<-pr_data%>%
-#  filter(!Plate==2)%>%
-#  filter(!Plate==1)
-```
-
 Look for outliers in the data.  
 
 ```{r}
-boxplot(pr_data$P.nmol.org.min)
-#pr_data<-pr_data%>%filter(P.nmol.org.min < 0.08)
-#boxplot(pr_data$P.nmol.org.min)
+boxplot(pr_data$nmol.org.min)
 
-boxplot(pr_data$P.nmol.org.min~pr_data$PAR)
+boxplot(pr_data$nmol.org.min~pr_data$Light_Value)
 
-pr_data$code<-paste(pr_data$Temperature, "_",pr_data$PAR)
+pr_data$code<-paste(pr_data$Temperature, "_",pr_data$Light_Value)
 
-boxplot(pr_data$P.nmol.org.min~pr_data$code)
+boxplot(pr_data$nmol.org.min~pr_data$code)
 ```
 
 Set values at 0 for light runs if <0 indicating no photosynthesis occurred. Set values at 0 for dark runs if >0 indicating no respiration occurred. 
 ```{r}
 pr_data<-pr_data%>%
-  mutate(P.nmol.org.min=if_else(P.nmol.org.min<0 & PAR==100, 0, 
-                                if_else(P.nmol.org.min<0 & PAR==500, 0, 
-                                        if_else(P.nmol.org.min>0 & PAR==0, 0, P.nmol.org.min))))
+  mutate(nmol.org.min=if_else(nmol.org.min<0 & Light_Value==100, 0, 
+                                if_else(nmol.org.min<0 & Light_Value==500, 0, 
+                                        if_else(nmol.org.min>0 & Light_Value==0, 0, nmol.org.min))))
 ```
 
 Calculate mean temperature values for each run.    
 
 ```{r}
-pr.temps<-read.csv("output/pr_sdr/runs_temp.csv")
-pr.temps = subset(pr.temps, select = -c(X) ) #remove empty column
+pr.temps<-read.csv("output/pr_sdr/mean_temperature_by_plate_and_light_interval.csv")
 
 pr_data$Plate<-as.integer(pr_data$Plate)
 ```
 
 Add temperature data to master data frame.  
 ```{r}
+pr.temps$SDR<-as.factor(as.character(pr.temps$SDR))
+pr.temps$Plate <- as.integer(sub("(?i)^plate", "", pr.temps$Plate, perl = TRUE))  # removes leading "Plate"
+
 pr_data<-left_join(pr_data,pr.temps)
 
 #round to 0.1°C 
 pr_data<-pr_data%>%
-  mutate(Temp.C=round(Temp.C,1))
+  mutate(Temp.C=round(Mean_T_internal_C,1))
 ```
 
 Set levels for light. 
 ```{r}
-pr_data$PAR<-factor(pr_data$PAR, levels=c("100", "500", "0"))
+pr_data$Light_Value<-factor(pr_data$Light_Value, levels=c("100", "500", "0"))
+```
+
+Filter out Plate 2 (values were off and blanks did not make sense). 
+
+```{r}
+pr_data<-pr_data%>%
+  filter(!Plate==2)
 ```
 
 # Plot and analyze: 20230624 
@@ -136,17 +131,17 @@ Plot data with means
 ```{r}
 pr_plot1<-pr_data %>%
     filter(Date=="20230624")%>%
-    group_by(PAR, Symbiont, Temperature)%>%
-    dplyr::summarise(mean=mean(P.nmol.org.min, na.rm=TRUE), sd=sd(P.nmol.org.min, na.rm=TRUE), N=length(P.nmol.org.min), se=sd/sqrt(N))%>%
+    group_by(Light_Value, Symbiont, Temperature)%>%
+    dplyr::summarise(mean=mean(nmol.org.min, na.rm=TRUE), sd=sd(nmol.org.min, na.rm=TRUE), N=length(nmol.org.min), se=sd/sqrt(N))%>%
     
-    ggplot(., aes(x = as.factor(PAR), y = mean, group=interaction(PAR, Symbiont))) +
+    ggplot(., aes(x = as.factor(Light_Value), y = mean, group=interaction(Light_Value, Symbiont))) +
     facet_wrap(~Temperature)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
-    geom_point(aes(group=interaction(PAR, Symbiont), colour=Symbiont), size=6, position = position_dodge(0.4)) + 
-    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(PAR, Symbiont)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
+    geom_point(aes(group=interaction(Light_Value, Symbiont), colour=Symbiont), size=6, position = position_dodge(0.4)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Light_Value, Symbiont)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
     xlab("Light (PAR)") + 
     scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
-    ylab(expression(bold(paste("log P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    ylab(expression(bold(paste("P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
     #ylim(0, 0.05)+
     theme_classic() + 
     theme(
@@ -164,17 +159,17 @@ Display with plate.
 ```{r}
 pr_plot1a<-pr_data %>%
     filter(Date=="20230624")%>%
-    group_by(PAR, Symbiont, Plate)%>%
-    dplyr::summarise(mean=mean(P.nmol.org.min, na.rm=TRUE), sd=sd(P.nmol.org.min, na.rm=TRUE), N=length(P.nmol.org.min), se=sd/sqrt(N))%>%
+    group_by(Light_Value, Symbiont, Plate)%>%
+    dplyr::summarise(mean=mean(nmol.org.min, na.rm=TRUE), sd=sd(nmol.org.min, na.rm=TRUE), N=length(nmol.org.min), se=sd/sqrt(N))%>%
     
-    ggplot(., aes(x = as.factor(PAR), y = mean, group=interaction(PAR, Symbiont))) +
+    ggplot(., aes(x = as.factor(Light_Value), y = mean, group=interaction(Light_Value, Symbiont))) +
     facet_wrap(~Plate)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
-    geom_point(aes(group=interaction(PAR, Symbiont), colour=Symbiont), size=6, position = position_dodge(0.4)) + 
-    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(PAR, Symbiont)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
+    geom_point(aes(group=interaction(Light_Value, Symbiont), colour=Symbiont), size=6, position = position_dodge(0.4)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Light_Value, Symbiont)), width=0, linetype="solid", position=position_dodge(0.4), size=0.8, color="black")+
     xlab("Light (PAR)") + 
     scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
-    ylab(expression(bold(paste("log P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    ylab(expression(bold(paste("P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
     #ylim(0, 0.05)+
     theme_classic() + 
     theme(
@@ -190,7 +185,7 @@ View by plate.
 ```{r}
 pr_plot2b<-pr_data %>%
     filter(Date=="20230624")%>%
-    ggplot(., aes(x = as.factor(PAR), y = P.nmol.org.min, group=Symbiont)) +
+    ggplot(., aes(x = as.factor(Light_Value), y = nmol.org.min, group=Symbiont)) +
     facet_wrap(~Plate)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_smooth(aes(color=Symbiont, group=Symbiont), method="loess", alpha=0.4, se=FALSE)+
@@ -213,10 +208,10 @@ Plot data with dots
 pr_plot3<-pr_data %>%
     filter(Date=="20230624")%>%
   
-    ggplot(., aes(x = as.factor(PAR), y = P.nmol.org.min, group=interaction(PAR, Symbiont))) +
-    facet_wrap(~Temperature)+
+    ggplot(., aes(x = Temperature, y = nmol.org.min, group=interaction(PAR, Symbiont))) +
+    facet_wrap(~Light_Value)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
-    geom_point(aes(group=interaction(PAR, Symbiont), color=Symbiont), size=3, fill="white", position = position_jitterdodge(0.4), shape=21) + 
+    geom_point(aes(group=interaction(Light_Value, Symbiont), color=Symbiont), size=3, fill="white", position = position_jitterdodge(0.4), shape=21) + 
     geom_smooth(aes(color=Symbiont, group=Symbiont), method="loess", size=2, alpha=0.4, se=FALSE)+
     xlab("Light (PAR)") + 
     scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
@@ -240,49 +235,56 @@ Run anova on values at each temperature
 ```{r}
 model<-pr_data%>%
   filter(Date=="20230624")%>%
-  aov(P.nmol.org.min~PAR*Symbiont*Temperature, data=.)
+  aov(nmol.org.min~Light_Value*Symbiont*Temperature, data=.)
 
 summary(model)
 
-TukeyHSD(model, "PAR")
+emm<-emmeans(model, ~ Temperature | Light_Value)
+pairs(emm)
 
-emm<-emmeans(model, ~ Temperature | PAR)
+emm<-emmeans(model, ~ Symbiont | Light_Value)
 pairs(emm)
 ```
-Photosynthesis was lower at 33 degrees at 100 par. P was lower at 30 and 33 at 500 PAR. LER is lower at 30 degrees. 
+Temperature differences present at 0, 100, and 100 PAR. 
 
-Run model for 27 
+Run model for dark 
 ```{r}
 model<-pr_data%>%
   filter(Date=="20230624")%>%
-  filter(Temperature==27)%>%
-  aov(P.nmol.org.min~PAR*Symbiont, data=.)
+  filter(Light_Value=="0")%>%
+  aov(nmol.org.min~Temperature*Symbiont, data=.)
 
 summary(model)
 ```
-At 27, oxygen is different by PAR. 
+Temp changes in dark. 
 
-Run model for 30
+Run model for 100 PAR
 ```{r}
 model<-pr_data%>%
   filter(Date=="20230624")%>%
-  filter(Temperature==30)%>%
-  aov(P.nmol.org.min~PAR*Symbiont, data=.)
+  filter(Light_Value=="100")%>%
+  aov(nmol.org.min~Temperature*Symbiont, data=.)
 
 summary(model)
-```
-At 30, oxygen is different by PAR. 
 
-Run model for 33
+emm<-emmeans(model, ~ Symbiont)
+pairs(emm)
+```
+Change by temperature at 100 PAR, lower in NB compared to WT. 
+
+Run model for 500 PAR
 ```{r}
 model<-pr_data%>%
   filter(Date=="20230624")%>%
-  filter(Temperature==33)%>%
-  aov(P.nmol.org.min~PAR*Symbiont, data=.)
+  filter(Light_Value=="500")%>%
+  aov(nmol.org.min~Temperature*Symbiont, data=.)
 
 summary(model)
+
+emm<-emmeans(model, ~ Temperature)
+pairs(emm)
 ```
-At 33, oxygen is different by PAR. 
+Peak at 30C at 500 PAR. 
 
 # Calculate R, P, and P:R: 20230624 
 
@@ -290,8 +292,8 @@ Calculate gross photosynthesis and P:R ratio.
 ```{r}
 pr_data_calc<-pr_data%>%
   filter(Date=="20230624")%>%
-  select(Date, Chamber.ID, Plate, Run, Temperature, Symbiont, PAR, P.nmol.org.min)%>%
-  pivot_wider(names_from=PAR, values_from=P.nmol.org.min)%>%
+  select(Date, Well, Plate, Run, Temperature, Symbiont, Light_Value, nmol.org.min)%>%
+  pivot_wider(names_from=Light_Value, values_from=nmol.org.min)%>%
   mutate(ler=`0`)%>%
   mutate(ler_inverse=ler*-1)%>%
   mutate(p_net_low=`100`)%>%
@@ -302,14 +304,6 @@ pr_data_calc<-pr_data%>%
   mutate(ratio_high=p_gross_high/(ler_inverse))%>%
   pivot_longer(names_to="Metric", values_to="Value", cols=c(ler:ratio_high))%>%
   select(!c(`0`, `100`, `500`))
-
-boxplot(pr_data_calc$Value)
-
-pr_data_calc<-pr_data_calc%>%
-  filter(Value>0)%>%
-  filter(Value<6)
-
-boxplot(pr_data_calc$Value)
 ```
 
 View P metrics. 
@@ -414,21 +408,6 @@ summary(model)
 
 TukeyHSD(model, "Temperature")
 ```
-PR ratio is higher at 33-36 compared to 27. 
-
-Look at 30C under high light specifically. 
-```{r}
-model<-pr_data_calc%>%
-  filter(Date=="20230624")%>%
-  filter(Metric=="ratio_high")%>%
-  filter(Value>0)%>%
-  aov(Value~Symbiont, data=.)
-
-summary(model)
-
-TukeyHSD(model, "Symbiont")
-```
-No effects. 
 
 Test P:R ratios under low light. 
 ```{r}
@@ -440,9 +419,9 @@ model<-pr_data_calc%>%
 
 summary(model)
 
-TukeyHSD(model, "Temperature")
+TukeyHSD(model, "Symbiont")
 ```
-P:R ratios at low light decrease with temperatures (interesting, as this is opposite for high temperature). Higher at 27 than 30 and 33. 
+Lower ratio in low light in NB. 
 
 Test light enhanced respiration. 
 ```{r}
@@ -455,7 +434,6 @@ summary(model)
 
 TukeyHSD(model, "Temperature")
 ```
-There is an effect of temperature on LER. LER is lower at 27 than it is at 30, but not different by 33. LER peaks at 30.  
 
 Test P gross at high light. 
 ```{r}
@@ -466,7 +444,6 @@ model<-pr_data_calc%>%
 
 summary(model)
 ```
-P gross at high light differs by temperature. 
 
 Test P gross at low light. 
 ```{r}
@@ -479,7 +456,6 @@ summary(model)
 
 TukeyHSD(model, "Temperature")
 ```
-No effect of temp on P gross at low light. 
 
 Test P net under low light. 
 ```{r}
@@ -491,8 +467,8 @@ model<-pr_data_calc%>%
 summary(model)
 
 TukeyHSD(model, "Temperature")
+TukeyHSD(model, "Symbiont")
 ```
-There is an effect of temperature on P net at low light. P net increases as temperature increases. 
 
 ```{r}
 model<-pr_data_calc%>%
@@ -502,10 +478,7 @@ model<-pr_data_calc%>%
 
 summary(model)
 
-emm<-emmeans(model, ~ Symbiont | Temperature)
-pairs(emm)
 ```
-P net is affected by symbiont and temperature. P net increases with temperature. MIX larvae are lower than WT at ambient temperature. C is not different than either group. 
 
 ## Test effect of light 
 
@@ -520,10 +493,11 @@ model<-pr_data_calc%>%
 summary(model)
 
 TukeyHSD(model, "Metric")
+TukeyHSD(model, "Symbiont")
 TukeyHSD(model, "Temperature")
 
 ```
-Ratios peak at 30C and are higher at high light. Almost an effect of symbiont. 
+Lower ratios in NB. 
 
 Test effect of light on P gross.  
 ```{r}
@@ -537,7 +511,6 @@ summary(model)
 TukeyHSD(model, "Metric")
 TukeyHSD(model, "Temperature")
 ```
-There is an interaction between light and temperature on P gross. P gross decreases with temp at low light. At high light, P gross peaks at 30 C then decreases. 
 
 Test effect of light on P net.   
 ```{r}
@@ -550,12 +523,9 @@ summary(model)
 
 TukeyHSD(model, "Metric")
 TukeyHSD(model, "Temperature")
-TukeyHSD(model, "Symbiont")
 
 emm<-emmeans(model, ~ Temperature | Metric)
 pairs(emm)
 ```
-P net is higher at high light. At high light, P net is higher at 30 than 27. At low light, P net decreases with temperature. P net is lower in MIX larvae than either C or WT. 
-
 
 

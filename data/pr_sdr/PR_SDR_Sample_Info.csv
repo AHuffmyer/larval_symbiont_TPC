@@ -1,4 +1,4 @@
-Date,Sample.ID,Chamber.ID,SDR,Tank,Temperature,Symbiont,Type,Salinity,Plate,Run,Volume,Org.Number,Notes
+Date,Sample.ID,Well,SDR,Tank,Temperature,Symbiont,Type,Salinity,Plate,Run,Volume,Org.Number,Notes
 20230624,1,A1,641,WT1,27,WT,Sample,33,1,1,0.00008,5,
 20230624,7,B1,641,MIX1,27,MIX,Sample,33,1,1,0.00008,5,
 20230624,13,C1,641,NA,27,NA,Blank,33,1,1,0.00008,NA,
