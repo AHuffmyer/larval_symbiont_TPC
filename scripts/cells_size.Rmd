@@ -100,16 +100,32 @@ df_cells$Date<-as.character(df_cells$Date)
 
 ## Visualize data   
 
+Set colors and dpf values. 
+```{r}
+parent_names<-c("Bleached" = "Susceptible (C)", "Nonbleached" = "Resistant (C/D)", "Wildtype" = "Wildtype (C/D)")
+
+df_cells<-df_cells%>%
+  mutate(dpf=if_else(Date=="20230622", "3", 
+                     if_else(Date=="20230623", "5", 
+                     if_else(Date=="20230624", "6",
+                     if_else(Date=="20230626", "8",
+                     if_else(Date=="20230627", "9", NA
+                     ))))))
+
+df_cells$dpf
+```
+
 Plot cells per unit protein data with mean and standard error.   
 
 ```{r}
 plot1<-df_cells %>%
-  ggplot(aes(x = as.character(Date), y = cells.larvae, color = Parent)) +
-  labs(x = "Date") +
+  ggplot(aes(x = dpf, y = cells.larvae, color = Parent)) +
+  labs(x = "DPF") +
   ylab(expression(paste("Symbiont cell density (cells larva" ^-1, ")")))+
-  scale_color_manual(values=c("orange", "red4", "darkgray"))+
+  scale_color_manual(values=c("orange", "red4", "darkgray"), labels=parent_names)+
   geom_boxplot(aes(group=interaction(Date,Parent)), position=position_dodge(0.8))+
   geom_point(position=position_jitterdodge(0.1))+
+  ggtitle("B")+
   #geom_smooth(aes(group=Parent), method="lm", se=FALSE)+
   theme_classic();plot1
 
@@ -122,7 +138,7 @@ Present means and standard error of each group in a table.
 
 ```{r}
 df_cells%>%
-  group_by(Parent, Date)%>%
+  group_by(Parent, dpf)%>%
   dplyr::summarise(n=length(cells.larvae),
             Mean=format(round(mean(cells.larvae), 0), 0), 
             SE=format(round(sd(cells.larvae)/sqrt(length(cells.larvae)),0),0))%>%
@@ -135,10 +151,10 @@ Plot with mean and standard errors.
 
 ```{r}
 df_cells %>%
-  group_by(Parent, Date)%>%
+  group_by(Parent, dpf)%>%
   dplyr::summarise(mean=mean(cells.larvae), se=(sd(cells.larvae)/sqrt(length(cells.larvae))))%>%
   
-  ggplot(aes(x = Date, y = mean, color = Parent)) +
+  ggplot(aes(x = dpf, y = mean, color = Parent)) +
   labs(x = "",y = "Cell Density per Larva") +
   scale_color_manual(values=c("orange", "red4", "darkgray"))+
   geom_point()+
@@ -192,15 +208,28 @@ size<-left_join(size, numbers)
 size$Date<-as.character(size$Date)
 ```
 
+```{r}
+size<-size%>%
+  mutate(dpf=if_else(Date=="20230622", "3", 
+                     if_else(Date=="20230623", "5", 
+                     if_else(Date=="20230624", "6",
+                     if_else(Date=="20230626", "8",
+                     if_else(Date=="20230627", "9", NA
+                     ))))))
+
+size$dpf
+```
+
 Plot individual sizes. 
 ```{r}
 plot2<-size %>%
-  ggplot(aes(x = Date, y = volume, color = Parent)) +
-  labs(x = "Date",y = "Larval Volume") +
-  scale_color_manual(values=c("orange", "red4", "darkgray"))+
+  ggplot(aes(x = dpf, y = volume, color = Parent)) +
+  labs(x = "DPF",y = "Larval Volume") +
+  scale_color_manual(values=c("orange", "red4", "darkgray"), labels=parent_names)+
   geom_boxplot(aes(group=interaction(Date,Parent)), position=position_dodge(0.8))+
   geom_point(position=position_jitterdodge(0.1))+
   #geom_smooth(aes(group=Parent), method="lm", se=FALSE)+
+  ggtitle("A")+
   theme_classic();plot2
 
 ggsave(plot2, filename="figures/cells_size/volume_larvae.png", width=7, height=5)
@@ -247,12 +276,13 @@ Plot size normalized densities.
 
 ```{r}
 plot3<-merged %>%
-  ggplot(aes(x = Date, y = cells.mm3, color = Parent)) +
-  labs(x = "Date") +
+  ggplot(aes(x = dpf, y = cells.mm3, color = Parent)) +
+  labs(x = "DPF") +
   ylab(expression(paste("Symbiont cell density (cells mm" ^-3, ")")))+
-  scale_color_manual(values=c("orange", "red4", "darkgray"))+
+  scale_color_manual(values=c("orange", "red4", "darkgray"), labels=parent_names)+
   geom_boxplot(aes(group=interaction(Date,Parent)), position=position_dodge(0.8))+
   geom_point(position=position_jitterdodge(0.1))+
+  ggtitle("C")+
   #geom_smooth(aes(group=Parent), method="lm", se=FALSE)+
   theme_classic();plot3
 

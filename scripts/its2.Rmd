@@ -211,16 +211,18 @@ p2b = plot_ordination(GP1_rare, GP.ord, type="samples", color="parent"); p2b
 
 Output NMDS plot for visualization.  
 ```{r}
+parent_names<-c("Bleached" = "Susceptible (C)", "Nonbleached" = "Resistant (C/D)", "Wildtype" = "Wildtype (C/D)")
+
 p2b_viz<-p2  + 
   geom_point(aes(colour=parent), size=4) + 
   ggtitle("NMDS")+
-  scale_colour_manual(name="Parent", values=c("orange", "darkred", "darkgray")) + 
+  scale_colour_manual(name="Parent", values=c("orange", "darkred", "darkgray"), labels=parent_names) + ggtitle("A")+
   theme_classic() + 
   theme(
     panel.background=element_blank()
   ); p2b_viz
 
-ggsave(plot=p2b_viz, "figures/its2/nmds_its2_div.jpeg", h=5, w=8)
+ggsave(plot=p2b_viz, "figures/its2/nmds_its2_div.jpeg", h=5, w=6)
 ```
 
 Conduct a permanova in the vegan package.  
@@ -275,13 +277,14 @@ p3b = plot_ordination(GP1_prune, GP.ordb.filt, type="samples", color="parent"); 
 p3b_viz_filt<-p3b  + 
   geom_point(aes(colour=parent), size=4) + 
   ggtitle("NMDS")+
-  scale_colour_manual(name="Parent", values=c("orange", "darkred","darkgray")) + 
+  scale_colour_manual(name="Parent", values=c("orange", "darkred","darkgray"), labels=parent_names) + 
   theme_classic() + 
+  ggtitle("A")+
   theme(
     panel.background=element_blank()
   ); p3b_viz_filt
 
-ggsave(plot=p3b_viz_filt, "figures/its2/nmds_its2_div_filtered.jpeg", h=5, w=8)
+ggsave(plot=p3b_viz_filt, "figures/its2/nmds_its2_div_filtered.jpeg", h=5, w=6)
 ```
 
 Run PERMANOVA on filtered data set. 
@@ -503,7 +506,7 @@ Plot abundance of each profile across lifestages.
 t<-plot_bar(GP1_rare_profile, fill="its2_type_profile")
 t$data$Sample <- factor(t$data$Sample, levels = sample_order)
 
-t_plot<-t + scale_fill_manual(name="ITS2 Profile", values=c("red4", "red3", "blue2","blue4", "lightblue")) + geom_hline(yintercept=0.5, linetype="dashed", color = "black", size=1) + facet_grid(~parent, scales = "free", space = "free", labeller = label_wrap_gen(width=10)) + ylab("Relative Abundance (%)") + theme(strip.text.x = element_text(size = 5, face="bold"))+theme_classic(); t_plot
+t_plot<-t + scale_fill_manual(name="ITS2 Profile", values=c("orange", "orange3", "darkred","red", "red2")) + geom_hline(yintercept=0.5, linetype="dashed", color = "black", size=1) + facet_grid(~parent, scales = "free", space = "free", labeller = labeller(parent=parent_names)) + ylab("Relative Abundance (%)") + theme(strip.text.x = element_text(size = 5, face="bold"))+theme_classic()+ggtitle("B"); t_plot
 
 rel_abund_data<-t$data
 
@@ -602,21 +605,22 @@ rel_abund_plot<-rel_abund_data%>%
   dplyr::summarise(mean=mean(Abundance, na.rm=TRUE), se=sd(Abundance, na.rm=TRUE)/sqrt(length(Abundance)))%>%
   
   ggplot(aes(x=parent, y=mean, color=its2_type_profile))+
-  facet_wrap(~its2_type_profile, nrow=1)+
+  facet_wrap(~its2_type_profile, nrow=2)+
   geom_point(position=position_dodge(0.2))+
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.1, position=position_dodge(0.2))+
   ylab("Mean Relative Abundance")+
   ylim(0,1)+
-  xlab("Parent Phenotype")+
-  scale_color_manual(name="ITS2 Type Profile", values=c("red4", "red3", "blue2","blue4", "lightblue"))+
+  xlab("Phenotype")+
+  scale_color_manual(name="ITS2 Type Profile", values=c("orange", "orange3", "darkred","red", "red2"), labels=parent_names)+
+  scale_x_discrete(labels = parent_names) + 
+  ggtitle("C")+
   theme_classic()+
   theme(
-    legend.position="bottom",
+    legend.position="none",
     text=element_text(color="black", size=12), 
     axis.text=element_text(color="black", size=11), 
-    axis.text.x=element_text(angle=45, hjust=1, vjust=1), 
-    axis.title=element_text(face="bold")
+    axis.text.x=element_text(angle=45, hjust=1, vjust=1)
   );rel_abund_plot
 
-ggsave("figures/its2/profile_plot_means.png", plot=rel_abund_plot, width=16, height=4)
+ggsave("figures/its2/profile_plot_means.png", plot=rel_abund_plot, width=10, height=6)
 ```

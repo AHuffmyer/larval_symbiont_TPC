@@ -181,7 +181,7 @@ temp_plot2a<-tidbits%>%
   
   ggplot(aes(x=DateTime, y=temp.C, colour=group))+
   geom_point()+
-  scale_colour_manual(values=c("darkred", "red", "blue"), name="Temperature")+
+  scale_colour_manual(values=c("#d53e4f", "#7b3294", "#2c7bb6"), name="Temperature")+
   ylab("Temperature (°C)")+
   xlab("Time")+
   ylim(23,35)+
@@ -208,11 +208,11 @@ temp_plot2b<-tidbits%>%
   
   ggplot(aes(x=DateTime, y=temp.C, colour=group))+
   geom_point()+
-  scale_colour_manual(values=c("darkred", "red", "blue"), name="Temperature")+
+  scale_colour_manual(values=c("#d53e4f", "#7b3294", "#2c7bb6"), name="Temperature")+
   ylab("Temperature (°C)")+
   xlab("Time")+
   ylim(22,35)+
-  ggtitle("2023-06-27")+
+  ggtitle("B")+
   theme_classic()+
   theme(
     axis.text=element_text(color="black", size=11, angle=45, hjust=1),

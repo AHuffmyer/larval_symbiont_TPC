@@ -133,21 +133,34 @@ ggsave(filename="figures/environmental/boxplot_daily_measurements.png", plot=dai
 
 Plot means for each symbiont type, filtering to measurements in treatment conicals. 
 ```{r}
-daily_treatment_summary<-daily_calc.long %>%
-  filter(group %in% c("Cladocopium", "Mixed", "Wildtype"))%>%
-  
-  ggplot(aes(x=group, y=value, colour=group))+
-  geom_boxplot()+
-    geom_point()+
-  scale_colour_manual(name="Parental \nPhenotype", values=c("orange", "brown4", "gray"), labels=c("Bleached", "Nonbleached", "Wildtype")) +
-  scale_x_discrete(name="Parental Phenotype", labels=c("Bleached", "Nonbleached", "Wildtype")) +
-  xlab("Date")+
-  ylab("Value")+
-  facet_wrap(~ metric, scales = "free")+
-  theme_classic()+
-  theme(legend.position="none"); daily_treatment_summary
+library(ggh4x)
 
-ggsave(filename="figures/environmental/summary_daily_measurements.png", plot=daily_treatment_summary, dpi=300, width=10, height=6, units="in")
+parent_names<-c("Cladocopium" = "Susceptible (C)", "Mixed" = "Resistant (C/D)", "Wildtype" = "Wildtype (C/D)")
+
+parent_colors<-c("Cladocopium" = "orange",   # calm blue
+                 "Mixed" = "darkred", # stressed purple
+                 "Wildtype" = "darkgray") 
+
+daily_treatment_summary<-daily_calc.long %>%
+  filter(group %in% c("Cladocopium", "Mixed", "Wildtype")) %>%
+  
+  ggplot(aes(x = group, y = value, colour = group)) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_point(position = position_jitter(width = 0.15, height = 0), alpha = 0.6, size = 1.8) +
+  scale_colour_manual(name = "Parent (Symbiont)", values = parent_colors, labels = parent_names) +
+  scale_x_discrete(name = "Parent (Symbiont)", labels = parent_names) +
+  ylab("Value") +
+  ggtitle("A")+
+  ggh4x::facet_wrap2(~ metric, scales = "free_y", nrow = 2, axes = "margins") +  # <- x-axis only on outer/bottom
+  theme_classic() +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    strip.placement = "outside",
+    strip.background = element_blank()
+  ); daily_treatment_summary
+
+ggsave(filename="figures/environmental/summary_daily_measurements.png", plot=daily_treatment_summary, dpi=300, width=7, height=6, units="in")
 ```
 
 ## Test for differences between tanks  
