@@ -452,11 +452,13 @@ ggsave("figures/temp_pi_curves/gross_photosynthesis_light_temp.png", metric_plot
 
 View P metrics by light and temp.  
 ```{r}
+parent_names<-c("C" = "Susceptible (C)", "MIX" = "Resistant (C/D)", "WT" = "Wildtype (C/D)")
+  
 # 1) compute mean ± SE for each Symbiont × Metric × Temperature
 sum_df <- pi_temp_data_calc %>%
   filter(Metric %in% c("p_gross_low", "p_gross_medium", "p_gross_high")) %>%
   group_by(Symbiont, Metric, Temperature) %>%
-  summarise(
+  dplyr::summarise(
     n    = n(),
     mean = mean(Value, na.rm = TRUE),
     se   = sd(Value, na.rm = TRUE) / sqrt(length(Value))
@@ -502,12 +504,12 @@ metric_plot3 <- ggplot() +
   scale_color_manual(
     name = "Parent",
     values = c("orange", "darkred", "darkgray"), 
-    labels = c("Bleached", "Nonbleached", "Wildtype")
+    labels = parent_names
   ) +
   scale_fill_manual(  # keep raw points in the same palette as lines
     name = "Parent",
     values = c("orange", "darkred", "darkgray"), 
-    labels = c("Bleached", "Nonbleached", "Wildtype")
+    labels = parent_names
   ) +
   ylab(expression(bold(paste(P[Gross]," (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
   theme_classic() +
@@ -660,7 +662,7 @@ View R metrics by symbiont and temp
 sum_df5 <- pi_temp_data_calc %>%
   filter(Metric %in% c("ler_inverse", "rd_inverse")) %>%
   group_by(Symbiont, Metric, Temperature) %>%
-  summarise(
+  dplyr::summarise(
     n    = n(),
     mean = mean(Value, na.rm = TRUE),
     se   = sd(Value, na.rm = TRUE) / sqrt(n),
@@ -716,12 +718,12 @@ metric_plot5 <- ggplot() +
   scale_color_manual(
     name   = "Parent",
     values = c("orange", "darkred", "darkgray"), 
-    labels= c("Bleached", "Nonbleached", "Wildtype")
+    labels= parent_names
   ) +
   scale_fill_manual(
     name   = "Parent",
     values = c("orange", "darkred", "darkgray"), 
-    labels= c("Bleached", "Nonbleached", "Wildtype")
+    labels= parent_names
   );metric_plot5
 
 ggsave("figures/temp_pi_curves/resp_symbiont_temp.png", metric_plot5, dpi=300, w=7, h=6, units="in")
@@ -875,7 +877,7 @@ sum_df6 <- pi_temp_data_calc %>%
   filter(!is.infinite(Value)) %>%
   filter(Value<10)%>%
   group_by(Symbiont, Metric, Temperature) %>%
-  summarise(
+  dplyr::summarise(
     n    = n(),
     mean = mean(Value, na.rm = TRUE),
     se   = sd(Value, na.rm = TRUE) / sqrt(n),
@@ -933,12 +935,12 @@ metric_plot6 <- ggplot() +
   scale_color_manual(
     name   = "Parent",
     values = c("orange", "darkred", "darkgrey"), 
-    labels = c("Bleached", "Nonbleached", "Wildtype")
+    labels = parent_names
   ) +
   scale_fill_manual(
     name   = "Parent",
     values = c("orange", "darkred", "darkgrey"), 
-    labels = c("Bleached", "Nonbleached", "Wildtype")
+    labels = parent_names
   );metric_plot6
 
 ggsave("figures/temp_pi_curves/PRratio_symbiont_temp.png", metric_plot6, dpi=300, w=9, h=6, units="in")

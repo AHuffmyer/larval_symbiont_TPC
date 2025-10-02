@@ -13,11 +13,6 @@ output:
 editor_options: 
   chunk_output_type: console
 ---
-
-QC all plots, check all blanks for every run 
-
-Need to bootstrap for model fit and for parameter estimates 
-
 # Setup  
 
 Set up workspace, set options, and load required packages.    
@@ -292,54 +287,6 @@ I/E = irradiance (PAR from Bayesian script)
 Rd = dark respiration   
 Ik = saturating irradiance 
 
-Next run NLS models.
-
-Using fixed initial values (not using, but keeping for reference):  
-
-```{r}
-#nest <- nest_legacy
-#unnest <- unnest_legacy
-
-#nls_data <- pi_data %>% 
-#   mutate(new_Pc=Pc+1)%>%
-#   group_by(Tank) %>%
-#   nest(-Tank) %>%
-#   mutate(model1 = map(data, ~ 
-#                        nls(new_Pc ~ (Am*((AQY*PAR)/(sqrt(Am^2 + (AQY*PAR)^2)))-Rd), data=., start=list(Am=0.05,  AQY=0.001, Rd=-0.02)) %>%
-#                             tidy %>%
-#                             dplyr::select(term, estimate) %>% 
-#                             spread(term, estimate))) %>%
-#  unnest(model1) %>%
-#  mutate(Ik = Am/AQY) 
-```
-
-Using flexible initial values based on input data:
-
-```{r}
-nest <- nest_legacy
-unnest <- unnest_legacy
-
-#pi_data<-pi_data%>%
-  #mutate(new_Pc=Pc+1)
-
-nls_data <- pi_data %>% 
-   group_by(Symbiont) %>%
-   nest(-Symbiont) %>%
-   mutate(model1 = map(data, ~ 
-                         nls(Pc ~ (Am*((AQY*Light_Value)/(sqrt(Am^2 + (AQY*Light_Value)^2)))-Rd), data=., start=list(Am=(max(.$Pc)-min(.$Pc)),  AQY=0.001, Rd=-min(.$Pc)), trace=TRUE) %>%
-                              tidy %>%
-                              dplyr::select(term, estimate) %>% 
-                              spread(term, estimate))) %>%
-  unnest(model1) %>%
-  mutate(Ik = Am/AQY) %>%
-  mutate(Ic=(Am*Rd)/(AQY*(sqrt(Am^2-Rd^2))))
-
-#save 
-pi_results<-nls_data
-
-pi_results
-```
-
 Plot curve over data points.  
 ```{r}
 augmented <- pi_data %>% 
@@ -388,36 +335,6 @@ curve_plot2<-augmented %>%
 ggsave("figures/larval_pi_curves/nls_curves_individual.png", width=10, height=6, dpi=500)
 ```
 
-Plot PI curve metrics. 
-
-```{r}
-metrics_plot1<-pi_results%>%
-  pivot_longer(values_to="Value", names_to="Parameter", cols=c(Am:Ic))%>%
-  filter(Parameter %in% c("Ik", "Ic"))%>%
-  
-  ggplot(aes(x=Symbiont, y=Value, color=Symbiont))+
-    facet_wrap(~Parameter)+
-    geom_point(aes(), size=4) +
-    scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
-    theme_classic()+
-    theme(legend.position="none");metrics_plot1
-
-metrics_plot1a<-pi_results%>%
-  pivot_longer(values_to="Value", names_to="Parameter", cols=c(Am:Ic))%>%
-  filter(!Parameter=="Ik")%>%
-  filter(!Parameter=="Ic")%>%
-  
-  ggplot(aes(x=Symbiont, y=Value, color=Symbiont))+
-    facet_wrap(~Parameter)+
-    geom_point(aes(), size=4) +
-    scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
-    theme_classic();metrics_plot1a
-
-metrics_plot<-plot_grid(metrics_plot1, metrics_plot1a, nrow=1, ncol=2, rel_widths=c(0.8,1))
-
-ggsave("figures/larval_pi_curves/parameters.png", metrics_plot, width=10, height=6, dpi=300)
-```
-
 # Apply PI curve to each individual well
 
 ```{r}
@@ -460,7 +377,7 @@ Now plot parameters based on individual well calculations.
 Check for outliers. 
 ```{r}
 hist(test$Am) #remove <0
-hist(test$AQY) 
+hist(test$AQY) #remove <0
 hist(test$Rd)
 hist(test$Ik) #remove one upper outliers 
 hist(test$Ic) #remove upper and lower outlier
@@ -471,6 +388,8 @@ Remove outliers
 test<-test%>%
   mutate(
     Am = ifelse(Am > 0, Am, NA),
+    AQY = ifelse(AQY > 0, AQY, NA),
+    Rd = ifelse(Rd > 0, Rd, NA),
     Ik = ifelse(Ik < 100, Ik, NA),
     Ic = ifelse(Ic < 50 & Ic > 0, Ic, NA)
   )
@@ -483,6 +402,8 @@ hist(test$Ic)
 ```
 
 ```{r}
+parent_names<-c("C" = "Susceptible (C)", "MIX" = "Resistant (C/D)", "WT" = "Wildtype (C/D)")
+
 metrics_plot2<-test%>%
   pivot_longer(cols=c(Am:Ic), names_to="Parameter", values_to="value")%>%
   
@@ -496,7 +417,7 @@ metrics_plot2<-test%>%
       geom_boxplot()+
     geom_point(aes(), size=1) +
     #geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.1)+
-    scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"))+
+    scale_color_manual(name="Symbiont", values=c("orange","brown4", "gray"), labels=parent_names)+
     theme_classic()+
   ggtitle("B")+
     ylab("Parameter Value")+
@@ -623,12 +544,10 @@ str(summary_curves)
 curves_plot<-ggplot(summary_curves, aes(x = Light_Value, y = fit_mean, color = Symbiont, fill = Symbiont)) +
   geom_line(size = 1.2) +
   geom_ribbon(aes(ymin = fit_mean - fit_se, ymax = fit_mean + fit_se), alpha = 0.3, linetype = 0) +
-  scale_color_manual(values = c("orange", "brown4", "gray")) +
-  scale_fill_manual(values = c("orange", "brown4", "gray")) +
   theme_classic() +
   ylim(-0.005, 0.01) +
-    scale_color_manual(name="Parent", labels=c("Bleached", "Nonbleached", "Wildtype"), values = c("orange", "brown4", "gray")) +
-  scale_fill_manual(name="Parent", labels=c("Bleached", "Nonbleached", "Wildtype"), values = c("orange", "brown4", "gray")) +
+    scale_color_manual(name="Parent", values = c("orange", "brown4", "gray"), labels=parent_names) +
+  scale_fill_manual(name="Parent", values = c("orange", "brown4", "gray"), labels=parent_names) +
   labs(x = expression(paste('PAR (', mu, "mol photons m"^-2, 's'^-1,")")),
                y = expression(paste('Photosynthetic rate (nmol larva'^-1, 'min'^-1,")")))+
   ggtitle("A")+
