@@ -14,58 +14,6 @@ editor_options:
   chunk_output_type: console
 ---
 
-
-Look at temperature induced NPQ responses (Suggett paper) + symbiont/bacteria co culture phenoplate paper
-- Look at NPQ levels before RLC to see if NPQ is starting at a different point in RLC from previous treatment, could explain why NPQ starts at different points
-- Look at NPQ at end of dark t gradient and end of low light t gradient 
-- Then calculate relative change in NPQ within the light curve 
-
-Low light t gradient is to keep photosynthesis going so that its ready for light curve, otherwise dark to light would hvae lag time 
-
-Add statistically different points to all figures to visualize 
-
-Differences are temperature specific - difference in parents are dependent by temperatures 
-
-Plot a heatmap for all metrics - put each metri and temp as own column
-
-Higher NPQ = experiencing stress and or ability to protect self? Decline in NPQ at high temp x light could be sign of damage not repairable 
-
-Bimodal temperature responses of Rd and rETR - expected, optimum in middle with high stress at end. NPQ increase at low temps iss insteresting - Andrei will look into this more. High stress at low and high temps, optimum in mid temperatures 
-
-Andrei - environmental plasticity of phenoplate data? Will look into this 
-
-Think about making conceptual model of biological response with phenotype with PHenoplate as performance metric
-
-Dont use O2 data - maybe use for respiration 
-
-
-
-
-
-1. Fluorescent light curve = RLC 
-
-Subset RLC analyses 
-Calculate rETR as QY (effective quantum yield) / PAR 
-Plot y as rETR against x as PAR 
-
-Calculate:
-- Saturating irradiance
-- rETR max 
-- Alpha 
-- Beta
-
-2. Oxygen light curve (PI curve)
-
-Plot y as O2 Fm against x as PAR 
-Calculate: 
-- Pmax
-- Saturating irradiance
-- Alpha 
-
-
-
-
-
 # Setup  
 
 Set up workspace, set options, and load required packages.    
@@ -103,8 +51,9 @@ library('nls.multstart')
 library('broom')
 library('emmeans')
 library('readxl')
-library('multcomp')
+#library('multcomp')
 library('dplyr')
+library("tidyverse")
 ```
 
 # Load data 
@@ -148,7 +97,6 @@ c_cold$Plate<-"C-Cold"
 ```
 
 ## C Warm Plate
-
 
 Read in data files for C Warm plate 
 ```{r}
@@ -415,10 +363,10 @@ light_plot<-df%>%
 
 Set names for parent phenotypes. 
 ```{r}
-parent_names<-c("C"="Bleached", "MIX"="Nonbleached", "WT"="Wildtype")
+parent_names<-c("C"="Susceptible (C)", "MIX"="Resistant (C/D)", "WT"="Wildtype (C/D)")
 ```
 
-# Oxygen PI-Curve Summary   
+# Oxygen QC check    
 
 Load a dataframe of start and end times for each phase from the treatment metadata. 
 ```{r}
@@ -470,172 +418,31 @@ pi_plot1<-df%>%
         text=element_text(size=18, color="black"), 
         axis.title=element_text(size=20, color="black", face="bold"), 
         title = element_text(size=20, color="black", face="bold")); pi_plot1
-
-ggsave(filename="figures/phenoplate/RLC_O2_summary.jpeg", pi_plot1, width=10, height=7)
 ```
 
-
-Does not look like photosynthesis is being captured/measured. How do we want to proceed? 
+Does not look like photosynthesis is being captured/measured. Do not use oxygen data.  
 
 # Fluorescence Summary 
 
-## Summarise data before equation calculations  
+## Check sample size 
 
-### QY 
-
-Plot the QY data from the RLC faceted by parent type.
-
+Check sample size 
 ```{r}
-rlc_QY_plot1<-df%>%
-  filter(Phase=="Rapid light curve - Temp Gradient")%>%
-  group_by(Symbiont, Phase, Time, Light, Gradient_Temperature)%>%
-  summarise(mean=mean(QY, na.rm=TRUE), se=sd(QY, na.rm=TRUE)/sqrt(length(QY)))%>%
-  
-  ggplot(aes(x=Time, y=mean, colour=Gradient_Temperature, fill=Gradient_Temperature))+
-  facet_grid(~Symbiont, labeller = as_labeller(parent_names))+
-  geom_ribbon(aes(ymin = mean - se, ymax = mean + se), alpha=0.2, linewidth=0) +
-  geom_line(aes(y = mean), linewidth=2)+
-  xlab("Time (min)")+
-  ylab("QY")+
-  ggtitle("RLC: QY")+
-  scale_colour_manual(values=palette, name="Gradient \nTemperature")+
-  scale_fill_manual(values=palette, name="Gradient \nTemperature")+
-  ylim(0, 0.7)+
-  theme_classic()+
-  theme(legend.position="none", 
-        text=element_text(size=18, color="black"), 
-        axis.title=element_text(size=20, color="black", face="bold"), 
-        title = element_text(size=20, color="black", face="bold")); rlc_QY_plot1
+df%>%
+  mutate(code=as.factor(code))%>%
+  group_by(Symbiont, Gradient_Temperature)%>%
+  summarise(length(unique(code)))
 
-ggsave(filename="figures/phenoplate/RLC_QY_summary.jpeg", rlc_QY_plot1, width=10, height=7)
+#n=4 per symbiont per temperature during temperature gradients 
+
+df%>%
+  mutate(code=as.factor(code))%>%
+  group_by(Symbiont)%>%
+  summarise(length(unique(code)))
+#n=48 per symbiont during non temperature gradient periods 
 ```
 
-
-### NPQ 
-
-Plot the NPQ data from the RLC faceted by parent type.
-
-```{r}
-rlc_NPQ_plot1<-df%>%
-  filter(Phase=="Rapid light curve - Temp Gradient")%>%
-  group_by(Symbiont, Phase, Time, Light, Gradient_Temperature)%>%
-  summarise(mean=mean(NPQ_norm, na.rm=TRUE), se=sd(NPQ_norm, na.rm=TRUE)/sqrt(length(NPQ_norm)))%>%
-  
-  ggplot(aes(x=Time, y=mean, colour=Gradient_Temperature, fill=Gradient_Temperature))+
-  facet_grid(~Symbiont, labeller = as_labeller(parent_names))+
-  geom_ribbon(aes(ymin = mean - se, ymax = mean + se), alpha=0.2, linewidth=0) +
-  geom_line(aes(y = mean), linewidth=2)+
-  xlab("Time (min)")+
-  ylab("NPQ")+
-  ggtitle("RLC: NPQ")+
-  scale_colour_manual(values=palette, name="Gradient \nTemperature")+
-  scale_fill_manual(values=palette, name="Gradient \nTemperature")+
-  #ylim(0, 0.7)+
-  theme_classic()+
-  theme(legend.position="none", 
-        text=element_text(size=18, color="black"), 
-        axis.title=element_text(size=20, color="black", face="bold"), 
-        title = element_text(size=20, color="black", face="bold")); rlc_NPQ_plot1
-
-ggsave(filename="figures/phenoplate/RLC_NPQ_summary.jpeg", rlc_NPQ_plot1, width=10, height=7)
-```
-
-Summarize NPQ values in last 5 minutes. Calculate as relative change in Fm per min. 
-```{r}
-NPQ_RLC<-df%>%
-  filter(Phase=="Rapid light curve - Temp Gradient")%>%
-  group_by(Plate, well, code, Symbiont, Gradient_Temperature, Light)%>%
-  summarise(NPQrlc=mean(NPQ_norm, na.rm=TRUE))
-```
-
-Plot values. 
-```{r}
-NPQ_RLC_plot2<-NPQ_RLC%>%
-  group_by(Symbiont, Gradient_Temperature, Light)%>%
-  summarise(mean=mean(NPQrlc, na.rm=TRUE), se=sd(NPQrlc, na.rm=TRUE)/sqrt(length(NPQrlc)))%>%
-  
-  ggplot(aes(x=as.integer(as.character(Light)), y=mean, colour=Gradient_Temperature, fill=Gradient_Temperature))+
-  facet_grid(~Symbiont)+
-  geom_point(size=2)+
-  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.1)+
-  geom_smooth(aes(group=Gradient_Temperature, fill=Gradient_Temperature, color=Gradient_Temperature), linewidth=2, alpha=0.1)+
-  xlab("Light")+
-  ylab(expression(bold(paste("Non-Photochemical Quenching"))))+
-  ggtitle(expression(bold(paste("NPQ during RLC"))))+
-  scale_colour_manual(values=palette, name="Gradient \nTemperature")+
-  scale_fill_manual(values=palette, name="Gradient \nTemperature")+
-  #ylim(-0.01,0.055)+
-  theme_classic()+
-  theme(legend.position="right", 
-        text=element_text(size=14, color="black"), 
-        axis.title=element_text(size=12, color="black", face="bold"), 
-        title = element_text(size=12, color="black", face="bold")); NPQ_RLC_plot2
-
-ggsave(filename="figures/phenoplate/RLC_NPQ_summary2.jpeg", NPQ_RLC_plot2, width=10, height=7)
-```
-
-Run ANOVA model on these values. 
-```{r}
-model<-NPQ_RLC%>%
-  
-  aov(NPQrlc~Symbiont*Gradient_Temperature*Light, data=.)
-
-summary(model)
-
-emm<-emmeans(model, ~Symbiont)
-pairs(emm)
-cld(emm, Letters = letters)
-
-emm<-emmeans(model, ~Gradient_Temperature)
-pairs(emm)
-cld(emm, Letters = letters)
-
-emm<-emmeans(model, ~Symbiont | Gradient_Temperature)
-pairs(emm)
-cld(emm, Letters = letters)
-
-emm<-emmeans(model, ~Symbiont * Light | Gradient_Temperature )
-pairs(emm)
-cld(emm, Letters = letters)
-```
-
-                                      Df Sum Sq Mean Sq  F value   Pr(>F)    
-Symbiont                               2  16.94    8.47  621.992  < 2e-16 ***
-Gradient_Temperature                  11  14.71    1.34   98.214  < 2e-16 ***
-Light                                  1 120.17  120.17 8823.973  < 2e-16 ***
-Symbiont:Gradient_Temperature         22   5.64    0.26   18.832  < 2e-16 ***
-Symbiont:Light                         2   0.26    0.13    9.486 7.93e-05 ***
-Gradient_Temperature:Light            11   6.01    0.55   40.091  < 2e-16 ***
-Symbiont:Gradient_Temperature:Light   22   0.71    0.03    2.364 0.000353 ***
-Residuals                           2088  28.44    0.01  
-
-Plot values faceted by temperature. 
-```{r}
-NPQ_RLC_plot3<-NPQ_RLC%>%
-  group_by(Symbiont, Gradient_Temperature, Light)%>%
-  summarise(mean=mean(NPQrlc, na.rm=TRUE), se=sd(NPQrlc, na.rm=TRUE)/sqrt(length(NPQrlc)))%>%
-  
-  ggplot(aes(x=as.integer(as.character(Light)), y=mean, colour=Symbiont, fill=Symbiont))+
-  facet_grid(~Gradient_Temperature)+
-  geom_point(size=2)+
-  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.1)+
-  geom_smooth(aes(group=Symbiont, fill=Symbiont, color=Symbiont), linewidth=2, alpha=0.1)+
-  xlab("Light")+
-  ylab(expression(bold(paste("Non-Photochemical Quenching"))))+
-  ggtitle(expression(bold(paste("NPQ during RLC"))))+
-  scale_colour_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
-  scale_fill_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
-  #ylim(-0.01,0.055)+
-  theme_classic()+
-  theme(legend.position="none", 
-        text=element_text(size=14, color="black"), 
-        axis.title=element_text(size=12, color="black", face="bold"), 
-        title = element_text(size=12, color="black", face="bold")); NPQ_RLC_plot3
-
-ggsave(filename="figures/phenoplate/RLC_NPQ_summary3.jpeg", NPQ_RLC_plot3, width=20, height=7)
-```
-
-# Rapid Light Curve 
+# Rapid Light Curve equations and parameters 
 
 ## Calculate rETR 
 
@@ -673,19 +480,9 @@ From this we will extract parameters:
 - alpha (slope under light limitation)
 - beta (photoinhibition)
 - max rETR (maximal rETR)
-- Ek (saturating irradiance)
+- Ik (saturating irradiance)
 
 Reference: https://enveurope.springeropen.com/articles/10.1186/s12302-020-00306-9 
-
-This model runs, but doesn't account for beta currently 
-
-
-
-For now, running - 
-
-Nonlinear Least Squares regression of a quadratic fit, test nls fit
-Aquatic Photosynthesis, Falkowski   
-
 ```{r}
 library(purrr)
 library(minpack.lm)
@@ -707,15 +504,10 @@ nls_data <- rlc %>%
     # Calculate I within the map function for each group
     I <- as.numeric(as.character(.x$Light))
     
-    # Fit the model with adjusted starting values and control parameters
-    #nls_fit <- nlsLM(rETR ~ (Ps*(1-exp(-(alpha * I)/Ps))*exp(-(beta * I)/Ps) - Rd),
-    #                 data = .x, 
-    #                 start = list(Ps = 200, alpha = 5, beta = 1, Rd = 10))
-    
-    nls_fit <- nlsLM(rETR ~ (Am*((AQY*I)/(sqrt(Am^2 + (AQY*I)^2)))-Rd), 
+    nls_fit <- nlsLM(rETR ~ rETRs * (1 - exp(-((a * I)/rETRs)))*exp(-((b*I)/rETRs))-rETRd,
                      data=., 
-                     start=list(Am=200,  AQY=5, Rd=10))
-    
+                     start=list(rETRs=150, a=1, rETRd=1, b=0.1))
+      
     # Return tidy results
     tidy(nls_fit) %>%
       dplyr::select(term, estimate) %>%
@@ -724,13 +516,12 @@ nls_data <- rlc %>%
   unnest(model1) %>%
   unnest(data) %>%
   group_by(code) %>%
-  summarise(rETRmax=mean(Am), AQY=mean(AQY), dark_rETR=mean(Rd))%>%
-  mutate(Ik = rETRmax/AQY) %>%
-  mutate(Ic=(rETRmax*dark_rETR)/(AQY*(sqrt(rETRmax^2-dark_rETR^2))))
-  #summarise(Ps = mean(Ps), alpha = mean(alpha), Rd = mean(Rd), beta = mean(beta)) %>%
-  #mutate(Ik = (Ps/alpha)* log((alpha + beta)/beta),
-  #       rETRmax = Ps*(alpha/(alpha + beta))*(beta/(alpha+beta))^(beta/alpha) - Rd,
-  #       Ic = Rd/alpha)
+  
+  summarise(rETRs=mean(rETRs), a=mean(a), rETRd=mean(rETRd), b=mean(b))%>%
+  
+  mutate(rETRmax=rETRs*(a/(a+b))*(b/(a+b))^(b/a)-rETRd)%>%
+  mutate(Ic = rETRd/a) %>%
+  mutate(Ik=(rETRmax/a) * log((a+b)/b))
 ```
 
 Add in metadata and generate summaries. 
@@ -741,43 +532,48 @@ results$Gradient_Temperature<-rlc$Gradient_Temperature[match(results$code, rlc$c
 results$Symbiont<-rlc$Symbiont[match(results$code, rlc$code)]
 
 results<-results%>%
-  pivot_longer(names_to="Metric", values_to=("Value"), cols=rETRmax:Ic)
+  pivot_longer(names_to="Metric", values_to=("Value"), cols=rETRs:Ik)
 ```
 
 ## Plot results 
 
 ```{r}
+parent_names<-c("C" = "Susceptible (C)", "MIX" = "Resistant (C/D)", "WT" = "Wildtype (C/D)")
+
 rlc_metrics_plot1<-results%>%
-  group_by(Symbiont, Gradient_Temperature, Metric)%>%
-  summarise(mean=mean(Value, na.rm=TRUE), se=sd(Value, na.rm=TRUE)/sqrt(length(Value)))%>%
+  filter(Metric %in% c("a", "b", "Ic", "Ik", "rETRmax", "rETRd"))%>%
   
-  ggplot(aes(x=Gradient_Temperature, y=mean, colour=Symbiont, fill=Symbiont))+
-  facet_grid(Metric ~., scales = "free_y")+
+  group_by(Symbiont, Gradient_Temperature, Metric)%>%
+  
+  ggplot(aes(x=Gradient_Temperature, y=Value, colour=Symbiont, fill=Symbiont))+
+  facet_wrap(Metric ~., scales = "free_y")+
   geom_point(size=2)+
-  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.1)+
   geom_smooth(aes(group=Symbiont, fill=Symbiont, color=Symbiont), linewidth=2, alpha=0.1)+
   xlab("Temperature")+
   ylab(expression(bold(paste("Value"))))+
-  scale_colour_manual(values=c("orange", "brown4", "gray"), name="Parental \nPhenotype", labels=c("Bleached", "Nonbleached", "Wildtype"))+
-  scale_fill_manual(values=c("orange", "brown4", "gray"), name="Parental \nPhenotype", labels=c("Bleached", "Nonbleached", "Wildtype"))+
+  scale_colour_manual(values=c("orange", "brown4", "gray"), name="Parental \nPhenotype", labels=parent_names)+
+  scale_fill_manual(values=c("orange", "brown4", "gray"), name="Parental \nPhenotype", labels=parent_names)+
   #ylim(-0.01,0.055)+
   theme_classic()+
   theme(legend.position="right", 
         text=element_text(size=14, color="black"), 
         axis.title=element_text(size=12, color="black", face="bold"), 
         title = element_text(size=12, color="black", face="bold")); rlc_metrics_plot1
-
-ggsave(filename="figures/phenoplate/rlc_metrics.jpeg", rlc_metrics_plot1, width=7, height=10)
 ```
 
-Ic isn't very meaningful to be below 0 though? What about Rd/dark rETR? 
+We will use the reliable metrics of alpha and rETRmax for analysis. 
 
-## ANOVA test
+## ANOVA tests and individual plots 
 
-AQY. 
+a 
 ```{r}
+a_data<-results%>%
+  filter(Metric=="a")
+
+hist(a_data$Value)
+
 model<-results%>%
-  filter(Metric=="AQY")%>%
+  filter(Metric=="a")%>%
   
   aov(Value~Gradient_Temperature*Symbiont, data=.)
 
@@ -786,53 +582,97 @@ summary(model)
 emm<-emmeans(model, ~Symbiont | Gradient_Temperature)
 pairs(emm)
 ```
-Significant temperature and interaction term. At low temperatures, alpha is higher in MIX than C. 
+Significant temp x symbiont interaction. C is lower than MIX at 20C and higher than mix at 29C (WT also higher than mix at 29°C). C higher than WT at 38°C. 
 
-Ic 
+Plot. 
 ```{r}
-model<-results%>%
-  filter(Metric=="Ic")%>%
+rlc_metrics_plot1<-results%>%
+  filter(Metric %in% c("a"))%>%
   
-  aov(Value~Gradient_Temperature*Symbiont, data=.)
-
-summary(model)
-
-emm<-emmeans(model, ~Symbiont | Gradient_Temperature)
-pairs(emm)
-```
-Significant main effects and interaction. Ic is lower in C than other groups. At low temperatures C is lower than other groups. 
-
-Ic 
-```{r}
-model<-results%>%
-  filter(Metric=="Ik")%>%
+  group_by(Symbiont, Gradient_Temperature, Metric)%>%
   
-  aov(Value~Gradient_Temperature*Symbiont, data=.)
+  ggplot(aes(x=Gradient_Temperature, y=Value, colour=Symbiont))+
+  geom_boxplot(position=position_dodge(0.5))+
+  geom_point(size=2, position=position_dodge(0.5))+
+  xlab("Temperature")+
+  ylab(expression(bold(paste("Alpha"))))+
+  scale_colour_manual(values=c("orange", "brown4", "gray"), name="Parent (Symbiont)", labels=parent_names)+
+  geom_text(x=1, y=0.65, label="*", inherit.aes=FALSE, size=8)+
+  geom_text(x=6, y=0.88, label="*", inherit.aes=FALSE, size=8)+
+  geom_text(x=12, y=0.72, label="*", inherit.aes=FALSE, size=8)+
+  theme_classic()+
+  ggtitle("D")+
+  ylim(0.2,0.91)+
+  theme(legend.position="right", 
+        text=element_text(size=14, color="black"), 
+        axis.title=element_text(size=12, color="black", face="bold"), 
+        title = element_text(size=12, color="black", face="bold")); rlc_metrics_plot1
 
-summary(model)
+ggsave(filename="figures/phenoplate/rlc_alpha.jpeg", rlc_metrics_plot1, width=8, height=6)
 
-emm<-emmeans(model, ~Symbiont | Gradient_Temperature)
-pairs(emm)
-```
-Significant main effects and interaction. Ik is higher in C at 38, but barely. C is higher than WT at 31. C is higher than other groups at low temperatures. 
+blue_red_12 <- c(
+  "#08306B", # dark navy
+  "#08519C",
+  "#2171B5",
+  "#4292C6",
+  "#6BAED6",
+  "#9ECAE1", # mid-light blue
+  "#FCAE91", # soft salmon
+  "#FB6A4A",
+  "#EF3B2C",
+  "#CB181D",
+  "#A50F15",
+  "#67000D"  # dark red
+)
 
-Rd (dark rETR essentially)
-```{r}
-model<-results%>%
-  filter(Metric=="dark_rETR")%>%
+rlc_metrics_plot4<-results%>%
+  filter(Metric %in% c("a"))%>%
   
-  aov(Value~Gradient_Temperature*Symbiont, data=.)
+  group_by(Gradient_Temperature, Metric)%>%
+  
+  ggplot(aes(x=Gradient_Temperature, y=Value, colour=Gradient_Temperature))+
+  geom_boxplot(position=position_dodge(0.5))+
+  geom_point(size=2, position=position_dodge(0.5))+
+  xlab("Temperature")+
+    ggtitle("C")+
+  ylab(expression(bold(paste("Alpha"))))+
+  scale_color_manual(values = blue_red_12, name="Temperature")+
+  ylim(0.2,0.91)+
+  theme_classic()+
+  theme(legend.position="right", 
+        text=element_text(size=14, color="black"), 
+        axis.title=element_text(size=12, color="black", face="bold"), 
+        title = element_text(size=12, color="black", face="bold")); rlc_metrics_plot4
 
-summary(model)
-
-emm<-emmeans(model, ~Symbiont | Gradient_Temperature)
-pairs(emm)
+ggsave(filename="figures/phenoplate/rlc_alpha_temp.jpeg", rlc_metrics_plot4, width=8, height=6)
 ```
-Significant main effects and interaction. Dark rETR is lower in C at 31 than other groups. C is lower than other groups at low temperatures. 
 
-rETR max 
+Ic shows many negative values, do not analyze. 
 ```{r}
-model<-results%>%
+ic_data<-results%>%
+  filter(Metric=="Ic")
+
+hist(ic_data$Value)
+```
+
+Ik has many values close to 0, do not analyze. 
+```{r}
+ik_data<-results%>%
+  filter(Metric=="Ik")
+
+hist(ik_data$Value)
+```
+
+rETRd and b have many values close to zero, do not analyze. 
+
+rETR Max 
+```{r}
+etr_data<-results%>%
+  filter(Metric=="rETRmax")
+
+hist(etr_data$Value)
+
+model<-etr_data%>%
   filter(Metric=="rETRmax")%>%
   
   aov(Value~Gradient_Temperature*Symbiont, data=.)
@@ -843,6 +683,200 @@ emm<-emmeans(model, ~Symbiont)
 pairs(emm)
 
 emm<-emmeans(model, ~Gradient_Temperature)
-cld(emm, Letters=letters)
+pairs(emm)
 ```
-Significant main effects of symbiont and gradient temp. rETR is higher in mix than WT, but no difference in MIX and C. Bimodal temperature effects. 
+Significant main effects of symbiont and temperature. C is higher than WT and so is MIX. 
+
+Plot. 
+```{r}
+rlc_metrics_plot3<-results%>%
+  filter(Metric %in% c("rETRmax"))%>%
+  
+  group_by(Symbiont, Gradient_Temperature, Metric)%>%
+  
+  ggplot(aes(x=Gradient_Temperature, y=Value, colour=Symbiont))+
+  geom_boxplot(position=position_dodge(0.5))+
+  geom_point(size=2, position=position_dodge(0.5))+
+  xlab("Temperature")+
+  ylab(expression(bold(paste("rETR max"))))+
+  scale_colour_manual(values=c("orange", "brown4", "gray"), name="Parent (Symbiont)", labels=parent_names)+
+  #geom_text(x=1, y=0.65, label="*", inherit.aes=FALSE, size=8)+
+  #geom_text(x=6, y=0.88, label="*", inherit.aes=FALSE, size=8)+
+  #geom_text(x=12, y=0.72, label="*", inherit.aes=FALSE, size=8)+
+  theme_classic()+
+  ggtitle("B")+
+  ylim(100,350)+
+  theme(legend.position="right", 
+        text=element_text(size=14, color="black"), 
+        axis.title=element_text(size=12, color="black", face="bold"), 
+        title = element_text(size=12, color="black", face="bold")); rlc_metrics_plot3
+
+ggsave(filename="figures/phenoplate/rlc_rETRmax.jpeg", rlc_metrics_plot3, width=8, height=6)
+
+rlc_metrics_plot3<-results%>%
+  filter(Metric %in% c("rETRmax"))%>%
+  
+  group_by(Symbiont, Metric)%>%
+  
+  ggplot(aes(x=Symbiont, y=Value, colour=Symbiont))+
+  geom_boxplot(position=position_dodge(0.5))+
+  geom_point(size=2, position=position_dodge(0.5))+
+  xlab("Temperature")+
+  ylab(expression(bold(paste("rETR max"))))+
+  scale_colour_manual(values=c("orange", "brown4", "gray"), name="Parent (Symbiont)", labels=parent_names)+
+  #geom_text(x=1, y=0.65, label="*", inherit.aes=FALSE, size=8)+
+  #geom_text(x=6, y=0.88, label="*", inherit.aes=FALSE, size=8)+
+  #geom_text(x=12, y=0.72, label="*", inherit.aes=FALSE, size=8)+
+  theme_classic()+
+  ylim(100,350)+
+  theme(legend.position="right", 
+        text=element_text(size=14, color="black"), 
+        axis.title=element_text(size=12, color="black", face="bold"), 
+        title = element_text(size=12, color="black", face="bold")); rlc_metrics_plot3
+
+blue_red_12 <- c(
+  "#08306B", # dark navy
+  "#08519C",
+  "#2171B5",
+  "#4292C6",
+  "#6BAED6",
+  "#9ECAE1", # mid-light blue
+  "#FCAE91", # soft salmon
+  "#FB6A4A",
+  "#EF3B2C",
+  "#CB181D",
+  "#A50F15",
+  "#67000D"  # dark red
+)
+
+rlc_metrics_plot4<-results%>%
+  filter(Metric %in% c("rETRmax"))%>%
+  
+  group_by(Gradient_Temperature, Metric)%>%
+  
+  ggplot(aes(x=Gradient_Temperature, y=Value, colour=Gradient_Temperature))+
+  geom_boxplot(position=position_dodge(0.5))+
+  geom_point(size=2, position=position_dodge(0.5))+
+  xlab("Temperature")+
+    ggtitle("A")+
+  ylab(expression(bold(paste("rETR max"))))+
+  scale_color_manual(values = blue_red_12, name="Temperature")+
+  ylim(100, 350)+
+  theme_classic()+
+  theme(legend.position="right", 
+        text=element_text(size=14, color="black"), 
+        axis.title=element_text(size=12, color="black", face="bold"), 
+        title = element_text(size=12, color="black", face="bold")); rlc_metrics_plot4
+
+ggsave(filename="figures/phenoplate/rlc_rETRmax_temp.jpeg", rlc_metrics_plot4, width=8, height=6)
+```
+
+# NPQ during RLC 
+
+Normalize NPQ to starting value, view across RLC temperature gradient, and merge into `results` dataframe. 
+
+```{r}
+npq<-rlc%>%
+  select(Plate, Phase, well, code, Time, Light, Gradient_Temperature,Symbiont, NPQ_norm)%>%
+  ungroup()%>%
+  filter(Phase == "Rapid light curve - Temp Gradient") %>%
+  arrange(Plate, well, code, Time, Light, Gradient_Temperature) %>%
+  mutate(
+    baseline = dplyr::first(NPQ_norm),           # within each group thanks to .by
+    NPQrlc   = NPQ_norm / baseline,
+    .by = c(Plate, well, code)
+  )%>%
+  select(!Phase)%>%
+  select(!baseline)%>%
+  select(!c(Plate, well, Time))
+
+head(npq)
+```
+
+View data. 
+```{r}
+hist(npq$NPQrlc)
+
+#filter upper outliers 
+
+npq<-npq%>%
+  filter(NPQrlc<6)
+
+hist(npq$NPQrlc)
+```
+
+View NPQ values across light and temperature for each symbiont. 
+
+```{r}
+npq_plot1<-npq%>%
+  
+  ggplot(aes(x=Light, y=NPQrlc, colour=Symbiont, fill=Symbiont))+
+  facet_grid(~Gradient_Temperature)+
+  geom_point(size=2, position=position_dodge(0.5), alpha=0.3)+
+  geom_smooth(aes(group=Symbiont), se=TRUE)+
+  xlab("Light")+
+  ylab("Normalized NPQ")+
+  scale_colour_manual(values=c("orange", "brown4", "gray"), name="Parent (Symbiont)", labels=parent_names)+
+  scale_fill_manual(values=c("orange", "brown4", "gray"), name="Parent (Symbiont)", labels=parent_names)+
+  theme_classic()+
+  ggtitle("B")+
+  theme(legend.position="right", 
+        text=element_text(size=14, color="black"), 
+        axis.title=element_text(size=12, color="black"), 
+        axis.text.x=element_text(angle=45, hjust=1),
+        title = element_text(size=12, color="black")); npq_plot1
+
+ggsave(filename="figures/phenoplate/rlc_npq_symbiont.jpeg", npq_plot1, width=14, height=6)
+
+blue_red_12 <- c(
+  "#08306B", # dark navy
+  "#08519C",
+  "#2171B5",
+  "#4292C6",
+  "#6BAED6",
+  "#9ECAE1", # mid-light blue
+  "#FCAE91", # soft salmon
+  "#FB6A4A",
+  "#EF3B2C",
+  "#CB181D",
+  "#A50F15",
+  "#67000D"  # dark red
+)
+
+npq_plot2<-npq%>%
+  
+  ggplot(aes(x=Light, y=NPQrlc, colour=Gradient_Temperature, fill=Gradient_Temperature))+
+  facet_grid(~Symbiont, labeller = as_labeller(parent_names))+
+  geom_point(size=2, position=position_dodge(0.5), alpha=0.3)+
+  geom_smooth(aes(group=Gradient_Temperature), se=TRUE)+
+  xlab("Light")+
+  ylab("Normalized NPQ")+
+  scale_colour_manual(values=blue_red_12)+
+  scale_fill_manual(values=blue_red_12)+
+  theme_classic()+
+  ggtitle("A")+
+  theme(legend.position="right", 
+        text=element_text(size=14, color="black"), 
+        axis.title=element_text(size=12, color="black"), 
+        axis.text.x=element_text(angle=45, hjust=1),
+        title = element_text(size=12, color="black")); npq_plot2
+
+ggsave(filename="figures/phenoplate/rlc_npq_temperature.jpeg", npq_plot2, width=10, height=5)
+```
+
+Analyze NPQ
+
+```{r}
+model<-npq%>%
+  
+  lmer(NPQrlc~Gradient_Temperature*Symbiont*Light + (1|code), data=.)
+
+anova(model)
+
+emm<-emmeans(model, ~Symbiont | Gradient_Temperature * Light)
+pairs(emm)
+
+emm<-emmeans(model, ~Symbiont | Gradient_Temperature)
+pairs(emm)
+```
+WT is higher than the other two at 21, 24, 2628, 29, 31, 34, 37. No differences between C and MIX. 

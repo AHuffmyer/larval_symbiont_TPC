@@ -14,32 +14,29 @@ editor_options:
   chunk_output_type: console
 ---
 
-NEXT: Normalize NPQ in gradient to startin value? Also visualize between phases? 
+Note we will not be using oxygen data as they were not reliable. 
 
 1. Dark 26°C  
-- Respiration (O2 Fm) *we will not be using these data as they were not reliable*  
-- QY (relative quantum yield)
-- NPQ (non photochemical quenching under dark)
+- Acclimation phase, no metrics quantified 
 
 2. Sub saturating Light 26°C 
-- Net Photosynthesis (O2 Fm) *we will not be using these data as they were not reliable*  
-- Gross Photosynthesis (Net P + Respiration from Dark 26°C) (O2 Fm) *we will not be using these data as they were not reliable*  
 - NPQ (non photochemical quenching under light)
+- QY (quantum yield)
 
 3. Dark at temperature gradient 
-- Respiration (O2 Fm) under temperatures in dark *we will not be using these data as they were not reliable*  
-- QY (relative quantum yield) under temperatures in dark
-- NPQ (non photochemical quenching under dark) under temperatures in dark
+- Acclimation phase, no metrics quantified 
 
-3. Low light recovery from RLC
+4. Low light under temperature gradient  
+- NPQ (non photochemical quenching under light)
+- QY (quantum yield)
+
+5. Low light recovery from RLC temperature gradient 
 - QY (relative quantum yield)
 - NPQ (non photochemical quenching under dark)
 
-Use the last 5 min averaged for O2, QY and NPQ to give final value reached in each phase. 
+RLC phase analyzed in phenoplate_RLC_analysis.Rmd script. 
 
-O2 - Fm = measured after saturating pulse. Use this metric for O2, it is measured under standardized light pulse consistent light. Lower flourescence = more O2; Higher fluorescence = less O2. O2 quenches the fluorescence. Will calculate this as the inverse to be intuitive for analyses. We will not be using the O2 data due to variability and reliability.  
-
-Analyze within a protocol - shifts between phases are not meaningful.   
+We will use the last 5 min averaged for QY and NPQ  in these phases to give final value reached in each phase. 
 
 # Setup  
 
@@ -363,7 +360,7 @@ Plot a time series plot of each response over the measurement period.
 
 Set custom theme for panel plots. 
 ```{r}
-custom_theme<-theme(text=element_text(size=20, face="bold", color="black"), 
+custom_theme<-theme(text=element_text(size=18, color="black"), 
         axis.text=element_text(size=18, color="black"), 
         legend.position="none", 
         )
@@ -378,17 +375,27 @@ light_plot<-df%>%
   
   ggplot(aes(y=Light, x=Time))+
   geom_line(colour="black", linewidth=2)+
+  
   geom_text(label="Dark (26°C)", x=8, y=250, size=4)+
+  geom_text(label="Acclimation", x=8, y=350, size=4, colour="darkgray")+
   geom_text(label="Light (26°C)", x=22, y=600, size=4)+
+  geom_text(label="QY & NPQ", x=22, y=700, size=4, colour="darkred")+
   geom_text(label="Dark \n[T Gradient]", x=36, y=250, size=4)+
+  geom_text(label="Acclimation", x=36, y=500, size=4, colour="darkgray")+
   geom_text(label="Low Light \n[T Gradient]", x=45, y=250, size=4)+
+  geom_text(label="QY & NPQ  \n~ Temp", x=45, y=500, size=4, colour="darkred")+
   geom_text(label="Rapid Light Curve \n[T Gradient]", x=58, y=1400, size=4)+
+  geom_text(label="Alpha, rETR, NPQ \n~ Temp", x=58, y=1600, size=4, colour="darkred")+
   geom_text(label="Low Light \nRecovery \n(26°C)", x=70, y=400, size=4)+
+  geom_text(label="QY & NPQ", x=70, y=600, size=4, colour="darkred")+
+  
   theme_classic()+
   custom_theme+
   ylim(0, 1650)+
   xlab("Time (min)")+
-  ylab("Light (PAR)");light_plot
+  ylab(expression(paste("Light (µmol photons m" ^-2, " s" ^-1, ")")));light_plot
+
+ggsave(light_plot, filename="figures/phenoplate/light_design.png", width=10, height=5)
 ```
 
 O2 Fm
@@ -699,6 +706,8 @@ Select only required columns.
 df<-df%>%
   dplyr::select(Plate, well, code, Time, Light, Gradient_Temperature, Symbiont, O2_Fm_norm, NPQ_norm, QY, Phase)
 ```
+
+Note that there is oxygen data in this data frame, but because this data did not pass QC checks we will not be analyzing it here. 
 
 ## 1. Dark 26°C: NPQ, and QY ~ Phenotype 
 
