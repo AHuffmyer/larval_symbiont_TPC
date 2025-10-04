@@ -623,11 +623,22 @@ pca1<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="parent", loadi
 ```
 
 ```{r}
+parent_names<-c("Bleached" = "Susceptible (C)", "Nonbleached" = "Resistant (C/D)", "Wildtype" = "Wildtype (C/D)")
+
+parent_colors<-c("Bleached" = "orange",   # calm blue
+                 "Nonbleached" = "darkred", # stressed purple
+                 "Wildtype" = "darkgray") 
+
+temp_colors <- c("Ambient" = "#2c7bb6",   # calm blue
+                 "Moderate (+3)" = "#7b3294", # stressed purple
+                 "High (+6)" = "#d53e4f") 
+
+
 pca2<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="parent", loadings=FALSE,  colour="parent", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
-  scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
-  scale_fill_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
+  scale_color_manual(name="Parental Phenotype", values=parent_colors, labels=parent_names)+
+  scale_fill_manual(name="Parental Phenotype", values=parent_colors, labels=parent_names)+
   theme_classic()+
-  geom_text(x=0, y=-0.35, label="p=0.029", size=8)+
+  geom_text(x=0, y=-0.35, label="p=0.029", size=6)+
    theme(legend.text = element_text(size=14), 
          legend.position="right",
         plot.background = element_blank(),
@@ -636,10 +647,10 @@ pca2<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="parent", loadi
         axis.title = element_text(size=14,  face="bold"));pca2
 
 pca2b<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="temperature", loadings=FALSE,  colour="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
-  scale_color_manual(name="Temperature", values=c("blue", "orange", "red"))+
-  scale_fill_manual(name="Temperature", values=c("blue", "orange", "red"))+
+  scale_color_manual(name="Temperature", values=temp_colors)+
+  scale_fill_manual(name="Temperature", values=temp_colors)+
   theme_classic()+
-  geom_text(x=0, y=-0.35, label="p=0.042", size=8)+
+  geom_text(x=0, y=-0.35, label="p=0.042", size=6)+
    theme(legend.text = element_text(size=14), 
          legend.position="right",
         plot.background = element_blank(),
@@ -719,10 +730,10 @@ plotIndiv(MyResult.plsda)    # 2 Plot the samples
 cols<-c("gray", "orange", "brown4") 
 
 pdf("figures/lipids/PLSDA_Parent.pdf", width=6, height=6)
-plotIndiv(MyResult.plsda, col=cols, ind.names = FALSE, legend=FALSE, legend.title = "A", ellipse = TRUE, title="", style = "graphics", centroid=FALSE, point.lwd = 2, cex=2)
+plotIndiv(MyResult.plsda, col=cols, ind.names = FALSE, legend=FALSE, ellipse = TRUE, title="A", style = "graphics", centroid=FALSE, point.lwd = 2, cex=2)
 dev.off() 
 
-plotIndiv(MyResult.plsda, col=cols, ind.names = FALSE, legend=FALSE, legend.title = "A", ellipse = TRUE, title="", style = "graphics", centroid=FALSE, point.lwd = 2, cex=2)
+plotIndiv(MyResult.plsda, col=cols, ind.names = FALSE, legend=FALSE, ellipse = TRUE, title="A", style = "graphics", centroid=FALSE, point.lwd = 2, cex=2)
 ```
 
 View classification plot. 
@@ -806,6 +817,7 @@ heatmap_data <- parent_vip_data %>%
 
 # Convert to matrix and set rownames
 heatmap_matrix <- as.matrix(column_to_rownames(heatmap_data, var = "lipid"))
+colnames(heatmap_matrix)<-c("Susceptible (C)", "Resistant (C/D)", "Wildtype (C/D)")
 
 # Create the heatmap
 heatmap <- Heatmap(
@@ -933,8 +945,8 @@ Total              50  1500.00 1.00000
 
 ```{r}
 pca_vip_parent1<-ggplot2::autoplot(scaled.pca, data=vip_data_parent, frame.colour="parent", loadings=FALSE,  colour="parent", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
-  scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
-  scale_fill_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
+  scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"), labels=parent_names)+
+  scale_fill_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"), labels=parent_names)+
   theme_classic()+
   ggtitle("A")+
    theme(legend.text = element_text(size=14), 
@@ -968,13 +980,13 @@ X<-X%>%select(where(is.numeric)) #pull only data columns
 MyResult.plsda <- plsda(X,Y, ncomp=2) # 1 Run the method with ncomp = groups -1
 plotIndiv(MyResult.plsda)    # 2 Plot the samples
 
-cols<-c("blue", "orange", "red") 
+cols<-temp_colors 
 
 pdf("figures/lipids/PLSDA_Temperature.pdf", width=6, height=6)
-plotIndiv(MyResult.plsda, col=cols, ind.names = FALSE, legend=FALSE, legend.title = "B", ellipse = TRUE, title="", style = "graphics", centroid=FALSE, point.lwd = 2, cex=2)
+plotIndiv(MyResult.plsda, col=cols, ind.names = FALSE, legend=FALSE, legend.title = "B", ellipse = TRUE, title="B", style = "graphics", centroid=FALSE, point.lwd = 2, cex=2)
 dev.off() 
 
-plotIndiv(MyResult.plsda, col=cols, ind.names = FALSE, legend=FALSE, legend.title = "B", ellipse = TRUE, title="", style = "graphics", centroid=FALSE, point.lwd = 2, cex=2)
+plotIndiv(MyResult.plsda, col=cols, ind.names = FALSE, legend=FALSE, legend.title = "B", ellipse = TRUE, title="B", style = "graphics", centroid=FALSE, point.lwd = 2, cex=2)
 ```
 
 View classification plot. 
@@ -1622,7 +1634,7 @@ plot_sign1<-classes%>%
   xlab("Temperature")+
   ylim(0,0.035)+
   theme(legend.position="none")+
-  scale_color_manual(values=c("blue", "red", "orange"))+
+  scale_color_manual(values=temp_colors)+
   scale_x_discrete(limits=c("Ambient", "Moderate (+3)", "High (+6)"))+
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1));plot_sign1
 
@@ -1637,17 +1649,18 @@ plot_sign2<-classes%>%
   filter(!ontology=="AHexCAS")%>%
   
   ggplot(aes(x=paste(parent), y=prop_class, color=parent))+
-  facet_wrap(~ontology, scales="free", nrow=3, ncol=5)+
+  facet_wrap(~ontology, nrow=3, scales="free_y")+
   geom_boxplot(outliers=FALSE)+
   geom_point()+
   theme_classic()+
     ylab("% Class Composition")+
-  xlab("Parent Phenotype")+
+  xlab("Phenotype")+
     theme(legend.position="none")+
   scale_color_manual(values=c("orange", "darkred", "darkgray"))+
+  scale_x_discrete(labels=parent_names)+
   theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1));plot_sign2
 
-ggsave(plot_sign2, filename="figures/lipids/sign_classes_parent.jpeg", width=9, height=8)
+ggsave(plot_sign2, filename="figures/lipids/sign_classes_parent.jpeg", width=9, height=6)
 ```
 
 https://systemsomicslab.github.io/compms/msdial/lipidnomenclature.html
@@ -1747,12 +1760,11 @@ fa_plot2<-fa_pufa%>%
   ggplot(aes(x = temperature, y = area_normalized, colour = parent)) +
   geom_boxplot()+
   geom_point(position=position_dodge(0.75)) +
-  scale_colour_manual(values=c("orange", "darkred", "darkgray"))+
+  scale_colour_manual(values=c("orange", "darkred", "darkgray"), labels=parent_names)+
   labs(x = "", y = "FFA 28:7 concentration") +
   ylim(0,0.028)+
   ggtitle("F")+
-  geom_text(inherit.aes=FALSE, x=2, y=0.025, label="p[parent]<0.001", size=4)+
-  geom_text(inherit.aes=FALSE, x=2, y=0.023, label="p[temperature]<0.001", size=4)+
+  geom_text(inherit.aes=FALSE, x=2, y=0.025, label="p<0.001", size=4)+
   theme_classic() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1), 
         legend.title=element_blank(),
@@ -1788,11 +1800,11 @@ st_plot<-lipids_filtered%>%
   ggplot(aes(x = temperature, y = area_normalized, colour = parent)) +
   geom_boxplot()+
   geom_point(position=position_dodge(0.75)) +
-  scale_colour_manual(values=c("orange", "darkred", "darkgray"))+
+  scale_colour_manual(values=c("orange", "darkred", "darkgray"), labels=parent_names)+
   labs(x = "", y = "ST 27:2;O concentration") +
   ylim(0,0.0015)+
   ggtitle("E")+
-  geom_text(inherit.aes=FALSE, x=2, y=0.0012, label="p[parent]<0.001", size=4)+
+  geom_text(inherit.aes=FALSE, x=2, y=0.0012, label="p<0.001", size=4)+
   theme_classic() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1), 
         legend.title=element_blank(),
@@ -1990,8 +2002,8 @@ ratio_plot1<-epa_dha%>%
   geom_boxplot() + 
   ggtitle("C")+
   labs(x = "Temperature", y = "EPA:DHA Ratio") +
-  geom_text(inherit.aes=FALSE, x=2, y=3, label="p[parent]<0.001", size=4)+
-  scale_colour_manual(values=c("orange", "darkred", "darkgray"))+
+  geom_text(inherit.aes=FALSE, x=2, y=3, label="p<0.001", size=4)+
+  scale_colour_manual(values=c("orange", "darkred", "darkgray"), labels=parent_names)+
   theme_classic() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1), 
         legend.position="right", 

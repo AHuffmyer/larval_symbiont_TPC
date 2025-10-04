@@ -606,10 +606,10 @@ rel_abund_plot<-rel_abund_data%>%
   
   ggplot(aes(x=parent, y=mean, color=its2_type_profile))+
   facet_wrap(~its2_type_profile, nrow=2)+
-  geom_point(position=position_dodge(0.2))+
-  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.1, position=position_dodge(0.2))+
+  geom_point(position=position_dodge(0.2), size=6)+
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.1, position=position_dodge(0.2), linewidth=2)+
   ylab("Mean Relative Abundance")+
-  ylim(0,1)+
+  ylim(-0.1,1.1)+
   xlab("Phenotype")+
   scale_color_manual(name="ITS2 Type Profile", values=c("orange", "orange3", "darkred","red", "red2"), labels=parent_names)+
   scale_x_discrete(labels = parent_names) + 

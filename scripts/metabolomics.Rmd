@@ -216,8 +216,8 @@ kept_metabolites2 <- metabolites %>%
   distinct(Name) 
 
 # Find the values unique to each list
-unique_to_kept1 <- setdiff(kept_metabolites, kept_metabolites2) # Elements in kept1 but not in kept2
-unique_to_kept2 <- setdiff(kept_metabolites2, kept_metabolites) # Elements in kept2 but not in kept1
+unique_to_kept1 <- base::setdiff(kept_metabolites, kept_metabolites2) # Elements in kept1 but not in kept2
+unique_to_kept2 <- base::setdiff(kept_metabolites2, kept_metabolites) # Elements in kept2 but not in kept1
 
 # Combine the unique values
 unique_values<- c(unique_to_kept1, unique_to_kept2)
@@ -593,9 +593,20 @@ pca1<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="parent", loadi
 ```
 
 ```{r}
+parent_names<-c("Bleached" = "Susceptible (C)", "Nonbleached" = "Resistant (C/D)", "Wildtype" = "Wildtype (C/D)")
+
+parent_colors<-c("Bleached" = "orange",   # calm blue
+                 "Nonbleached" = "darkred", # stressed purple
+                 "Wildtype" = "darkgray") 
+
+temp_colors <- c("Ambient" = "#2c7bb6",   # calm blue
+                 "Moderate (+3)" = "#7b3294", # stressed purple
+                 "High (+6)" = "#d53e4f") 
+
+
 pca2<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="parent", loadings=FALSE,  colour="parent", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
-  scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
-  scale_fill_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
+  scale_color_manual(name="Parental Phenotype", values=parent_colors, labels=parent_names)+
+  scale_fill_manual(name="Parental Phenotype", values=parent_colors, labels=parent_names)+
   theme_classic()+
    theme(legend.text = element_text(size=14), 
          legend.position="right",
@@ -605,8 +616,8 @@ pca2<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="parent", loadi
         axis.title = element_text(size=14,  face="bold"));pca2
 
 pca2b<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="temperature", loadings=FALSE,  colour="temperature", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=4) + 
-  scale_color_manual(name="Temperature", values=c("blue", "orange", "red"))+
-  scale_fill_manual(name="Temperature", values=c("blue", "orange", "red"))+
+  scale_color_manual(name="Temperature", values=temp_colors)+
+  scale_fill_manual(name="Temperature", values=temp_colors)+
   theme_classic()+
    theme(legend.text = element_text(size=14), 
          legend.position="right",
@@ -615,7 +626,7 @@ pca2b<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="temperature",
         axis.text = element_text(size=14), 
         axis.title = element_text(size=14,  face="bold"));pca2b
 
-pca_plots<-plot_grid(pca2, pca2b, ncol=2, nrow=1)
+pca_plots<-plot_grid(pca2, pca2b, ncol=2, nrow=1, labels=c("A", "B"))
 
 ggsave(pca_plots, filename="figures/metabolites/pca_plots.jpeg", width=12, height=4)
 ```
@@ -684,6 +695,7 @@ heatmap_data <- test_heatmap %>%
 
 # Convert to matrix and set rownames
 heatmap_matrix <- as.matrix(column_to_rownames(heatmap_data, var = "Name"))
+colnames(heatmap_matrix)<-c("Susceptible (C)", "Resistant (C/D)", "Wildtype (C/D)")
 
 # Create the heatmap
 heatmap <- Heatmap(
