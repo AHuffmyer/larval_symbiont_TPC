@@ -879,4 +879,4 @@ pairs(emm)
 emm<-emmeans(model, ~Symbiont | Gradient_Temperature)
 pairs(emm)
 ```
-WT is higher than the other two at 21, 24, 2628, 29, 31, 34, 37. No differences between C and MIX. 
+WT is higher than the other two at 21, 24, 26, 28, 29, 31, 34, 37. No differences between C and MIX. 
