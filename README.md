@@ -1,4 +1,4 @@
-# Larval Symbiont Thermal Performance Curves (TPC)
+# Symbiont communities mediate parental legacy effects on coral larval metabolism
 
 ## Project Overview
 
