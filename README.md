@@ -129,6 +129,7 @@ Oxygen flux measurements using Sensor Dish Reader (SDR) systems to quantify phot
   - `rna-extraction-workbook.xlsx`: Extraction metadata
 - **Analysis Scripts**: 
   - `scripts/rna-seq_DEG.Rmd`: Differential expression analysis
+  - `scripts/rna-seq_differential_correlation.Rmd`: Differential network/correlation analysis
   - `scripts/rna-seq_functional_enrichment_goseq.Rmd`: GO enrichment with GOseq
   - `scripts/rna-seq_functional_enrichment_topGO.Rmd`: GO enrichment with topGO
 - **Bioinformatics**: `scripts/bioinformatics/`: Quality control, trimming, alignment workflows
@@ -241,6 +242,7 @@ graph LR
 |--------|---------|
 | `its2.Rmd` | ITS2 diversity, ordination, visualization |
 | `rna-seq_DEG.Rmd` | Differential gene expression with DESeq2 |
+| `rna-seq_differential_correlation.Rmd` | Differential correlation/network analysis with DGCA |
 | `rna-seq_functional_enrichment_goseq.Rmd` | GO enrichment analysis (GOseq) |
 | `rna-seq_functional_enrichment_topGO.Rmd` | GO enrichment analysis (topGO) |
 | `metabolomics.Rmd` | Metabolite profiling and analysis |
@@ -316,7 +318,8 @@ graph TD
 ### R Packages
 - **Respirometry**: LoLinR, segmented
 - **Statistics**: DESeq2, emmeans, car, vegan
-- **Visualization**: ggplot2, ComplexHeatmap, cowplot
+- **Visualization**: ggplot2, ComplexHeatmap, cowplot, pheatmap, viridis
+- **Network Analysis**: DGCA, igraph, ggraph
 - **Phyloseq**: phyloseq, microViz (for ITS2 analysis)
 - **Functional Enrichment**: goseq, topGO
 
