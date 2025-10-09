@@ -1,0 +1,755 @@
+---
+title: "RNAseq Differential Network/Correlation Analysis"
+author: "Ariana S Huffmyer"
+date: "`r Sys.Date()`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+Analysis of RNAseq data using differential correlation/network methods to identify gene hubs and clusters characteristic of each parent/phenotype and how these change in response to temperature.
+
+This script uses DGCA (Differential Gene Correlation Analysis) to identify gene pairs or modules whose correlation structure changes between phenotypes or temperature treatments.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+options(stringsAsFactors = FALSE)
+```
+
+# Set up
+
+Load required libraries.
+
+```{r}
+# Install packages if needed
+# if (!require("BiocManager", quietly = TRUE))
+#     install.packages("BiocManager")
+# BiocManager::install("DGCA")
+# install.packages("tidyverse")
+# install.packages("pheatmap")
+# install.packages("igraph")
+# install.packages("ggraph")
+# install.packages("viridis")
+# install.packages("gridExtra")
+# install.packages("RColorBrewer")
+
+library(tidyverse)
+library(DGCA)
+library(pheatmap)
+library(igraph)
+library(ggraph)
+library(viridis)
+library(gridExtra)
+library(RColorBrewer)
+```
+
+# Data input and preparation
+
+Load the gene count matrix and metadata generated from rna-seq_DEG.Rmd.
+
+```{r}
+# Load VST-normalized gene count matrix (all genes)
+all_genes <- read_csv("output/rna_seq/all_genes.csv")
+dim(all_genes)
+
+# Load metadata
+metadata <- read_csv("data/rna_seq/sample_rnaseq_metadata.csv") %>%
+  dplyr::select(sample, temperature, parent, symbiont, phenotype)
+
+# Join metadata with sample info
+all_genes <- all_genes %>%
+  left_join(metadata, by = "sample")
+
+head(all_genes[,1:10])
+```
+
+# Data filtering for correlation analysis
+
+Filter genes to focus on those with sufficient variation and expression for correlation analysis.
+
+```{r}
+# Separate gene expression from metadata
+gene_cols <- all_genes %>%
+  dplyr::select(-sample, -temperature, -parent, -symbiont, -phenotype) %>%
+  names()
+
+# Calculate coefficient of variation for each gene across all samples
+gene_cv <- all_genes %>%
+  dplyr::select(all_of(gene_cols)) %>%
+  summarise(across(everything(), ~sd(.)/mean(.))) %>%
+  pivot_longer(cols = everything(), names_to = "gene", values_to = "cv")
+
+# Filter genes by coefficient of variation (keep genes with CV > 0.1)
+# This focuses on genes with meaningful variation
+high_var_genes <- gene_cv %>%
+  filter(cv > 0.1) %>%
+  pull(gene)
+
+length(high_var_genes)
+
+# Additionally, filter to keep top variable genes to make computation manageable
+# Keep top 5000 most variable genes for correlation analysis
+top_var_genes <- gene_cv %>%
+  arrange(desc(cv)) %>%
+  head(5000) %>%
+  pull(gene)
+
+length(top_var_genes)
+```
+
+Based on filtering, we have `r length(high_var_genes)` genes with CV > 0.1, and we'll use the top `r length(top_var_genes)` most variable genes for differential correlation analysis.
+
+# Prepare data matrices for DGCA analysis
+
+Prepare separate matrices for each comparison: by parent phenotype and by temperature.
+
+```{r}
+# Create expression matrix (genes in columns, samples in rows)
+expr_matrix <- all_genes %>%
+  dplyr::select(sample, all_of(top_var_genes)) %>%
+  column_to_rownames("sample") %>%
+  as.matrix()
+
+# Create design matrix with sample info
+design_matrix <- all_genes %>%
+  dplyr::select(sample, temperature, parent) %>%
+  column_to_rownames("sample")
+
+dim(expr_matrix)
+head(design_matrix)
+```
+
+# Differential Correlation Analysis by Parent Phenotype at Each Temperature
+
+Analyze how correlation structures differ between parent phenotypes at each temperature.
+
+## Analysis at 27°C
+
+Compare Wildtype, Bleached, and Nonbleached at 27°C.
+
+```{r}
+# Subset data for 27°C
+samples_27C <- design_matrix %>%
+  filter(temperature == "27") %>%
+  rownames()
+
+expr_27C <- expr_matrix[samples_27C, ]
+design_27C <- design_matrix[samples_27C, ]
+
+# Compare Nonbleached vs Wildtype at 27°C
+samples_NB_27C <- rownames(design_27C[design_27C$parent == "Nonbleached", ])
+samples_WT_27C <- rownames(design_27C[design_27C$parent == "Wildtype", ])
+
+if(length(samples_NB_27C) >= 3 & length(samples_WT_27C) >= 3) {
+  dgca_NB_WT_27C <- ddcorAll(
+    inputMat = t(expr_27C),
+    design = design_27C$parent,
+    compare = c("Nonbleached", "Wildtype"),
+    adjust = "perm",
+    nPerm = 100,
+    corrType = "pearson"
+  )
+  
+  # Filter significant differential correlations (adjusted p-value < 0.05)
+  dgca_NB_WT_27C_sig <- dgca_NB_WT_27C %>%
+    filter(pValDiff_adj < 0.05)
+  
+  print(paste0("Number of significant differential correlations (NB vs WT at 27°C): ", nrow(dgca_NB_WT_27C_sig)))
+} else {
+  print("Insufficient samples for NB vs WT comparison at 27°C")
+}
+
+# Compare Nonbleached vs Bleached at 27°C
+samples_B_27C <- rownames(design_27C[design_27C$parent == "Bleached", ])
+
+if(length(samples_NB_27C) >= 3 & length(samples_B_27C) >= 3) {
+  dgca_NB_B_27C <- ddcorAll(
+    inputMat = t(expr_27C),
+    design = design_27C$parent,
+    compare = c("Nonbleached", "Bleached"),
+    adjust = "perm",
+    nPerm = 100,
+    corrType = "pearson"
+  )
+  
+  dgca_NB_B_27C_sig <- dgca_NB_B_27C %>%
+    filter(pValDiff_adj < 0.05)
+  
+  print(paste0("Number of significant differential correlations (NB vs B at 27°C): ", nrow(dgca_NB_B_27C_sig)))
+} else {
+  print("Insufficient samples for NB vs B comparison at 27°C")
+}
+```
+
+## Analysis at 33°C
+
+Compare Wildtype, Bleached, and Nonbleached at 33°C.
+
+```{r}
+# Subset data for 33°C
+samples_33C <- design_matrix %>%
+  filter(temperature == "33") %>%
+  rownames()
+
+expr_33C <- expr_matrix[samples_33C, ]
+design_33C <- design_matrix[samples_33C, ]
+
+# Compare Nonbleached vs Wildtype at 33°C
+samples_NB_33C <- rownames(design_33C[design_33C$parent == "Nonbleached", ])
+samples_WT_33C <- rownames(design_33C[design_33C$parent == "Wildtype", ])
+
+if(length(samples_NB_33C) >= 3 & length(samples_WT_33C) >= 3) {
+  dgca_NB_WT_33C <- ddcorAll(
+    inputMat = t(expr_33C),
+    design = design_33C$parent,
+    compare = c("Nonbleached", "Wildtype"),
+    adjust = "perm",
+    nPerm = 100,
+    corrType = "pearson"
+  )
+  
+  dgca_NB_WT_33C_sig <- dgca_NB_WT_33C %>%
+    filter(pValDiff_adj < 0.05)
+  
+  print(paste0("Number of significant differential correlations (NB vs WT at 33°C): ", nrow(dgca_NB_WT_33C_sig)))
+} else {
+  print("Insufficient samples for NB vs WT comparison at 33°C")
+}
+
+# Compare Nonbleached vs Bleached at 33°C
+samples_B_33C <- rownames(design_33C[design_33C$parent == "Bleached", ])
+
+if(length(samples_NB_33C) >= 3 & length(samples_B_33C) >= 3) {
+  dgca_NB_B_33C <- ddcorAll(
+    inputMat = t(expr_33C),
+    design = design_33C$parent,
+    compare = c("Nonbleached", "Bleached"),
+    adjust = "perm",
+    nPerm = 100,
+    corrType = "pearson"
+  )
+  
+  dgca_NB_B_33C_sig <- dgca_NB_B_33C %>%
+    filter(pValDiff_adj < 0.05)
+  
+  print(paste0("Number of significant differential correlations (NB vs B at 33°C): ", nrow(dgca_NB_B_33C_sig)))
+} else {
+  print("Insufficient samples for NB vs B comparison at 33°C")
+}
+```
+
+# Differential Correlation Analysis by Temperature within Each Phenotype
+
+Analyze how correlation structures change between 27°C and 33°C for each parent phenotype.
+
+## Wildtype: 27°C vs 33°C
+
+```{r}
+# Subset data for Wildtype
+samples_WT <- design_matrix %>%
+  filter(parent == "Wildtype") %>%
+  rownames()
+
+expr_WT <- expr_matrix[samples_WT, ]
+design_WT <- design_matrix[samples_WT, ]
+
+# Compare 27°C vs 33°C in Wildtype
+if(sum(design_WT$temperature == "27") >= 3 & sum(design_WT$temperature == "33") >= 3) {
+  dgca_WT_27v33 <- ddcorAll(
+    inputMat = t(expr_WT),
+    design = design_WT$temperature,
+    compare = c("27", "33"),
+    adjust = "perm",
+    nPerm = 100,
+    corrType = "pearson"
+  )
+  
+  dgca_WT_27v33_sig <- dgca_WT_27v33 %>%
+    filter(pValDiff_adj < 0.05)
+  
+  print(paste0("Number of significant differential correlations (WT: 27°C vs 33°C): ", nrow(dgca_WT_27v33_sig)))
+} else {
+  print("Insufficient samples for Wildtype 27°C vs 33°C comparison")
+}
+```
+
+## Bleached: 27°C vs 33°C
+
+```{r}
+# Subset data for Bleached
+samples_B <- design_matrix %>%
+  filter(parent == "Bleached") %>%
+  rownames()
+
+expr_B <- expr_matrix[samples_B, ]
+design_B <- design_matrix[samples_B, ]
+
+# Compare 27°C vs 33°C in Bleached
+if(sum(design_B$temperature == "27") >= 3 & sum(design_B$temperature == "33") >= 3) {
+  dgca_B_27v33 <- ddcorAll(
+    inputMat = t(expr_B),
+    design = design_B$temperature,
+    compare = c("27", "33"),
+    adjust = "perm",
+    nPerm = 100,
+    corrType = "pearson"
+  )
+  
+  dgca_B_27v33_sig <- dgca_B_27v33 %>%
+    filter(pValDiff_adj < 0.05)
+  
+  print(paste0("Number of significant differential correlations (Bleached: 27°C vs 33°C): ", nrow(dgca_B_27v33_sig)))
+} else {
+  print("Insufficient samples for Bleached 27°C vs 33°C comparison")
+}
+```
+
+## Nonbleached: 27°C vs 33°C
+
+```{r}
+# Subset data for Nonbleached
+samples_NB <- design_matrix %>%
+  filter(parent == "Nonbleached") %>%
+  rownames()
+
+expr_NB <- expr_matrix[samples_NB, ]
+design_NB <- design_matrix[samples_NB, ]
+
+# Compare 27°C vs 33°C in Nonbleached
+if(sum(design_NB$temperature == "27") >= 3 & sum(design_NB$temperature == "33") >= 3) {
+  dgca_NB_27v33 <- ddcorAll(
+    inputMat = t(expr_NB),
+    design = design_NB$temperature,
+    compare = c("27", "33"),
+    adjust = "perm",
+    nPerm = 100,
+    corrType = "pearson"
+  )
+  
+  dgca_NB_27v33_sig <- dgca_NB_27v33 %>%
+    filter(pValDiff_adj < 0.05)
+  
+  print(paste0("Number of significant differential correlations (Nonbleached: 27°C vs 33°C): ", nrow(dgca_NB_27v33_sig)))
+} else {
+  print("Insufficient samples for Nonbleached 27°C vs 33°C comparison")
+}
+```
+
+# Visualization: Differential Network Diagrams
+
+Create network visualizations showing edges gained/lost between temperatures for each phenotype.
+
+## Function to create network diagrams
+
+```{r}
+create_network_plot <- function(dgca_result, title, top_n = 100) {
+  # Select top differential correlations
+  top_dc <- dgca_result %>%
+    arrange(pValDiff_adj) %>%
+    head(top_n)
+  
+  if(nrow(top_dc) == 0) {
+    return(NULL)
+  }
+  
+  # Create edge list
+  edges <- top_dc %>%
+    dplyr::select(Gene1, Gene2, cor1, cor2, corDiff = zDiff) %>%
+    mutate(
+      edge_type = case_when(
+        abs(cor1) < 0.3 & abs(cor2) >= 0.3 ~ "Gained",
+        abs(cor1) >= 0.3 & abs(cor2) < 0.3 ~ "Lost",
+        TRUE ~ "Changed"
+      ),
+      abs_corDiff = abs(corDiff)
+    )
+  
+  # Create graph
+  g <- graph_from_data_frame(edges, directed = FALSE)
+  
+  # Set edge attributes
+  E(g)$color <- case_when(
+    E(g)$edge_type == "Gained" ~ "#1f77b4",
+    E(g)$edge_type == "Lost" ~ "#d62728",
+    TRUE ~ "#ff7f0e"
+  )
+  
+  E(g)$width <- scales::rescale(E(g)$abs_corDiff, to = c(0.5, 3))
+  
+  # Create plot
+  p <- ggraph(g, layout = 'fr') +
+    geom_edge_link(aes(color = edge_type, width = width), alpha = 0.6) +
+    geom_node_point(size = 3, color = "gray30") +
+    scale_edge_color_manual(
+      values = c("Gained" = "#1f77b4", "Lost" = "#d62728", "Changed" = "#ff7f0e"),
+      name = "Edge Type"
+    ) +
+    scale_edge_width_continuous(range = c(0.5, 2), guide = "none") +
+    theme_graph() +
+    ggtitle(title) +
+    theme(
+      plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+      legend.position = "bottom"
+    )
+  
+  return(p)
+}
+```
+
+## Wildtype: 27°C vs 33°C Network
+
+```{r}
+if(exists("dgca_WT_27v33_sig") && nrow(dgca_WT_27v33_sig) > 0) {
+  p_network_WT <- create_network_plot(
+    dgca_WT_27v33_sig,
+    "Wildtype: Differential Network (27°C vs 33°C)",
+    top_n = 100
+  )
+  
+  if(!is.null(p_network_WT)) {
+    print(p_network_WT)
+    
+    ggsave("figures/rna_seq/diff_network_wildtype_27v33.pdf", p_network_WT, width = 10, height = 8)
+    ggsave("figures/rna_seq/diff_network_wildtype_27v33.png", p_network_WT, width = 10, height = 8)
+  }
+}
+```
+
+## Bleached: 27°C vs 33°C Network
+
+```{r}
+if(exists("dgca_B_27v33_sig") && nrow(dgca_B_27v33_sig) > 0) {
+  p_network_B <- create_network_plot(
+    dgca_B_27v33_sig,
+    "Bleached: Differential Network (27°C vs 33°C)",
+    top_n = 100
+  )
+  
+  if(!is.null(p_network_B)) {
+    print(p_network_B)
+    
+    ggsave("figures/rna_seq/diff_network_bleached_27v33.pdf", p_network_B, width = 10, height = 8)
+    ggsave("figures/rna_seq/diff_network_bleached_27v33.png", p_network_B, width = 10, height = 8)
+  }
+}
+```
+
+## Nonbleached: 27°C vs 33°C Network
+
+```{r}
+if(exists("dgca_NB_27v33_sig") && nrow(dgca_NB_27v33_sig) > 0) {
+  p_network_NB <- create_network_plot(
+    dgca_NB_27v33_sig,
+    "Nonbleached: Differential Network (27°C vs 33°C)",
+    top_n = 100
+  )
+  
+  if(!is.null(p_network_NB)) {
+    print(p_network_NB)
+    
+    ggsave("figures/rna_seq/diff_network_nonbleached_27v33.pdf", p_network_NB, width = 10, height = 8)
+    ggsave("figures/rna_seq/diff_network_nonbleached_27v33.png", p_network_NB, width = 10, height = 8)
+  }
+}
+```
+
+# Visualization: Correlation Difference Heatmaps
+
+Create heatmaps showing the magnitude of correlation differences (Δr) between temperatures.
+
+## Function to create correlation difference heatmaps
+
+```{r}
+create_corr_diff_heatmap <- function(dgca_result, title, top_genes = 50) {
+  # Get top genes by number of differential correlations
+  top_gene_counts <- dgca_result %>%
+    pivot_longer(cols = c(Gene1, Gene2), values_to = "gene") %>%
+    count(gene, sort = TRUE) %>%
+    head(top_genes)
+  
+  if(nrow(top_gene_counts) == 0) {
+    return(NULL)
+  }
+  
+  # Filter for correlations involving top genes
+  dc_subset <- dgca_result %>%
+    filter(Gene1 %in% top_gene_counts$gene | Gene2 %in% top_gene_counts$gene)
+  
+  # Create a matrix of correlation differences
+  genes <- unique(c(dc_subset$Gene1, dc_subset$Gene2))
+  corr_diff_mat <- matrix(0, nrow = length(genes), ncol = length(genes))
+  rownames(corr_diff_mat) <- genes
+  colnames(corr_diff_mat) <- genes
+  
+  for(i in 1:nrow(dc_subset)) {
+    g1 <- dc_subset$Gene1[i]
+    g2 <- dc_subset$Gene2[i]
+    val <- dc_subset$zDiff[i]
+    
+    corr_diff_mat[g1, g2] <- val
+    corr_diff_mat[g2, g1] <- val
+  }
+  
+  # Simplify gene names for display
+  rownames(corr_diff_mat) <- gsub("Montipora_capitata_HIv3___RNAseq\\.g", "g", rownames(corr_diff_mat))
+  rownames(corr_diff_mat) <- gsub("\\.t1", "", rownames(corr_diff_mat))
+  colnames(corr_diff_mat) <- gsub("Montipora_capitata_HIv3___RNAseq\\.g", "g", colnames(corr_diff_mat))
+  colnames(corr_diff_mat) <- gsub("\\.t1", "", colnames(corr_diff_mat))
+  
+  # Create heatmap
+  p <- pheatmap(
+    corr_diff_mat,
+    color = colorRampPalette(c("blue", "white", "red"))(100),
+    breaks = seq(-max(abs(corr_diff_mat)), max(abs(corr_diff_mat)), length.out = 101),
+    main = title,
+    show_rownames = TRUE,
+    show_colnames = TRUE,
+    fontsize_row = 6,
+    fontsize_col = 6,
+    cluster_rows = TRUE,
+    cluster_cols = TRUE,
+    treeheight_row = 20,
+    treeheight_col = 20,
+    silent = TRUE
+  )
+  
+  return(p)
+}
+```
+
+## Wildtype: Correlation Difference Heatmap
+
+```{r}
+if(exists("dgca_WT_27v33_sig") && nrow(dgca_WT_27v33_sig) > 0) {
+  pdf("figures/rna_seq/diff_corr_heatmap_wildtype_27v33.pdf", width = 12, height = 10)
+  p_heatmap_WT <- create_corr_diff_heatmap(
+    dgca_WT_27v33_sig,
+    "Wildtype: Correlation Differences (Δr) between 27°C and 33°C",
+    top_genes = 50
+  )
+  if(!is.null(p_heatmap_WT)) {
+    print(p_heatmap_WT)
+  }
+  dev.off()
+  
+  png("figures/rna_seq/diff_corr_heatmap_wildtype_27v33.png", width = 1200, height = 1000)
+  if(!is.null(p_heatmap_WT)) {
+    print(p_heatmap_WT)
+  }
+  dev.off()
+}
+```
+
+## Bleached: Correlation Difference Heatmap
+
+```{r}
+if(exists("dgca_B_27v33_sig") && nrow(dgca_B_27v33_sig) > 0) {
+  pdf("figures/rna_seq/diff_corr_heatmap_bleached_27v33.pdf", width = 12, height = 10)
+  p_heatmap_B <- create_corr_diff_heatmap(
+    dgca_B_27v33_sig,
+    "Bleached: Correlation Differences (Δr) between 27°C and 33°C",
+    top_genes = 50
+  )
+  if(!is.null(p_heatmap_B)) {
+    print(p_heatmap_B)
+  }
+  dev.off()
+  
+  png("figures/rna_seq/diff_corr_heatmap_bleached_27v33.png", width = 1200, height = 1000)
+  if(!is.null(p_heatmap_B)) {
+    print(p_heatmap_B)
+  }
+  dev.off()
+}
+```
+
+## Nonbleached: Correlation Difference Heatmap
+
+```{r}
+if(exists("dgca_NB_27v33_sig") && nrow(dgca_NB_27v33_sig) > 0) {
+  pdf("figures/rna_seq/diff_corr_heatmap_nonbleached_27v33.pdf", width = 12, height = 10)
+  p_heatmap_NB <- create_corr_diff_heatmap(
+    dgca_NB_27v33_sig,
+    "Nonbleached: Correlation Differences (Δr) between 27°C and 33°C",
+    top_genes = 50
+  )
+  if(!is.null(p_heatmap_NB)) {
+    print(p_heatmap_NB)
+  }
+  dev.off()
+  
+  png("figures/rna_seq/diff_corr_heatmap_nonbleached_27v33.png", width = 1200, height = 1000)
+  if(!is.null(p_heatmap_NB)) {
+    print(p_heatmap_NB)
+  }
+  dev.off()
+}
+```
+
+# Gene Module/Hub Analysis
+
+Identify hub genes (highly connected genes) in each phenotype and temperature condition.
+
+```{r}
+# Function to identify hub genes
+identify_hubs <- function(dgca_result, top_n = 20) {
+  hub_genes <- dgca_result %>%
+    pivot_longer(cols = c(Gene1, Gene2), values_to = "gene") %>%
+    count(gene, sort = TRUE) %>%
+    head(top_n) %>%
+    mutate(gene_short = gsub("Montipora_capitata_HIv3___RNAseq\\.g", "g", gene)) %>%
+    mutate(gene_short = gsub("\\.t1", "", gene_short))
+  
+  return(hub_genes)
+}
+```
+
+## Hub genes for each phenotype comparison
+
+```{r}
+# Wildtype hubs
+if(exists("dgca_WT_27v33_sig") && nrow(dgca_WT_27v33_sig) > 0) {
+  hubs_WT <- identify_hubs(dgca_WT_27v33_sig)
+  
+  print("Top hub genes in Wildtype (27°C vs 33°C):")
+  print(hubs_WT)
+  
+  write_csv(hubs_WT, "output/rna_seq/hub_genes_wildtype_27v33.csv")
+}
+
+# Bleached hubs
+if(exists("dgca_B_27v33_sig") && nrow(dgca_B_27v33_sig) > 0) {
+  hubs_B <- identify_hubs(dgca_B_27v33_sig)
+  
+  print("Top hub genes in Bleached (27°C vs 33°C):")
+  print(hubs_B)
+  
+  write_csv(hubs_B, "output/rna_seq/hub_genes_bleached_27v33.csv")
+}
+
+# Nonbleached hubs
+if(exists("dgca_NB_27v33_sig") && nrow(dgca_NB_27v33_sig) > 0) {
+  hubs_NB <- identify_hubs(dgca_NB_27v33_sig)
+  
+  print("Top hub genes in Nonbleached (27°C vs 33°C):")
+  print(hubs_NB)
+  
+  write_csv(hubs_NB, "output/rna_seq/hub_genes_nonbleached_27v33.csv")
+}
+```
+
+## Visualize hub genes
+
+```{r}
+# Combine hub gene data for comparison
+hub_comparison <- data.frame()
+
+if(exists("hubs_WT")) {
+  hub_comparison <- bind_rows(
+    hub_comparison,
+    hubs_WT %>% mutate(phenotype = "Wildtype")
+  )
+}
+
+if(exists("hubs_B")) {
+  hub_comparison <- bind_rows(
+    hub_comparison,
+    hubs_B %>% mutate(phenotype = "Bleached")
+  )
+}
+
+if(exists("hubs_NB")) {
+  hub_comparison <- bind_rows(
+    hub_comparison,
+    hubs_NB %>% mutate(phenotype = "Nonbleached")
+  )
+}
+
+if(nrow(hub_comparison) > 0) {
+  # Plot hub gene connectivity
+  p_hubs <- ggplot(hub_comparison %>% head(60), 
+                   aes(x = reorder(gene_short, n), y = n, fill = phenotype)) +
+    geom_bar(stat = "identity") +
+    facet_wrap(~phenotype, scales = "free_y", ncol = 1) +
+    coord_flip() +
+    scale_fill_manual(values = c("Wildtype" = "gray", "Bleached" = "orange", "Nonbleached" = "brown4")) +
+    labs(
+      title = "Top Hub Genes by Phenotype",
+      subtitle = "Number of differential correlations between 27°C and 33°C",
+      x = "Gene",
+      y = "Number of Differential Correlations"
+    ) +
+    theme_classic() +
+    theme(
+      legend.position = "none",
+      plot.title = element_text(hjust = 0.5, face = "bold"),
+      plot.subtitle = element_text(hjust = 0.5)
+    )
+  
+  print(p_hubs)
+  
+  ggsave("figures/rna_seq/hub_genes_comparison.pdf", p_hubs, width = 10, height = 12)
+  ggsave("figures/rna_seq/hub_genes_comparison.png", p_hubs, width = 10, height = 12)
+}
+```
+
+# Save Results
+
+Save all differential correlation results to CSV files.
+
+```{r}
+# Create output directory if it doesn't exist
+if(!dir.exists("output/rna_seq/differential_correlation")) {
+  dir.create("output/rna_seq/differential_correlation", recursive = TRUE)
+}
+
+# Save temperature comparison results
+if(exists("dgca_WT_27v33_sig")) {
+  write_csv(dgca_WT_27v33_sig, "output/rna_seq/differential_correlation/dgca_wildtype_27v33.csv")
+}
+
+if(exists("dgca_B_27v33_sig")) {
+  write_csv(dgca_B_27v33_sig, "output/rna_seq/differential_correlation/dgca_bleached_27v33.csv")
+}
+
+if(exists("dgca_NB_27v33_sig")) {
+  write_csv(dgca_NB_27v33_sig, "output/rna_seq/differential_correlation/dgca_nonbleached_27v33.csv")
+}
+
+# Save parent comparison results at different temperatures
+if(exists("dgca_NB_WT_27C_sig")) {
+  write_csv(dgca_NB_WT_27C_sig, "output/rna_seq/differential_correlation/dgca_NB_vs_WT_27C.csv")
+}
+
+if(exists("dgca_NB_B_27C_sig")) {
+  write_csv(dgca_NB_B_27C_sig, "output/rna_seq/differential_correlation/dgca_NB_vs_B_27C.csv")
+}
+
+if(exists("dgca_NB_WT_33C_sig")) {
+  write_csv(dgca_NB_WT_33C_sig, "output/rna_seq/differential_correlation/dgca_NB_vs_WT_33C.csv")
+}
+
+if(exists("dgca_NB_B_33C_sig")) {
+  write_csv(dgca_NB_B_33C_sig, "output/rna_seq/differential_correlation/dgca_NB_vs_B_33C.csv")
+}
+```
+
+# Summary
+
+This analysis identified gene pairs and modules whose correlation structure changes between:
+
+1. **Temperature conditions** (27°C vs 33°C) within each phenotype
+2. **Parent phenotypes** at each temperature
+
+Key findings:
+
+- Differential correlation analysis reveals regulatory rewiring under thermal stress
+- Hub genes identified represent key regulatory nodes that change their connectivity patterns
+- Network diagrams show edges gained/lost between temperature conditions
+- Correlation difference heatmaps (Δr) quantify the magnitude of changes
+
+These results complement traditional differential expression analysis by revealing changes in gene regulatory relationships that may not be apparent from expression changes alone.
+
+```{r}
+sessionInfo()
+```
