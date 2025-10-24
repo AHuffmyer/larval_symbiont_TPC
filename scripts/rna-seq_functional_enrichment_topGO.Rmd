@@ -153,7 +153,7 @@ missing<-as.data.frame(probes[row_nas])
 print(missing)
 ```
 
-There are 9390 genes from our data set that are not in the annotation file but that are in the genome. We will need to BLAST these to obtain functional information.  
+There are 12293 genes from our data set that are not in the annotation file but that are in the genome. 
 
 ## Reduce annotation file to only contain genes detected in our dataset.  
 
@@ -217,7 +217,7 @@ View number of DEGs
 ```{r}
 length(parent_test_set)
 ```
-1082 DEGs
+2540 DEGs with annotation informaiton
 
 Run TopGO
 
@@ -233,8 +233,8 @@ GOdata
 numSigGenes(GOdata)
 sum(feasible(GOdata))
 
-#254 sig genes
-#8237 genes used in analysis as background
+#684 sig genes
+#8509 genes used in analysis 
 ```
 
 Run fisher test. 
@@ -242,15 +242,11 @@ Run fisher test.
 resultFisher <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
 resultFisher
 hist(score(resultFisher), 50, xlab = "p-values")
-#95 terms with p<0.01
 
 resultWeight <- runTest(GOdata, algorithm = "weight01", statistic = "fisher")
 resultWeight
 hist(score(resultWeight), 50, xlab = "p-values")
-#28 terms with p<0.01
 ```
-
-Which test should be used? 
 
 ```{r}
 allRes <- GenTable(GOdata, classicFisher = resultFisher, weightFisher = resultWeight, orderBy = "weightFisher", ranksOf = "classicFisher", topNodes = length(score(resultFisher)))
@@ -274,8 +270,6 @@ showSigOfNodes(GOdata, score(resultWeight), firstSigNodes = 5, useInfo = 'def')
 dev.off()
 ```
 
-The subgraph induced by the top 5 GO terms identified by the classic algorithm for scoring GO terms for enrichment. Boxes indicate the 5 most significant terms. Box color represents the relative significance, ranging from dark red (most significant) to light yellow (least significant). Black arrows indicate is-a relationships and red arrows part-of relationships.
-
 Proceed using weighted fisher test results.  
 ```{r}
 p05_res <- allRes %>% dplyr::filter(weightFisher < 0.05)
@@ -296,7 +290,7 @@ reducedTerms <- reduceSimMatrix(simMatrix,
                                 orgdb="org.Ce.eg.db")
 dim(reducedTerms)
 ```
-76 terms at p<0.05
+93 terms at p<0.05
 
 ```{r}
 #keep only the goterms from the reduced list
@@ -312,7 +306,7 @@ p05_res_reduced <- p05_res_reduced %>% group_by(ParentTerm) %>% mutate("N_in_Par
 length(unique(p05_res_reduced$ParentTerm))
 ```
 
-The reduced list of terms is 76 terms that falls under 32 parent terms.
+The reduced list of terms is 93 terms that falls under 34 parent terms.
 
 ```{r}
 write.csv(p05_res_reduced, "output/rna_seq/topGO/parent_topGO_results.csv")
@@ -394,7 +388,7 @@ parent_enrich_plot5 <- p05_res_reduced%>%
         axis.title = element_text(size=9),
         plot.title = element_text(hjust=0.5, size=10));parent_enrich_plot5
 
-ggsave(parent_enrich_plot5, filename="figures/rna_seq/topGO/parent_lipid_terms.png", width=7, height=5)
+ggsave(parent_enrich_plot5, filename="figures/rna_seq/topGO/parent_lipid_terms.png", width=6, height=3)
 ```
 
 ## Temperature enrichment 
@@ -421,8 +415,8 @@ GOdata
 numSigGenes(GOdata)
 sum(feasible(GOdata))
 
-#3238 sig genes
-#8237 genes used in analysis 
+#4351 sig genes
+#8509 genes used in analysis 
 ```
 
 Run fisher test. 
@@ -430,15 +424,11 @@ Run fisher test.
 resultFisher <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
 resultFisher
 hist(score(resultFisher), 50, xlab = "p-values")
-#358 terms with p<0.01
 
 resultWeight <- runTest(GOdata, algorithm = "weight01", statistic = "fisher")
 resultWeight
 hist(score(resultWeight), 50, xlab = "p-values")
-#118 terms with p<0.01
 ```
-
-Which test should be used? 
 
 ```{r}
 allRes <- GenTable(GOdata, classicFisher = resultFisher, weightFisher = resultWeight, orderBy = "weightFisher", ranksOf = "classicFisher", topNodes = length(score(resultFisher)))
@@ -484,7 +474,7 @@ reducedTerms <- reduceSimMatrix(simMatrix,
                                 orgdb="org.Ce.eg.db")
 dim(reducedTerms)
 ```
-267 terms at p<0.05
+293 terms at p<0.05
 
 ```{r}
 #keep only the goterms from the reduced list
@@ -500,7 +490,7 @@ p05_res_reduced <- p05_res_reduced %>% group_by(ParentTerm) %>% mutate("N_in_Par
 length(unique(p05_res_reduced$ParentTerm))
 ```
 
-The reduced list of terms is 267 terms that falls under 55 parent terms.
+The reduced list of terms is 293 terms that falls under 62 parent terms.
 
 ```{r}
 write.csv(p05_res_reduced, "output/rna_seq/topGO/temperature_topGO_results.csv")
@@ -609,8 +599,8 @@ GOdata
 numSigGenes(GOdata)
 sum(feasible(GOdata))
 
-#1266 sig genes
-#8237 genes used in analysis 
+#1513 sig genes
+#8509 genes used in analysis 
 ```
 
 Run fisher test. 
@@ -618,15 +608,11 @@ Run fisher test.
 resultFisher <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
 resultFisher
 hist(score(resultFisher), 50, xlab = "p-values")
-#177 terms with p<0.05
 
 resultWeight <- runTest(GOdata, algorithm = "weight01", statistic = "fisher")
 resultWeight
 hist(score(resultWeight), 50, xlab = "p-values")
-#44 terms with p<0.05
 ```
-
-Which test should be used? 
 
 ```{r}
 allRes <- GenTable(GOdata, classicFisher = resultFisher, weightFisher = resultWeight, orderBy = "weightFisher", ranksOf = "classicFisher", topNodes = length(score(resultFisher)))
@@ -672,7 +658,7 @@ reducedTerms <- reduceSimMatrix(simMatrix,
                                 orgdb="org.Ce.eg.db")
 dim(reducedTerms)
 ```
-121 terms at p<0.05
+173 terms at p<0.05
 
 ```{r}
 #keep only the goterms from the reduced list
@@ -688,7 +674,7 @@ p05_res_reduced <- p05_res_reduced %>% group_by(ParentTerm) %>% mutate("N_in_Par
 length(unique(p05_res_reduced$ParentTerm))
 ```
 
-The reduced list of terms is 121 terms that falls under 42 parent terms.
+The reduced list of terms is 173 terms that falls under 50 parent terms.
 
 ```{r}
 write.csv(p05_res_reduced, "output/rna_seq/topGO/interaction_topGO_results.csv")
@@ -705,8 +691,6 @@ interaction_enrich_plot1 <- ggplot(p05_res_reduced, aes(x=weightFisher, y=reorde
   theme(axis.text.y = element_text(size = 8), 
               axis.title = element_text(size = 8), 
               plot.title = element_text(hjust = 0.5, size = 8));interaction_enrich_plot1
-
-#save plot 
 ```
 
 Try some different plots. 
@@ -726,7 +710,7 @@ interaction_enrich_plot3 <- ggplot(p05_res_reduced,
         axis.title = element_text(size=9),
         plot.title = element_text(hjust=0.5, size=10));interaction_enrich_plot3
 
-ggsave(interaction_enrich_plot3, filename="figures/rna_seq/topGO/interaction_enrichment_individual_terms.png", width=10, height=12)
+ggsave(interaction_enrich_plot3, filename="figures/rna_seq/topGO/interaction_enrichment_individual_terms.png", width=10, height=15)
 
 #summarize by parent term
 parent_summary <- p05_res_reduced %>%
