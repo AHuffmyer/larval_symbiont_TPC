@@ -1,0 +1,590 @@
+---
+title: "RNAseq ASCA Analysis"
+author: "Ariana S Huffmyer"
+date: "`r Sys.Date()`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+Analysis of RNAseq data using ASCA (ANOVA Simultaneous Component Analysis) to examine how gene expression changes across temperatures for each parental phenotype.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# The following setting is important, do not omit.
+options(stringsAsFactors = FALSE) #Set Strings to character
+```
+
+# Load libraries
+
+```{r}
+library("tidyverse")
+library("genefilter")
+library("DESeq2")
+library("RColorBrewer")
+library("ALASCA")
+```
+
+# Data input and filtering
+
+Import the data files.
+
+```{r}
+#load metadata sheet with sample name and developmental stage information
+metadata <- read.csv("data/rna_seq/sample_rnaseq_metadata.csv", header = TRUE, sep = ",")%>%
+  dplyr::select(sample, temperature, parent, symbiont, phenotype)
+metadata$code<-paste0(metadata$temperature, "_", metadata$parent)
+head(metadata)
+
+#load gene count matrix generated from cluster computation
+gcount <- as.data.frame(read.csv("data/rna_seq/Mcapitata2023_gene_count_matrix_STAR.csv", row.names="gene_id"), colClasses = double)
+head(gcount)
+```
+
+Check that there are no genes with 0 counts across all samples.
+
+```{r}
+dim(gcount) 
+
+gcount<-gcount %>%
+     mutate(Total = rowSums(.[, 1:54]))%>%
+    filter(!Total==0)%>%
+    dplyr::select(!Total)
+
+dim(gcount)
+```
+
+Conduct data filtering using pOverA approach.
+
+```{r}
+filt <- filterfun(pOverA(0.1,10))
+
+#create filter for the counts data
+gfilt <- genefilter(gcount, filt)
+
+#identify genes to keep by count filter
+gkeep <- gcount[gfilt,]
+
+#identify gene lists
+gn.keep <- rownames(gkeep)
+
+#gene count data filtered in PoverA, P percent of the samples have counts over A
+gcount_filt <- as.data.frame(gcount[which(rownames(gcount) %in% gn.keep),])
+
+#How many rows do we have before and after filtering?
+nrow(gcount) #Before
+nrow(gcount_filt) #After
+```
+
+Prepare sample names.
+
+```{r}
+# Function to extract 'R' followed by numbers from column names
+extract_R_numbers <- function(col_names) {
+  sub("R(\\d+).*", "\\1", col_names)
+}
+
+# Apply the function to all column names
+new_col_names <- sapply(names(gcount_filt), extract_R_numbers)
+
+# Rename the columns
+names(gcount_filt) <- paste0("R", new_col_names)
+
+# remove "trim." from the name
+names(gcount_filt) <- gsub("trim\\.", "", names(gcount_filt))
+
+# Output the modified dataframe
+names(gcount_filt)
+length(names(gcount_filt))
+```
+
+# Format metadata and count data
+
+Convert temperature and metadata categories to factors.
+
+```{r}
+metadata$temperature<-as.factor(metadata$temperature)
+metadata$parent<-as.factor(metadata$parent)
+metadata$symbiont<-as.factor(metadata$symbiont)
+metadata$code<-as.factor(metadata$code)
+```
+
+Set levels of factors.
+
+```{r}
+metadata$temperature<-factor(metadata$temperature, levels=c("27", "30", "33"))
+metadata$parent<-factor(metadata$parent, levels=c("Wildtype", "Bleached", "Nonbleached"))
+metadata$code<-factor(metadata$code, levels=c("27_Wildtype", "27_Bleached", "27_Nonbleached", "30_Wildtype", "30_Bleached", "30_Nonbleached", "33_Wildtype", "33_Bleached", "33_Nonbleached"))
+```
+
+Reorder metadata to match gene count columns.
+
+```{r}
+list<-colnames(gcount_filt)
+list<-as.factor(list)
+
+metadata$sample<-as.factor(metadata$sample)
+
+# Re-order the levels
+metadata$sample <- factor(as.character(metadata$sample), levels=list)
+# Re-order the data.frame
+metadata_ordered <- metadata[order(metadata$sample),]
+metadata_ordered$sample
+
+head(metadata_ordered)
+
+metadata_ordered$sample
+colnames(gcount_filt)
+head(gcount_filt)
+```
+
+# Normalize data using VST transformation
+
+Create a DESeqDataSet and apply variance stabilizing transformation for normalization.
+
+```{r}
+#Set DESeq2 design
+gdds <- DESeqDataSetFromMatrix(countData = gcount_filt,
+                              colData = metadata_ordered,
+                             design = ~temperature + parent + temperature:parent)
+```
+
+Calculate size factors and check if VST can be used (size factors should be <4).
+
+```{r}
+SF.gdds <- estimateSizeFactors(gdds)
+print(sizeFactors(SF.gdds))
+
+all(sizeFactors(SF.gdds)) < 4
+```
+
+Apply VST transformation.
+
+```{r}
+gvst <- vst(gdds, blind=FALSE)
+head(assay(gvst), 3)
+dim(gvst)
+```
+
+Extract normalized counts.
+
+```{r}
+normalized_counts <- assay(gvst)
+dim(normalized_counts)
+head(normalized_counts)
+```
+
+# Prepare data for ASCA analysis
+
+Create long format data with sample, temperature, parent, gene, and value columns.
+
+```{r}
+# Transpose and convert to dataframe
+normalized_df <- as.data.frame(t(normalized_counts))
+normalized_df$sample <- rownames(normalized_df)
+rownames(normalized_df) <- NULL
+
+# Add metadata
+normalized_df <- normalized_df %>%
+  left_join(metadata_ordered %>% dplyr::select(sample, temperature, parent), by = "sample")
+
+# Reorder columns to put metadata first
+normalized_df <- normalized_df %>%
+  dplyr::select(sample, temperature, parent, everything())
+
+head(normalized_df[, 1:10])
+```
+
+Convert to long format for ALASCA.
+
+```{r}
+long_data <- normalized_df %>%
+  pivot_longer(cols = -c(sample, temperature, parent), 
+               names_to = "variable", 
+               values_to = "value")
+
+str(long_data)
+head(long_data)
+```
+
+# Run ASCA analysis for each parental phenotype
+
+## Wildtype
+
+Filter data for Wildtype parent.
+
+```{r}
+wildtype_data <- long_data %>%
+  filter(parent == "Wildtype")
+
+str(wildtype_data)
+```
+
+Run ASCA model with temperature as the main effect and sample as random effect.
+
+```{r}
+res_wildtype <- ALASCA(
+  wildtype_data,
+  value ~ temperature + (1|sample),
+  n_validation_runs = 100,
+  validate = TRUE,
+  reduce_dimensions = TRUE
+)
+```
+
+Create output directory.
+
+```{r}
+dir.create("output/rna_seq/asca", showWarnings = FALSE, recursive = TRUE)
+dir.create("output/rna_seq/asca/wildtype", showWarnings = FALSE, recursive = TRUE)
+```
+
+Generate scree plot.
+
+```{r}
+pdf(file="output/rna_seq/asca/wildtype/scree_wildtype.pdf", width=6, height=4)
+plot(res_wildtype, component = seq(1,10), effect = 1, type = 'scree')
+dev.off()
+```
+
+Plot significant components (>1% variance explained).
+
+```{r}
+# PC1
+pdf(file="output/rna_seq/asca/wildtype/PC1_wildtype.pdf", width=8, height=4)
+plot(res_wildtype, effect = 1, component = 1, type = 'effect', 
+     n_limit=5, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     flip_axis=TRUE,
+     my_theme = theme_classic())
+dev.off()
+
+# PC2
+pdf(file="output/rna_seq/asca/wildtype/PC2_wildtype.pdf", width=8, height=4)
+plot(res_wildtype, effect = 1, component = 2, type = 'effect', 
+     n_limit=5, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     flip_axis=TRUE,
+     my_theme = theme_classic())
+dev.off()
+
+# PC3
+pdf(file="output/rna_seq/asca/wildtype/PC3_wildtype.pdf", width=8, height=4)
+plot(res_wildtype, effect = 1, component = 3, type = 'effect', 
+     n_limit=5, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     flip_axis=TRUE,
+     my_theme = theme_classic())
+dev.off()
+```
+
+Plot top genes contributing to each component.
+
+```{r}
+# PC1 genes
+pdf(file="output/rna_seq/asca/wildtype/PC1_genes_wildtype.pdf", width=12, height=6)
+plot(res_wildtype, component = 1, effect = 1, type = 'prediction', n_limit = 10, variable = c())
+dev.off()
+
+# PC2 genes
+pdf(file="output/rna_seq/asca/wildtype/PC2_genes_wildtype.pdf", width=12, height=6)
+plot(res_wildtype, component = 2, effect = 1, type = 'prediction', n_limit = 10, variable = c())
+dev.off()
+
+# PC3 genes
+pdf(file="output/rna_seq/asca/wildtype/PC3_genes_wildtype.pdf", width=12, height=6)
+plot(res_wildtype, component = 3, effect = 1, type = 'prediction', n_limit = 10, variable = c())
+dev.off()
+```
+
+Extract top genes from each component.
+
+```{r}
+loadings1_wt <- get_loadings(res_wildtype, component=1, effect=1, n_limit=20)
+list1_wt <- loadings1_wt[[1]]$covars
+
+loadings2_wt <- get_loadings(res_wildtype, component=2, effect=1, n_limit=20)
+list2_wt <- loadings2_wt[[1]]$covars
+
+loadings3_wt <- get_loadings(res_wildtype, component=3, effect=1, n_limit=20)
+list3_wt <- loadings3_wt[[1]]$covars
+
+# Combine all lists
+list_wt <- data.frame(
+  PC1 = c(list1_wt, rep(NA, max(0, 20 - length(list1_wt)))),
+  PC2 = c(list2_wt, rep(NA, max(0, 20 - length(list2_wt)))),
+  PC3 = c(list3_wt, rep(NA, max(0, 20 - length(list3_wt))))
+)
+
+write.csv(list_wt, file="output/rna_seq/asca/wildtype/wildtype_thermally_responsive_genes.csv", row.names=FALSE)
+```
+
+## Bleached
+
+Filter data for Bleached parent.
+
+```{r}
+bleached_data <- long_data %>%
+  filter(parent == "Bleached")
+
+str(bleached_data)
+```
+
+Run ASCA model.
+
+```{r}
+res_bleached <- ALASCA(
+  bleached_data,
+  value ~ temperature + (1|sample),
+  n_validation_runs = 100,
+  validate = TRUE,
+  reduce_dimensions = TRUE
+)
+```
+
+Create output directory.
+
+```{r}
+dir.create("output/rna_seq/asca/bleached", showWarnings = FALSE, recursive = TRUE)
+```
+
+Generate scree plot.
+
+```{r}
+pdf(file="output/rna_seq/asca/bleached/scree_bleached.pdf", width=6, height=4)
+plot(res_bleached, component = seq(1,10), effect = 1, type = 'scree')
+dev.off()
+```
+
+Plot significant components.
+
+```{r}
+# PC1
+pdf(file="output/rna_seq/asca/bleached/PC1_bleached.pdf", width=8, height=4)
+plot(res_bleached, effect = 1, component = 1, type = 'effect', 
+     n_limit=5, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     flip_axis=TRUE,
+     my_theme = theme_classic())
+dev.off()
+
+# PC2
+pdf(file="output/rna_seq/asca/bleached/PC2_bleached.pdf", width=8, height=4)
+plot(res_bleached, effect = 1, component = 2, type = 'effect', 
+     n_limit=5, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     flip_axis=TRUE,
+     my_theme = theme_classic())
+dev.off()
+
+# PC3
+pdf(file="output/rna_seq/asca/bleached/PC3_bleached.pdf", width=8, height=4)
+plot(res_bleached, effect = 1, component = 3, type = 'effect', 
+     n_limit=5, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     flip_axis=TRUE,
+     my_theme = theme_classic())
+dev.off()
+```
+
+Plot top genes contributing to each component.
+
+```{r}
+# PC1 genes
+pdf(file="output/rna_seq/asca/bleached/PC1_genes_bleached.pdf", width=12, height=6)
+plot(res_bleached, component = 1, effect = 1, type = 'prediction', n_limit = 10, variable = c())
+dev.off()
+
+# PC2 genes
+pdf(file="output/rna_seq/asca/bleached/PC2_genes_bleached.pdf", width=12, height=6)
+plot(res_bleached, component = 2, effect = 1, type = 'prediction', n_limit = 10, variable = c())
+dev.off()
+
+# PC3 genes
+pdf(file="output/rna_seq/asca/bleached/PC3_genes_bleached.pdf", width=12, height=6)
+plot(res_bleached, component = 3, effect = 1, type = 'prediction', n_limit = 10, variable = c())
+dev.off()
+```
+
+Extract top genes from each component.
+
+```{r}
+loadings1_b <- get_loadings(res_bleached, component=1, effect=1, n_limit=20)
+list1_b <- loadings1_b[[1]]$covars
+
+loadings2_b <- get_loadings(res_bleached, component=2, effect=1, n_limit=20)
+list2_b <- loadings2_b[[1]]$covars
+
+loadings3_b <- get_loadings(res_bleached, component=3, effect=1, n_limit=20)
+list3_b <- loadings3_b[[1]]$covars
+
+# Combine all lists
+list_b <- data.frame(
+  PC1 = c(list1_b, rep(NA, max(0, 20 - length(list1_b)))),
+  PC2 = c(list2_b, rep(NA, max(0, 20 - length(list2_b)))),
+  PC3 = c(list3_b, rep(NA, max(0, 20 - length(list3_b))))
+)
+
+write.csv(list_b, file="output/rna_seq/asca/bleached/bleached_thermally_responsive_genes.csv", row.names=FALSE)
+```
+
+## Nonbleached
+
+Filter data for Nonbleached parent.
+
+```{r}
+nonbleached_data <- long_data %>%
+  filter(parent == "Nonbleached")
+
+str(nonbleached_data)
+```
+
+Run ASCA model.
+
+```{r}
+res_nonbleached <- ALASCA(
+  nonbleached_data,
+  value ~ temperature + (1|sample),
+  n_validation_runs = 100,
+  validate = TRUE,
+  reduce_dimensions = TRUE
+)
+```
+
+Create output directory.
+
+```{r}
+dir.create("output/rna_seq/asca/nonbleached", showWarnings = FALSE, recursive = TRUE)
+```
+
+Generate scree plot.
+
+```{r}
+pdf(file="output/rna_seq/asca/nonbleached/scree_nonbleached.pdf", width=6, height=4)
+plot(res_nonbleached, component = seq(1,10), effect = 1, type = 'scree')
+dev.off()
+```
+
+Plot significant components.
+
+```{r}
+# PC1
+pdf(file="output/rna_seq/asca/nonbleached/PC1_nonbleached.pdf", width=8, height=4)
+plot(res_nonbleached, effect = 1, component = 1, type = 'effect', 
+     n_limit=5, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     flip_axis=TRUE,
+     my_theme = theme_classic())
+dev.off()
+
+# PC2
+pdf(file="output/rna_seq/asca/nonbleached/PC2_nonbleached.pdf", width=8, height=4)
+plot(res_nonbleached, effect = 1, component = 2, type = 'effect', 
+     n_limit=5, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     flip_axis=TRUE,
+     my_theme = theme_classic())
+dev.off()
+
+# PC3
+pdf(file="output/rna_seq/asca/nonbleached/PC3_nonbleached.pdf", width=8, height=4)
+plot(res_nonbleached, effect = 1, component = 3, type = 'effect', 
+     n_limit=5, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     flip_axis=TRUE,
+     my_theme = theme_classic())
+dev.off()
+```
+
+Plot top genes contributing to each component.
+
+```{r}
+# PC1 genes
+pdf(file="output/rna_seq/asca/nonbleached/PC1_genes_nonbleached.pdf", width=12, height=6)
+plot(res_nonbleached, component = 1, effect = 1, type = 'prediction', n_limit = 10, variable = c())
+dev.off()
+
+# PC2 genes
+pdf(file="output/rna_seq/asca/nonbleached/PC2_genes_nonbleached.pdf", width=12, height=6)
+plot(res_nonbleached, component = 2, effect = 1, type = 'prediction', n_limit = 10, variable = c())
+dev.off()
+
+# PC3 genes
+pdf(file="output/rna_seq/asca/nonbleached/PC3_genes_nonbleached.pdf", width=12, height=6)
+plot(res_nonbleached, component = 3, effect = 1, type = 'prediction', n_limit = 10, variable = c())
+dev.off()
+```
+
+Extract top genes from each component.
+
+```{r}
+loadings1_nb <- get_loadings(res_nonbleached, component=1, effect=1, n_limit=20)
+list1_nb <- loadings1_nb[[1]]$covars
+
+loadings2_nb <- get_loadings(res_nonbleached, component=2, effect=1, n_limit=20)
+list2_nb <- loadings2_nb[[1]]$covars
+
+loadings3_nb <- get_loadings(res_nonbleached, component=3, effect=1, n_limit=20)
+list3_nb <- loadings3_nb[[1]]$covars
+
+# Combine all lists
+list_nb <- data.frame(
+  PC1 = c(list1_nb, rep(NA, max(0, 20 - length(list1_nb)))),
+  PC2 = c(list2_nb, rep(NA, max(0, 20 - length(list2_nb)))),
+  PC3 = c(list3_nb, rep(NA, max(0, 20 - length(list3_nb))))
+)
+
+write.csv(list_nb, file="output/rna_seq/asca/nonbleached/nonbleached_thermally_responsive_genes.csv", row.names=FALSE)
+```
+
+# Compare unique thermally responsive genes across phenotypes
+
+Identify genes unique to each parental phenotype.
+
+```{r}
+# Combine all genes from each phenotype
+all_genes_wt <- unique(c(list1_wt, list2_wt, list3_wt))
+all_genes_wt <- all_genes_wt[!is.na(all_genes_wt)]
+
+all_genes_b <- unique(c(list1_b, list2_b, list3_b))
+all_genes_b <- all_genes_b[!is.na(all_genes_b)]
+
+all_genes_nb <- unique(c(list1_nb, list2_nb, list3_nb))
+all_genes_nb <- all_genes_nb[!is.na(all_genes_nb)]
+
+# Find unique genes
+unique_to_wildtype <- setdiff(all_genes_wt, c(all_genes_b, all_genes_nb))
+unique_to_bleached <- setdiff(all_genes_b, c(all_genes_wt, all_genes_nb))
+unique_to_nonbleached <- setdiff(all_genes_nb, c(all_genes_wt, all_genes_b))
+
+# Create summary data frame
+unique_genes_summary <- data.frame(
+  Wildtype_unique = c(unique_to_wildtype, rep(NA, max(0, max(length(unique_to_bleached), length(unique_to_nonbleached)) - length(unique_to_wildtype)))),
+  Bleached_unique = c(unique_to_bleached, rep(NA, max(0, max(length(unique_to_wildtype), length(unique_to_nonbleached)) - length(unique_to_bleached)))),
+  Nonbleached_unique = c(unique_to_nonbleached, rep(NA, max(0, max(length(unique_to_wildtype), length(unique_to_bleached)) - length(unique_to_nonbleached))))
+)
+
+write.csv(unique_genes_summary, file="output/rna_seq/asca/unique_thermally_responsive_genes_by_phenotype.csv", row.names=FALSE)
+
+# Print summary
+cat("Number of thermally responsive genes unique to each phenotype:\n")
+cat("Wildtype:", length(unique_to_wildtype), "\n")
+cat("Bleached:", length(unique_to_bleached), "\n")
+cat("Nonbleached:", length(unique_to_nonbleached), "\n")
+```
+
+# Session info
+
+```{r}
+sessionInfo()
+```
