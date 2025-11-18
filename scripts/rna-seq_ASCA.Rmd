@@ -162,7 +162,7 @@ all(sizeFactors(SF.gdds)) < 4
 Apply VST transformation.
 
 ```{r}
-gvst <- vst(gdds, blind=FALSE)
+gvst <- vst(gdds, blind=TRUE)
 head(assay(gvst), 3)
 dim(gvst)
 ```
@@ -208,43 +208,39 @@ str(long_data)
 head(long_data)
 ```
 
-# Run ASCA analysis for each parental phenotype
-
-## Wildtype
-
-Filter data for Wildtype parent.
+View any NA or Inf values. 
 
 ```{r}
-wildtype_data <- long_data %>%
-  filter(parent == "Wildtype")
+long_data%>%
+  filter(if_any(everything(), is.na))
 
-str(wildtype_data)
+long_data%>%
+  filter(is.infinite(value))
 ```
 
-Run ASCA model with temperature as the main effect and sample as random effect.
+No NA or INF values. 
+
+# Run ASCA analysis for all parental phenotypes
+
+Start with 10 runs, increase to 100 for full analysis. 
+
+Run ASCA model with temperature and phenotype as the main effect and sample as random effect.
 
 ```{r}
-res_wildtype <- ALASCA(
-  wildtype_data,
-  value ~ temperature + (1|sample),
-  n_validation_runs = 100,
+res_all <- ALASCA(
+  long_data,
+  value ~ temperature * parent + (1|sample),
+  n_validation_runs = 10,
   validate = TRUE,
   reduce_dimensions = TRUE
 )
 ```
 
-Create output directory.
-
-```{r}
-dir.create("output/rna_seq/asca", showWarnings = FALSE, recursive = TRUE)
-dir.create("output/rna_seq/asca/wildtype", showWarnings = FALSE, recursive = TRUE)
-```
-
 Generate scree plot.
 
 ```{r}
-pdf(file="output/rna_seq/asca/wildtype/scree_wildtype.pdf", width=6, height=4)
-plot(res_wildtype, component = seq(1,10), effect = 1, type = 'scree')
+pdf(file="figures/rna_seq/asca/scree_plot.pdf", width=6, height=4)
+plot(res_all, component = seq(1,10), effect = 1, type = 'scree')
 dev.off()
 ```
 
@@ -252,19 +248,19 @@ Plot significant components (>1% variance explained).
 
 ```{r}
 # PC1
-pdf(file="output/rna_seq/asca/wildtype/PC1_wildtype.pdf", width=8, height=4)
-plot(res_wildtype, effect = 1, component = 1, type = 'effect', 
-     n_limit=5, 
+pdf(file="figures/rna_seq/asca/PC1.pdf", width=10, height=4)
+plot(res_all, effect = 1, component = 1, type = 'effect', 
+     n_limit=10, 
      ribbon = TRUE,
      x_angle = 0, x_h_just= 0.5,
      flip_axis=TRUE,
      my_theme = theme_classic())
 dev.off()
 
-# PC2
-pdf(file="output/rna_seq/asca/wildtype/PC2_wildtype.pdf", width=8, height=4)
-plot(res_wildtype, effect = 1, component = 2, type = 'effect', 
-     n_limit=5, 
+# PC1
+pdf(file="figures/rna_seq/asca/PC2.pdf", width=10, height=4)
+plot(res_all, effect = 1, component = 2, type = 'effect', 
+     n_limit=10, 
      ribbon = TRUE,
      x_angle = 0, x_h_just= 0.5,
      flip_axis=TRUE,
@@ -272,9 +268,72 @@ plot(res_wildtype, effect = 1, component = 2, type = 'effect',
 dev.off()
 
 # PC3
-pdf(file="output/rna_seq/asca/wildtype/PC3_wildtype.pdf", width=8, height=4)
-plot(res_wildtype, effect = 1, component = 3, type = 'effect', 
-     n_limit=5, 
+pdf(file="figures/rna_seq/asca/PC3.pdf", width=10, height=4)
+plot(res_all, effect = 1, component = 3, type = 'effect', 
+     n_limit=10, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     flip_axis=TRUE,
+     my_theme = theme_classic())
+dev.off()
+
+pdf(file="figures/rna_seq/asca/PC4.pdf", width=10, height=4)
+plot(res_all, effect = 1, component = 4, type = 'effect', 
+     n_limit=10, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     flip_axis=TRUE,
+     my_theme = theme_classic())
+dev.off()
+
+pdf(file="figures/rna_seq/asca/PC5.pdf", width=10, height=4)
+plot(res_all, effect = 1, component = 5, type = 'effect', 
+     n_limit=10, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     flip_axis=TRUE,
+     my_theme = theme_classic())
+dev.off()
+
+pdf(file="figures/rna_seq/asca/PC6.pdf", width=10, height=4)
+plot(res_all, effect = 1, component = 6, type = 'effect', 
+     n_limit=10, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     flip_axis=TRUE,
+     my_theme = theme_classic())
+dev.off()
+
+pdf(file="figures/rna_seq/asca/PC7.pdf", width=10, height=4)
+plot(res_all, effect = 1, component = 7, type = 'effect', 
+     n_limit=10, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     flip_axis=TRUE,
+     my_theme = theme_classic())
+dev.off()
+
+pdf(file="figures/rna_seq/asca/PC8.pdf", width=10, height=4)
+plot(res_all, effect = 1, component = 8, type = 'effect', 
+     n_limit=10, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     flip_axis=TRUE,
+     my_theme = theme_classic())
+dev.off()
+
+pdf(file="figures/rna_seq/asca/PC9.pdf", width=10, height=4)
+plot(res_all, effect = 1, component = 9, type = 'effect', 
+     n_limit=10, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     flip_axis=TRUE,
+     my_theme = theme_classic())
+dev.off()
+
+pdf(file="figures/rna_seq/asca/PC10.pdf", width=10, height=4)
+plot(res_all, effect = 1, component = 10, type = 'effect', 
+     n_limit=10, 
      ribbon = TRUE,
      x_angle = 0, x_h_just= 0.5,
      flip_axis=TRUE,
@@ -286,305 +345,102 @@ Plot top genes contributing to each component.
 
 ```{r}
 # PC1 genes
-pdf(file="output/rna_seq/asca/wildtype/PC1_genes_wildtype.pdf", width=12, height=6)
-plot(res_wildtype, component = 1, effect = 1, type = 'prediction', n_limit = 10, variable = c())
+pdf(file="figures/rna_seq/asca/PC1_genes.pdf", width=12, height=6)
+plot(res_all, component = 1, effect = 1, type = 'prediction', n_limit = 10, variable = c())
 dev.off()
 
 # PC2 genes
-pdf(file="output/rna_seq/asca/wildtype/PC2_genes_wildtype.pdf", width=12, height=6)
-plot(res_wildtype, component = 2, effect = 1, type = 'prediction', n_limit = 10, variable = c())
+pdf(file="figures/rna_seq/asca/PC2_genes.pdf", width=12, height=6)
+plot(res_all, component = 2, effect = 1, type = 'prediction', n_limit = 10, variable = c())
 dev.off()
 
 # PC3 genes
-pdf(file="output/rna_seq/asca/wildtype/PC3_genes_wildtype.pdf", width=12, height=6)
-plot(res_wildtype, component = 3, effect = 1, type = 'prediction', n_limit = 10, variable = c())
+pdf(file="figures/rna_seq/asca/PC3_genes.pdf", width=12, height=6)
+plot(res_all, component = 3, effect = 1, type = 'prediction', n_limit = 10, variable = c())
+dev.off()
+
+# PC4 genes
+pdf(file="figures/rna_seq/asca/PC4_genes.pdf", width=12, height=6)
+plot(res_all, component = 4, effect = 1, type = 'prediction', n_limit = 10, variable = c())
+dev.off()
+
+# PC5 genes
+pdf(file="figures/rna_seq/asca/PC5_genes.pdf", width=12, height=6)
+plot(res_all, component = 5, effect = 1, type = 'prediction', n_limit = 10, variable = c())
+dev.off()
+
+# PC6 genes
+pdf(file="figures/rna_seq/asca/PC6_genes.pdf", width=12, height=6)
+plot(res_all, component = 6, effect = 1, type = 'prediction', n_limit = 10, variable = c())
+dev.off()
+
+# PC7 genes
+pdf(file="figures/rna_seq/asca/PC7_genes.pdf", width=12, height=6)
+plot(res_all, component = 7, effect = 1, type = 'prediction', n_limit = 10, variable = c())
+dev.off()
+
+# PC8 genes
+pdf(file="figures/rna_seq/asca/PC8_genes.pdf", width=12, height=6)
+plot(res_all, component = 8, effect = 1, type = 'prediction', n_limit = 10, variable = c())
+dev.off()
+
+# PC9 genes
+pdf(file="figures/rna_seq/asca/PC9_genes.pdf", width=12, height=6)
+plot(res_all, component = 9, effect = 1, type = 'prediction', n_limit = 10, variable = c())
+dev.off()
+
+# PC10 genes
+pdf(file="figures/rna_seq/asca/PC10_genes.pdf", width=12, height=6)
+plot(res_all, component = 10, effect = 1, type = 'prediction', n_limit = 10, variable = c())
 dev.off()
 ```
 
 Extract top genes from each component.
 
 ```{r}
-loadings1_wt <- get_loadings(res_wildtype, component=1, effect=1, n_limit=20)
-list1_wt <- loadings1_wt[[1]]$covars
+loadings1 <- get_loadings(res_all, component=1, effect=1, n_limit=20)
+list1 <- loadings1[[1]]$covars
 
-loadings2_wt <- get_loadings(res_wildtype, component=2, effect=1, n_limit=20)
-list2_wt <- loadings2_wt[[1]]$covars
+loadings2 <- get_loadings(res_all, component=2, effect=1, n_limit=20)
+list2 <- loadings2[[1]]$covars
 
-loadings3_wt <- get_loadings(res_wildtype, component=3, effect=1, n_limit=20)
-list3_wt <- loadings3_wt[[1]]$covars
+loadings3 <- get_loadings(res_all, component=3, effect=1, n_limit=20)
+list3 <- loadings3[[1]]$covars
+
+loadings4 <- get_loadings(res_all, component=4, effect=1, n_limit=20)
+list4 <- loadings4[[1]]$covars
+
+loadings5 <- get_loadings(res_all, component=5, effect=1, n_limit=20)
+list5 <- loadings5[[1]]$covars
+
+loadings6 <- get_loadings(res_all, component=6, effect=1, n_limit=20)
+list6 <- loadings6[[1]]$covars
+
+loadings7 <- get_loadings(res_all, component=7, effect=1, n_limit=20)
+list7 <- loadings7[[1]]$covars
+
+loadings8 <- get_loadings(res_all, component=8, effect=1, n_limit=20)
+list8 <- loadings8[[1]]$covars
+
+loadings9 <- get_loadings(res_all, component=9, effect=1, n_limit=20)
+list9 <- loadings9[[1]]$covars
+
+loadings10 <- get_loadings(res_all, component=10, effect=1, n_limit=20)
+list10 <- loadings10[[1]]$covars
 
 # Combine all lists
 list_wt <- data.frame(
-  PC1 = c(list1_wt, rep(NA, max(0, 20 - length(list1_wt)))),
-  PC2 = c(list2_wt, rep(NA, max(0, 20 - length(list2_wt)))),
-  PC3 = c(list3_wt, rep(NA, max(0, 20 - length(list3_wt))))
+  PC1 = c(list1, rep(NA, max(0, 20 - length(list1)))),
+  PC2 = c(list2, rep(NA, max(0, 20 - length(list2)))),
+  PC3 = c(list3, rep(NA, max(0, 20 - length(list3)))),
+  PC4 = c(list4, rep(NA, max(0, 20 - length(list4)))),
+  PC5 = c(list5, rep(NA, max(0, 20 - length(list5)))),
+  PC6 = c(list6, rep(NA, max(0, 20 - length(list6)))),
+  PC7 = c(list7, rep(NA, max(0, 20 - length(list7)))),
+  PC8 = c(list8, rep(NA, max(0, 20 - length(list8)))),
+  PC9 = c(list9, rep(NA, max(0, 20 - length(list9)))),
+  PC10 = c(list10, rep(NA, max(0, 20 - length(list10))))
 )
 
-write.csv(list_wt, file="output/rna_seq/asca/wildtype/wildtype_thermally_responsive_genes.csv", row.names=FALSE)
-```
-
-## Bleached
-
-Filter data for Bleached parent.
-
-```{r}
-bleached_data <- long_data %>%
-  filter(parent == "Bleached")
-
-str(bleached_data)
-```
-
-Run ASCA model.
-
-```{r}
-res_bleached <- ALASCA(
-  bleached_data,
-  value ~ temperature + (1|sample),
-  n_validation_runs = 100,
-  validate = TRUE,
-  reduce_dimensions = TRUE
-)
-```
-
-Create output directory.
-
-```{r}
-dir.create("output/rna_seq/asca/bleached", showWarnings = FALSE, recursive = TRUE)
-```
-
-Generate scree plot.
-
-```{r}
-pdf(file="output/rna_seq/asca/bleached/scree_bleached.pdf", width=6, height=4)
-plot(res_bleached, component = seq(1,10), effect = 1, type = 'scree')
-dev.off()
-```
-
-Plot significant components.
-
-```{r}
-# PC1
-pdf(file="output/rna_seq/asca/bleached/PC1_bleached.pdf", width=8, height=4)
-plot(res_bleached, effect = 1, component = 1, type = 'effect', 
-     n_limit=5, 
-     ribbon = TRUE,
-     x_angle = 0, x_h_just= 0.5,
-     flip_axis=TRUE,
-     my_theme = theme_classic())
-dev.off()
-
-# PC2
-pdf(file="output/rna_seq/asca/bleached/PC2_bleached.pdf", width=8, height=4)
-plot(res_bleached, effect = 1, component = 2, type = 'effect', 
-     n_limit=5, 
-     ribbon = TRUE,
-     x_angle = 0, x_h_just= 0.5,
-     flip_axis=TRUE,
-     my_theme = theme_classic())
-dev.off()
-
-# PC3
-pdf(file="output/rna_seq/asca/bleached/PC3_bleached.pdf", width=8, height=4)
-plot(res_bleached, effect = 1, component = 3, type = 'effect', 
-     n_limit=5, 
-     ribbon = TRUE,
-     x_angle = 0, x_h_just= 0.5,
-     flip_axis=TRUE,
-     my_theme = theme_classic())
-dev.off()
-```
-
-Plot top genes contributing to each component.
-
-```{r}
-# PC1 genes
-pdf(file="output/rna_seq/asca/bleached/PC1_genes_bleached.pdf", width=12, height=6)
-plot(res_bleached, component = 1, effect = 1, type = 'prediction', n_limit = 10, variable = c())
-dev.off()
-
-# PC2 genes
-pdf(file="output/rna_seq/asca/bleached/PC2_genes_bleached.pdf", width=12, height=6)
-plot(res_bleached, component = 2, effect = 1, type = 'prediction', n_limit = 10, variable = c())
-dev.off()
-
-# PC3 genes
-pdf(file="output/rna_seq/asca/bleached/PC3_genes_bleached.pdf", width=12, height=6)
-plot(res_bleached, component = 3, effect = 1, type = 'prediction', n_limit = 10, variable = c())
-dev.off()
-```
-
-Extract top genes from each component.
-
-```{r}
-loadings1_b <- get_loadings(res_bleached, component=1, effect=1, n_limit=20)
-list1_b <- loadings1_b[[1]]$covars
-
-loadings2_b <- get_loadings(res_bleached, component=2, effect=1, n_limit=20)
-list2_b <- loadings2_b[[1]]$covars
-
-loadings3_b <- get_loadings(res_bleached, component=3, effect=1, n_limit=20)
-list3_b <- loadings3_b[[1]]$covars
-
-# Combine all lists
-list_b <- data.frame(
-  PC1 = c(list1_b, rep(NA, max(0, 20 - length(list1_b)))),
-  PC2 = c(list2_b, rep(NA, max(0, 20 - length(list2_b)))),
-  PC3 = c(list3_b, rep(NA, max(0, 20 - length(list3_b))))
-)
-
-write.csv(list_b, file="output/rna_seq/asca/bleached/bleached_thermally_responsive_genes.csv", row.names=FALSE)
-```
-
-## Nonbleached
-
-Filter data for Nonbleached parent.
-
-```{r}
-nonbleached_data <- long_data %>%
-  filter(parent == "Nonbleached")
-
-str(nonbleached_data)
-```
-
-Run ASCA model.
-
-```{r}
-res_nonbleached <- ALASCA(
-  nonbleached_data,
-  value ~ temperature + (1|sample),
-  n_validation_runs = 100,
-  validate = TRUE,
-  reduce_dimensions = TRUE
-)
-```
-
-Create output directory.
-
-```{r}
-dir.create("output/rna_seq/asca/nonbleached", showWarnings = FALSE, recursive = TRUE)
-```
-
-Generate scree plot.
-
-```{r}
-pdf(file="output/rna_seq/asca/nonbleached/scree_nonbleached.pdf", width=6, height=4)
-plot(res_nonbleached, component = seq(1,10), effect = 1, type = 'scree')
-dev.off()
-```
-
-Plot significant components.
-
-```{r}
-# PC1
-pdf(file="output/rna_seq/asca/nonbleached/PC1_nonbleached.pdf", width=8, height=4)
-plot(res_nonbleached, effect = 1, component = 1, type = 'effect', 
-     n_limit=5, 
-     ribbon = TRUE,
-     x_angle = 0, x_h_just= 0.5,
-     flip_axis=TRUE,
-     my_theme = theme_classic())
-dev.off()
-
-# PC2
-pdf(file="output/rna_seq/asca/nonbleached/PC2_nonbleached.pdf", width=8, height=4)
-plot(res_nonbleached, effect = 1, component = 2, type = 'effect', 
-     n_limit=5, 
-     ribbon = TRUE,
-     x_angle = 0, x_h_just= 0.5,
-     flip_axis=TRUE,
-     my_theme = theme_classic())
-dev.off()
-
-# PC3
-pdf(file="output/rna_seq/asca/nonbleached/PC3_nonbleached.pdf", width=8, height=4)
-plot(res_nonbleached, effect = 1, component = 3, type = 'effect', 
-     n_limit=5, 
-     ribbon = TRUE,
-     x_angle = 0, x_h_just= 0.5,
-     flip_axis=TRUE,
-     my_theme = theme_classic())
-dev.off()
-```
-
-Plot top genes contributing to each component.
-
-```{r}
-# PC1 genes
-pdf(file="output/rna_seq/asca/nonbleached/PC1_genes_nonbleached.pdf", width=12, height=6)
-plot(res_nonbleached, component = 1, effect = 1, type = 'prediction', n_limit = 10, variable = c())
-dev.off()
-
-# PC2 genes
-pdf(file="output/rna_seq/asca/nonbleached/PC2_genes_nonbleached.pdf", width=12, height=6)
-plot(res_nonbleached, component = 2, effect = 1, type = 'prediction', n_limit = 10, variable = c())
-dev.off()
-
-# PC3 genes
-pdf(file="output/rna_seq/asca/nonbleached/PC3_genes_nonbleached.pdf", width=12, height=6)
-plot(res_nonbleached, component = 3, effect = 1, type = 'prediction', n_limit = 10, variable = c())
-dev.off()
-```
-
-Extract top genes from each component.
-
-```{r}
-loadings1_nb <- get_loadings(res_nonbleached, component=1, effect=1, n_limit=20)
-list1_nb <- loadings1_nb[[1]]$covars
-
-loadings2_nb <- get_loadings(res_nonbleached, component=2, effect=1, n_limit=20)
-list2_nb <- loadings2_nb[[1]]$covars
-
-loadings3_nb <- get_loadings(res_nonbleached, component=3, effect=1, n_limit=20)
-list3_nb <- loadings3_nb[[1]]$covars
-
-# Combine all lists
-list_nb <- data.frame(
-  PC1 = c(list1_nb, rep(NA, max(0, 20 - length(list1_nb)))),
-  PC2 = c(list2_nb, rep(NA, max(0, 20 - length(list2_nb)))),
-  PC3 = c(list3_nb, rep(NA, max(0, 20 - length(list3_nb))))
-)
-
-write.csv(list_nb, file="output/rna_seq/asca/nonbleached/nonbleached_thermally_responsive_genes.csv", row.names=FALSE)
-```
-
-# Compare unique thermally responsive genes across phenotypes
-
-Identify genes unique to each parental phenotype.
-
-```{r}
-# Combine all genes from each phenotype
-all_genes_wt <- unique(c(list1_wt, list2_wt, list3_wt))
-all_genes_wt <- all_genes_wt[!is.na(all_genes_wt)]
-
-all_genes_b <- unique(c(list1_b, list2_b, list3_b))
-all_genes_b <- all_genes_b[!is.na(all_genes_b)]
-
-all_genes_nb <- unique(c(list1_nb, list2_nb, list3_nb))
-all_genes_nb <- all_genes_nb[!is.na(all_genes_nb)]
-
-# Find unique genes
-unique_to_wildtype <- setdiff(all_genes_wt, c(all_genes_b, all_genes_nb))
-unique_to_bleached <- setdiff(all_genes_b, c(all_genes_wt, all_genes_nb))
-unique_to_nonbleached <- setdiff(all_genes_nb, c(all_genes_wt, all_genes_b))
-
-# Create summary data frame
-unique_genes_summary <- data.frame(
-  Wildtype_unique = c(unique_to_wildtype, rep(NA, max(0, max(length(unique_to_bleached), length(unique_to_nonbleached)) - length(unique_to_wildtype)))),
-  Bleached_unique = c(unique_to_bleached, rep(NA, max(0, max(length(unique_to_wildtype), length(unique_to_nonbleached)) - length(unique_to_bleached)))),
-  Nonbleached_unique = c(unique_to_nonbleached, rep(NA, max(0, max(length(unique_to_wildtype), length(unique_to_bleached)) - length(unique_to_nonbleached))))
-)
-
-write.csv(unique_genes_summary, file="output/rna_seq/asca/unique_thermally_responsive_genes_by_phenotype.csv", row.names=FALSE)
-
-# Print summary
-cat("Number of thermally responsive genes unique to each phenotype:\n")
-cat("Wildtype:", length(unique_to_wildtype), "\n")
-cat("Bleached:", length(unique_to_bleached), "\n")
-cat("Nonbleached:", length(unique_to_nonbleached), "\n")
-```
-
-# Session info
-
-```{r}
-sessionInfo()
+write.csv(list_wt, file="output/rna_seq/asca/PC1-10_top_genes.csv", row.names=FALSE)
 ```
