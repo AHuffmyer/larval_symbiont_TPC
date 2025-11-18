@@ -381,9 +381,9 @@ allgenesfilt_PCA <- ggplot(gPCAdata, aes(PC1, PC2, color=parent, shape=temperatu
   ylab(paste0("PC2: ",percentVar[2],"% variance")) +
   scale_color_manual(name="Phenotype (Symbiont)", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"), labels=parent_names)+
   scale_shape_manual(name="Temperature", values=c(19,17,15))+
-  geom_text(x=0, y=8, label="p[Phenotype]=0.001", color="black")+
-  geom_text(x=0, y=7, label="p[Temperature]=0.001", color="black")+
-  geom_text(x=0, y=6, label="p[Interaction]=0.157", color="darkgray")+
+  geom_text(x=0, y=-8, label="p[Phenotype]=0.001", color="black")+
+  geom_text(x=0, y=-9, label="p[Temperature]=0.001", color="black")+
+  geom_text(x=0, y=-10, label="p[Interaction]=0.157", color="darkgray")+
   theme_classic() + #Set background color
   ggtitle("A")+
   theme(panel.border = element_blank(), # Set border
@@ -593,9 +593,9 @@ DEG_PCA_temp <- ggplot(gPCAdata_DEG_temp, aes(PC1, PC2, color=parent, shape=temp
   ylab(paste0("PC2: ",percentVar_DEG_temp[2],"% variance")) +
   scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"), labels=parent_names)+
   scale_shape_manual(name="Temperature", values=c(19,17,15))+
-  geom_text(x=0, y=-5, label="p[Phenotype]=0.002", color="black")+
-  geom_text(x=0, y=-6.5, label="p[Temperature]=0.001", color="black")+
-  geom_text(x=0, y=-8, label="p[Interaction]=0.201", color="darkgray")+
+  geom_text(x=0, y=12.5, label="p[Phenotype]=0.001", color="black")+
+  geom_text(x=0, y=11, label="p[Temperature]=0.001", color="black")+
+  geom_text(x=0, y=9.5, label="p[Interaction]=0.124", color="darkgray")+
   theme_classic() + #Set background color
   theme(panel.border = element_blank(), # Set border
                      #panel.grid.major = element_blank(), #Set major gridlines 
@@ -787,9 +787,9 @@ DEG_PCA_parent <- ggplot(gPCAdata_DEG_parent, aes(PC1, PC2, color=parent, shape=
   ylab(paste0("PC2: ",percentVar_DEG_parent[2],"% variance")) +
   scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"), labels=parent_names)+
   scale_shape_manual(name="Temperature", values=c(19,17,15))+
-  geom_text(x=0, y=10, label="p[Phenotype]=0.001", color="black")+
-  geom_text(x=0, y=8, label="p[Temperature]=0.001", color="black")+
-  geom_text(x=0, y=6, label="p[Interaction]=0.026", color="black")+
+  geom_text(x=-2, y=10, label="p[Phenotype]=0.001", color="black")+
+  geom_text(x=-2, y=8, label="p[Temperature]=0.001", color="black")+
+  geom_text(x=-2, y=6, label="p[Interaction]=0.026", color="black")+
   theme_classic() + #Set background color
   theme(panel.border = element_blank(), # Set border
                      #panel.grid.major = element_blank(), #Set major gridlines 
@@ -797,7 +797,7 @@ DEG_PCA_parent <- ggplot(gPCAdata_DEG_parent, aes(PC1, PC2, color=parent, shape=
                      axis.line = element_line(colour = "black"), #Set axes color
         plot.background=element_blank())+
   stat_ellipse()+
-  ggtitle("D"); DEG_PCA_parent
+  ggtitle("C"); DEG_PCA_parent
 
 ggsave("figures/rna_seq/pca_DEG_parent.pdf", DEG_PCA_parent, width=8, height=4)
 ggsave("figures/rna_seq/pca_DEG_parent.png", DEG_PCA_parent, width=8, height=4)
@@ -1016,14 +1016,14 @@ percentVar_DEG_interaction <- round(100*attr(gPCAdata_DEG_interaction, "percentV
 
 DEG_PCA_interaction <- ggplot(gPCAdata_DEG_interaction, aes(PC1, PC2, color=parent, shape=temperature)) + 
   geom_point(size=3) + 
-  ggtitle("F")+
+  ggtitle("D")+
   xlab(paste0("PC1: ",percentVar_DEG_parent[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar_DEG_parent[2],"% variance")) +
   scale_color_manual(name="Parental Phenotype", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"))+
   scale_shape_manual(name="Temperature", values=c(19,17,15))+
-  geom_text(x=-2, y=-2.75, label="p[Parent]=0.001", color="black")+
-  geom_text(x=-2, y=-4.25, label="p[Temperature]=0.001", color="black")+
-  geom_text(x=-2, y=-5.75, label="p[Interaction]=0.010", color="black")+
+  geom_text(x=-2, y=-3.75, label="p[Parent]=0.001", color="black")+
+  geom_text(x=-2, y=-5.25, label="p[Temperature]=0.001", color="black")+
+  geom_text(x=-2, y=-6.75, label="p[Interaction]=0.009", color="black")+
   theme_classic() + #Set background color
   theme(panel.border = element_blank(), # Set border
                      #panel.grid.major = element_blank(), #Set major gridlines 
