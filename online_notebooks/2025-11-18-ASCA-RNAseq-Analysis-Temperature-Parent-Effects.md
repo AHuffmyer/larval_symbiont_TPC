@@ -10,9 +10,9 @@ This post details ANOVA Simultaneous Component Analysis (ASCA) of RNAseq data to
 
 # Overview
 
-In this analysis, I used ASCA (ANOVA Simultaneous Component Analysis) to examine coordinated gene expression patterns across temperatures (27°C, 30°C, and 33°C) and parental phenotypes (Wildtype, Bleached, and Nonbleached). ASCA is a powerful multivariate method that combines ANOVA with PCA to identify the main patterns of variation in gene expression data and understand which genes drive those patterns.
+In this analysis, I used ASCA (ANOVA Simultaneous Component Analysis) to examine coordinated gene expression patterns in coral larvae across temperatures (27°C, 30°C, and 33°C) and between parental phenotypes (Wildtype, Bleached, and Nonbleached). These phenotypes also vary in symbiont community composition with Wildtype and Nonbleached hosting a mixture of *Cladocopium* and *Durusdinium* with Bleached only hosting *Cladocopium*. ASCA (ALASCA package in R) is a multivariate method that combines ANOVA with PCA to identify the main patterns of variation in gene expression data and understand which genes drive those patterns.
 
-Unlike traditional differential expression analysis that examines genes one at a time, ASCA captures coordinated expression patterns across the entire transcriptome, revealing how groups of genes respond together to experimental factors like temperature and parent effects.
+Unlike differential expression analysis that examines genes one at a time, ASCA captures coordinated expression patterns (principle components) across the entire dataset, indicating how groups of genes respond together to experimental factors like temperature and phenotype effects in this study.
 
 The data and analysis scripts for this project can be found in the [GitHub repository](https://github.com/AHuffmyer/larval_symbiont_TPC).
 
@@ -21,10 +21,11 @@ The data and analysis scripts for this project can be found in the [GitHub repos
 ## Dataset
 
 The analysis uses RNAseq data from *M. capitata* larvae that were:
-- Exposed to three temperatures: 27°C (ambient), 30°C (elevated), and 33°C (high stress)
-- Derived from three parental phenotypes: Wildtype, Bleached (parents with bleaching history), and Nonbleached (parents without bleaching history)
 
-The full dataset includes ~28,600 genes (after filtering) across 54 samples.
+- Exposed to three temperatures: 27°C (ambient), 30°C (moderate), and 33°C (high stress)
+- Derived from three parental phenotypes: Wildtype (C and D symbionts), Bleached (parents with bleaching history; C symbints), and Nonbleached (parents without bleaching history; C and D symbints)  
+
+The full dataset includes ~28,600 genes (after filtering) across 54 samples.  
 
 ## Analysis Approach
 
@@ -36,17 +37,17 @@ I performed ASCA using the ALASCA package in R, which uses a linear mixed model 
    - Main effect of parent
    - Temperature × parent interaction
    - Sample as a random effect
-3. **Identify components**: Used PCA to identify principal components that capture the most variation
+3. **Identify components**: Used PCA to identify principal components that capture the most variation in gene expression
 4. **Validate components**: Used bootstrapping (10 validation runs for exploratory analysis) to assess component significance
-5. **Extract key genes**: Identified genes with the highest loadings (contributions) to each component
+5. **Extract key genes**: Identified genes with the highest loadings (contributions) to each component (top 20)
 
-The complete analysis script can be found at [`scripts/rna-seq_ASCA.Rmd`](https://github.com/AHuffmyer/larval_symbiont_TPC/blob/main/scripts/rna-seq_ASCA.Rmd) and detailed documentation is in [`scripts/rna-seq_ASCA_README.md`](https://github.com/AHuffmyer/larval_symbiont_TPC/blob/main/scripts/rna-seq_ASCA_README.md).
+The complete analysis script can be found at [`scripts/rna-seq_ASCA.Rmd`](https://github.com/AHuffmyer/larval_symbiont_TPC/blob/main/scripts/rna-seq_ASCA.Rmd).  
 
 # Results
 
 ## Scree Plot: Variance Explained
 
-The scree plot shows how much variance is explained by each principal component across the first 10 components.
+The scree plot shows how much variance is explained by each principal component across the first 10 components. We analyzed the first 10 components. 
 
 ![Scree Plot](https://raw.githubusercontent.com/AHuffmyer/larval_symbiont_TPC/main/figures/rna_seq/asca/scree_plot.png)
 
@@ -58,11 +59,13 @@ The scree plot reveals that the first three principal components capture the maj
 - **PC2** explains approximately 15% of variance, capturing a secondary pattern
 - **PC3** explains approximately 10% of variance, representing a third pattern of coordinated gene expression
 
-Components beyond PC3 show diminishing returns with each explaining less than 5% of variance. This suggests that the main biological signals related to temperature and parent effects are captured in the first three components, which we'll examine in detail below.
+Components beyond PC3 show diminishing returns with each explaining less than 5% of variance. This suggests that the main biological signals related to temperature and parent effects are captured in the first three components, which we'll examine in detail below. I've generated figures for PCs 4-6, but they explain only a minor portion of variance and are not reliable. 
 
-## PC1: Primary Temperature and Parent Response Pattern
 
-The first principal component captures the largest source of variation in gene expression.
+
+## PC1: Primary Temperature Response Pattern
+
+The first principal component captures the largest source of variation in gene expression and describes changes in gene expression linearly across temperature.
 
 ### PC1 Effect Plot
 

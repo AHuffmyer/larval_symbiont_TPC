@@ -1,0 +1,609 @@
+---
+title: "RNAseq DEG Functional Enrichment Analysis of ASCA results with TopGO"
+author: "Ariana S Huffmyer"
+date: "2024"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+Functional enrichment of M. capitata larvae DEGs.  
+
+# Set up 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# The following setting is important, do not omit.
+options(stringsAsFactors = FALSE) #Set Strings to character
+```
+
+```{r}
+if ("tidyverse" %in% rownames(installed.packages()) == 'FALSE') install.packages('tidyverse') 
+if ("genefilter" %in% rownames(installed.packages()) == 'FALSE') install.packages('genefilter') 
+if ("DESeq2" %in% rownames(installed.packages()) == 'FALSE') install.packages('DESeq2') 
+if ("RColorBrewer" %in% rownames(installed.packages()) == 'FALSE') install.packages('RColorBrewer') 
+if ("WGCNA" %in% rownames(installed.packages()) == 'FALSE') install.packages('WGCNA') 
+if ("flashClust" %in% rownames(installed.packages()) == 'FALSE') install.packages('flashClust') 
+if ("gridExtra" %in% rownames(installed.packages()) == 'FALSE') install.packages('gridExtra') 
+if ("ComplexHeatmap" %in% rownames(installed.packages()) == 'FALSE') install.packages('ComplexHeatmap') 
+if ("goseq" %in% rownames(installed.packages()) == 'FALSE') install.packages('goseq') 
+if ("dplyr" %in% rownames(installed.packages()) == 'FALSE') install.packages('dplyr') 
+if ("clusterProfiler" %in% rownames(installed.packages()) == 'FALSE') install.packages('clusterProfiler') 
+if ("pheatmap" %in% rownames(installed.packages()) == 'FALSE') install.packages('pheatmap') 
+if ("magrittr" %in% rownames(installed.packages()) == 'FALSE') install.packages('magrittr') 
+if ("rtracklayer" %in% rownames(installed.packages()) == 'FALSE') BiocManager::install("rtracklayer")
+if ("GenomicRanges" %in% rownames(installed.packages()) == 'FALSE') BiocManager::install("GenomicRanges")
+if ("plyranges" %in% rownames(installed.packages()) == 'FALSE') BiocManager::install("plyranges")
+if ("GSEABase" %in% rownames(installed.packages()) == 'FALSE') BiocManager::install("GSEABase")
+#if ("GOSim" %in% rownames(installed.packages()) == 'FALSE') BiocManager::install("GOSim")
+if ("stats" %in% rownames(installed.packages()) == 'FALSE') install.packages("stats")
+if ("ggdendro" %in% rownames(installed.packages()) == 'FALSE') BiocManager::install("ggdendro")
+if ("GO.db" %in% rownames(installed.packages()) == 'FALSE') BiocManager::install("GO.db")
+if ("rrvgo" %in% rownames(installed.packages()) == 'FALSE') BiocManager::install("rrvgo")
+
+#BiocManager::install("org.Ce.eg.db", force=TRUE) #install if needed 
+
+#BiocManager::install("topGO")
+#BiocManager::install("biomaRt")
+#BiocManager::install("Rgraphviz")
+
+library("tidyverse")
+library("genefilter")
+library("DESeq2")
+library("RColorBrewer")
+library("WGCNA")
+library("flashClust")
+library("gridExtra")
+library("ComplexHeatmap")
+library("goseq")
+library("dplyr")
+library("clusterProfiler")
+library("pheatmap")
+library("magrittr")
+library("rtracklayer")
+library("GenomicRanges")
+library("plyranges")
+library("GSEABase")
+#library("GOSim")
+library("stats")
+library("ggdendro")
+library("GO.db")
+library("rrvgo")
+library("cowplot")
+
+library("topGO")
+library("biomaRt")
+library("Rgraphviz")
+```
+
+# Read in data files 
+
+Read in file with vst transformed counts of all genes detected and kept after filtering. 
+```{r}
+all_genes<-read.csv("output/rna_seq/all_genes.csv")
+```
+
+Read in files of PC top genes from ASCA
+```{r}
+PC1_list<-read.csv("output/rna_seq/asca/PC1_important_genes_50pct_variance.csv")%>%pull(gene)
+PC2_list<-read.csv("output/rna_seq/asca/PC2_important_genes_50pct_variance.csv")%>%pull(gene)
+PC3_list<-read.csv("output/rna_seq/asca/PC3_important_genes_50pct_variance.csv")%>%pull(gene)
+```
+
+# Read in annotation files 
+
+Downloaded functional annotation (version 3) from: http://cyanophora.rutgers.edu/montipora/Montipora_capitata_HIv3.genes.EggNog_results.txt.gz (EggNog) and http://cyanophora.rutgers.edu/montipora/Montipora_capitata_HIv3.genes.KEGG_results.txt.gz (KEGG). 
+
+Scripts to generate this file are from Mcapitata 2020 project scripts here: https://github.com/AHuffmyer/EarlyLifeHistory_Energetics 
+
+Downloaded on 21 April 2024. Unzipped on computer. I then removed the # in #query in the first column, otherwise it does not read in column names.    
+
+```{r}
+Mcap.annot <- read.table("data/rna_seq/Montipora_capitata_HIv3.genes.EggNog_results.txt",  quote="", sep="\t", header=TRUE)
+dim(Mcap.annot)
+
+# column names
+head(Mcap.annot)
+tail(Mcap.annot)
+
+Mcap.annot<-Mcap.annot%>%
+  rename(gene=query)
+```
+
+This functional annotation as 24,072 genes. This is 44% of total protein predicted genes described in the publication associated with this annotation. https://academic.oup.com/gigascience/article/doi/10.1093/gigascience/giac098/6815755 
+
+We had 24,005 genes in our dataset that were detected and present at counts >10. 
+
+Match up genes in gene list file to annotation file
+```{r}
+names(Mcap.annot)
+
+#remove sample column name 
+probes = names(all_genes)
+#probes <- gsub("sample", "", probes)
+#probes <- probes[probes != ""]
+
+probes2annot = match(probes, Mcap.annot$gene) #match genes in datExpr to genes in annotation file, note I removed the # before query in this file before loading
+
+# The following is the number of probes without annotation 
+sum(is.na(probes2annot))
+
+row_nas<-which(is.na(probes2annot))
+
+#view the genes that do not have a match in the annotation file
+missing<-as.data.frame(probes[row_nas])
+print(missing)
+```
+
+There are 12293 genes from our data set that are not in the annotation file but that are in the genome. 
+
+## Reduce annotation file to only contain genes detected in our dataset.  
+
+```{r}
+filtered_Mcap.annot <- Mcap.annot[Mcap.annot$gene %in% probes, ]
+dim(filtered_Mcap.annot)
+```
+
+The annotation file now only contains genes that were detected in our dataset that have annotation information.  
+
+Format GO terms to remove dashes and quotes.  
+```{r}
+#remove dashes, remove quotes from columns and separate by semicolons (replace , with ;) in KEGG_ko, KEGG_pathway, and Annotation.GO.ID columns
+head(filtered_Mcap.annot$GOs)
+filtered_Mcap.annot$GOs <- gsub(",", ";", filtered_Mcap.annot$GOs)
+filtered_Mcap.annot$GOs <- gsub('"', "", filtered_Mcap.annot$GOs)
+filtered_Mcap.annot$GOs <- gsub("-", NA, filtered_Mcap.annot$GOs)
+head(filtered_Mcap.annot$GOs)
+```
+
+# TopGO 
+
+In topGO we need: 
+
+- Ontology: character string specifying the ontology of interest (BP, MF or CC).
+- allGenes: named vector of type numeric or factor. The names attribute contains the genes identifiers. The genes listed in this object define the gene universe.
+- nodeSize: an integer larger or equal to 1. This parameter is used to prune the GO hierarchy from the terms which have less than nodeSize annotated genes (after the true path rule is applied).
+- annotationFun: function which maps genes identifiers to GO terms. There are a couple of annotation function included in the package trying to address the user’s needs. The annotation functions take three arguments. One of those arguments is specifying where the mappings can be found, and needs to be provided by the user. annFUN.gene2GO this function is used when the annotations are provided as a gene-to-GOs mapping.
+
+Background/GO information (14,811 genes): 
+```{r}
+geneID2GO<-filtered_Mcap.annot%>%dplyr::select(gene, GOs)%>%rename("gene_id"=gene, "GO.terms"=GOs)
+
+background<-geneID2GO%>%pull(gene_id)
+
+#remove genes with NA in go term 
+geneID2GO<-geneID2GO%>%
+  filter(!is.na(GO.terms))%>%
+  separate_rows(GO.terms, sep = ";")
+
+geneID2GO <- split(as.character(geneID2GO$GO.terms), geneID2GO$gene_id)
+```
+
+Annotation setting: annFUN.gene2GO 
+
+nodeSize = 5; this setting prunes GO terms that have <5 annotated genes associated with this GO term. "It is often the case that many GO terms which have few annotated genes are detected to be significantly enriched due to artifacts in the statistical test. These small sized GO terms are of less importance for the analysis and in many cases they can be omitted. By using the nodeSize argument the user can control the size of the GO terms used in the analysis. Once the genes are annotated to the each GO term and the true path rule is applied the nodes with less than nodeSize annotated genes are removed from the GO hierarchy. We found that values between 5 and 10 for the nodeSize parameter yield more stable results. The default value for the nodeSize parameter is 1, meaning that no pruning is performed." - TopGO documentation 
+
+## PC1: Temperature 
+
+4053 genes from PC1 
+```{r}
+length(PC1_list)
+
+pc1.vector=as.factor(as.integer(background %in% PC1_list)) 
+names(pc1.vector)<-background#set names
+```
+
+Run TopGO
+
+```{r}
+GOdata <- new("topGOdata",
+              description = "PC1",
+              ontology = "BP",
+              allGenes = pc1.vector,
+              nodeSize = 5,
+              gene2GO = geneID2GO, annot = annFUN.gene2GO) 
+
+GOdata
+numSigGenes(GOdata)
+sum(feasible(GOdata))
+
+#2074 sig genes
+#8509 genes used in analysis 
+```
+
+Run fisher test. 
+```{r}
+resultFisher <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
+resultFisher
+hist(score(resultFisher), 50, xlab = "p-values")
+
+resultWeight <- runTest(GOdata, algorithm = "weight01", statistic = "fisher")
+resultWeight
+hist(score(resultWeight), 50, xlab = "p-values")
+```
+
+```{r}
+allRes <- GenTable(GOdata, classicFisher = resultFisher, weightFisher = resultWeight, orderBy = "weightFisher", ranksOf = "classicFisher", topNodes = length(score(resultFisher)))
+
+# Convert character columns to numeric
+allRes$classicFisher <- as.numeric(allRes$classicFisher)
+allRes$weightFisher <- as.numeric(allRes$weightFisher)
+
+#adjust p-values 
+allRes$bh_adjust <- p.adjust(allRes$classicFisher, method="BH") #add adjusted p-values
+
+#adjust p-values 
+allRes$bh_adjust_weight <- p.adjust(allRes$weightFisher, method="BH") #add adjusted p-values
+```
+
+```{r}
+showSigOfNodes(GOdata, score(resultFisher), firstSigNodes = 5, useInfo = 'def')
+dev.off()
+
+showSigOfNodes(GOdata, score(resultWeight), firstSigNodes = 5, useInfo = 'def')
+dev.off()
+```
+
+Proceed using weighted fisher test results.  
+```{r}
+p05_res <- allRes %>% dplyr::filter(weightFisher < 0.05)
+  
+#Reduce/collapse GO term set with the rrvgo package 
+simMatrix <- calculateSimMatrix(p05_res$GO.ID,
+                                orgdb="org.Ce.eg.db", #c. elegans database
+                                ont="BP",
+                                method="Rel")
+```
+
+```{r}
+ #calculate similarity 
+scores <- setNames(-log(as.numeric(p05_res$weightFisher)), p05_res$GO.ID)
+reducedTerms <- reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Ce.eg.db")
+dim(reducedTerms)
+```
+314 terms at p<0.05
+
+```{r}
+#keep only the goterms from the reduced list
+p05_res_reduced <- p05_res %>%
+  filter(GO.ID %in% reducedTerms$go)
+
+#add in parent terms to list of go terms 
+p05_res_reduced$ParentTerm <- reducedTerms$parentTerm[match(p05_res_reduced$GO.ID, reducedTerms$go)]
+
+length(unique(p05_res_reduced$ParentTerm))
+
+p05_res_reduced <- p05_res_reduced %>% group_by(ParentTerm) %>% mutate("N_in_Parent" = dplyr::n()) %>% ungroup()
+length(unique(p05_res_reduced$ParentTerm))
+```
+
+The reduced list of terms is 314 terms that falls under 60 parent terms.
+
+```{r}
+write.csv(p05_res_reduced, "output/rna_seq/asca/functional_enrichment/PC1_topGO_results.csv")
+```
+
+Try some different plots. 
+```{r}
+p05_res_reduced$GeneRatio <- p05_res_reduced$Significant / p05_res_reduced$Annotated
+
+PC1_enrich_plot1 <- ggplot(p05_res_reduced, 
+       aes(x = GeneRatio, 
+           y = reorder(Term, GeneRatio), 
+           color = -log10(weightFisher))) +
+  geom_point(size=1) +
+  geom_segment(aes(x=0, xend=GeneRatio, y=Term, yend=Term), color="grey70") +
+  scale_color_gradient(low="lightblue", high="darkblue", name="-log10(weightFisher)") +
+  theme_classic(base_size=10) +
+  labs(x="Gene Ratio", y="GO Term") +
+  theme(axis.text.y = element_text(size=8),
+        axis.title = element_text(size=9),
+        plot.title = element_text(hjust=0.5, size=10));PC1_enrich_plot1
+
+#summarize by parent term
+PC1_summary <- p05_res_reduced %>%
+  group_by(ParentTerm) %>%
+  summarise(
+    maxLogP = max(-log10(weightFisher)),
+    meanGeneRatio = mean(Significant/Annotated),
+    nTerms = length(maxLogP)
+  ) %>%
+  arrange(desc(maxLogP))
+
+PC1_enrich_plot2<-ggplot(PC1_summary, aes(x = meanGeneRatio, y = reorder(ParentTerm, meanGeneRatio), color = maxLogP, size = nTerms)) +
+  geom_point(size=2) +
+  scale_color_gradient(low = "lightblue", high = "darkblue", name="Max -log10(weightFisher)") +
+  scale_size_continuous(name="Number of Terms") +
+  theme_classic(base_size=10) +
+  labs(x="Mean Gene Ratio", y="Parent GO Term");PC1_enrich_plot2
+
+ggsave(PC1_enrich_plot2, filename="figures/rna_seq/asca/functional_enrichment/PC1_enrichment_parent_terms.png", width=10, height=7)
+```
+
+
+
+## PC2: Cladocopium vs mixture symbionts 
+
+3247 genes from PC1 
+```{r}
+length(PC2_list)
+
+pc2.vector=as.factor(as.integer(background %in% PC2_list)) 
+names(pc2.vector)<-background#set names
+```
+
+Run TopGO
+
+```{r}
+GOdata <- new("topGOdata",
+              description = "PC2",
+              ontology = "BP",
+              allGenes = pc2.vector,
+              nodeSize = 5,
+              gene2GO = geneID2GO, annot = annFUN.gene2GO) 
+
+GOdata
+numSigGenes(GOdata)
+sum(feasible(GOdata))
+
+#665 sig genes
+#8509 genes used in analysis 
+```
+
+Run fisher test. 
+```{r}
+resultFisher <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
+resultFisher
+hist(score(resultFisher), 50, xlab = "p-values")
+
+resultWeight <- runTest(GOdata, algorithm = "weight01", statistic = "fisher")
+resultWeight
+hist(score(resultWeight), 50, xlab = "p-values")
+```
+
+```{r}
+allRes <- GenTable(GOdata, classicFisher = resultFisher, weightFisher = resultWeight, orderBy = "weightFisher", ranksOf = "classicFisher", topNodes = length(score(resultFisher)))
+
+# Convert character columns to numeric
+allRes$classicFisher <- as.numeric(allRes$classicFisher)
+allRes$weightFisher <- as.numeric(allRes$weightFisher)
+
+#adjust p-values 
+allRes$bh_adjust <- p.adjust(allRes$classicFisher, method="BH") #add adjusted p-values
+
+#adjust p-values 
+allRes$bh_adjust_weight <- p.adjust(allRes$weightFisher, method="BH") #add adjusted p-values
+```
+
+```{r}
+showSigOfNodes(GOdata, score(resultFisher), firstSigNodes = 5, useInfo = 'def')
+dev.off()
+
+showSigOfNodes(GOdata, score(resultWeight), firstSigNodes = 5, useInfo = 'def')
+dev.off()
+```
+
+Proceed using weighted fisher test results.  
+```{r}
+p05_res <- allRes %>% dplyr::filter(weightFisher < 0.05)
+  
+#Reduce/collapse GO term set with the rrvgo package 
+simMatrix <- calculateSimMatrix(p05_res$GO.ID,
+                                orgdb="org.Ce.eg.db", #c. elegans database
+                                ont="BP",
+                                method="Rel")
+```
+
+```{r}
+ #calculate similarity 
+scores <- setNames(-log(as.numeric(p05_res$weightFisher)), p05_res$GO.ID)
+reducedTerms <- reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Ce.eg.db")
+dim(reducedTerms)
+```
+85 terms at p<0.05
+
+```{r}
+#keep only the goterms from the reduced list
+p05_res_reduced <- p05_res %>%
+  filter(GO.ID %in% reducedTerms$go)
+
+#add in parent terms to list of go terms 
+p05_res_reduced$ParentTerm <- reducedTerms$parentTerm[match(p05_res_reduced$GO.ID, reducedTerms$go)]
+
+length(unique(p05_res_reduced$ParentTerm))
+
+p05_res_reduced <- p05_res_reduced %>% group_by(ParentTerm) %>% mutate("N_in_Parent" = dplyr::n()) %>% ungroup()
+length(unique(p05_res_reduced$ParentTerm))
+```
+
+The reduced list of terms is 85 terms that falls under 41 parent terms.
+
+```{r}
+write.csv(p05_res_reduced, "output/rna_seq/asca/functional_enrichment/PC2_topGO_results.csv")
+```
+
+Try some different plots. 
+```{r}
+p05_res_reduced$GeneRatio <- p05_res_reduced$Significant / p05_res_reduced$Annotated
+
+PC2_enrich_plot1 <- ggplot(p05_res_reduced, 
+       aes(x = GeneRatio, 
+           y = reorder(Term, GeneRatio), 
+           color = -log10(weightFisher))) +
+  geom_point(size=1) +
+  geom_segment(aes(x=0, xend=GeneRatio, y=Term, yend=Term), color="grey70") +
+  scale_color_gradient(low="lightblue", high="darkblue", name="-log10(weightFisher)") +
+  theme_classic(base_size=10) +
+  labs(x="Gene Ratio", y="GO Term") +
+  theme(axis.text.y = element_text(size=8),
+        axis.title = element_text(size=9),
+        plot.title = element_text(hjust=0.5, size=10));PC2_enrich_plot1
+
+#summarize by parent term
+PC2_summary <- p05_res_reduced %>%
+  group_by(ParentTerm) %>%
+  summarise(
+    maxLogP = max(-log10(weightFisher)),
+    meanGeneRatio = mean(Significant/Annotated),
+    nTerms = length(maxLogP)
+  ) %>%
+  arrange(desc(maxLogP))
+
+PC2_enrich_plot2<-ggplot(PC2_summary, aes(x = meanGeneRatio, y = reorder(ParentTerm, meanGeneRatio), color = maxLogP, size = nTerms)) +
+  geom_point(size=2) +
+  scale_color_gradient(low = "lightblue", high = "darkblue", name="Max -log10(weightFisher)") +
+  scale_size_continuous(name="Number of Terms") +
+  theme_classic(base_size=10) +
+  labs(x="Mean Gene Ratio", y="Parent GO Term");PC2_enrich_plot2
+
+ggsave(PC2_enrich_plot2, filename="figures/rna_seq/asca/functional_enrichment/PC2_enrichment_parent_terms.png", width=10, height=6)
+```
+
+
+
+## PC3: Parental histry  
+
+3225 genes from PC3
+```{r}
+length(PC3_list)
+
+pc3.vector=as.factor(as.integer(background %in% PC3_list)) 
+names(pc3.vector)<-background#set names
+```
+
+Run TopGO
+
+```{r}
+GOdata <- new("topGOdata",
+              description = "PC3",
+              ontology = "BP",
+              allGenes = pc3.vector,
+              nodeSize = 5,
+              gene2GO = geneID2GO, annot = annFUN.gene2GO) 
+
+GOdata
+numSigGenes(GOdata)
+sum(feasible(GOdata))
+
+#894 sig genes
+#8509 genes used in analysis 
+```
+
+Run fisher test. 
+```{r}
+resultFisher <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
+resultFisher
+hist(score(resultFisher), 50, xlab = "p-values")
+
+resultWeight <- runTest(GOdata, algorithm = "weight01", statistic = "fisher")
+resultWeight
+hist(score(resultWeight), 50, xlab = "p-values")
+```
+
+```{r}
+allRes <- GenTable(GOdata, classicFisher = resultFisher, weightFisher = resultWeight, orderBy = "weightFisher", ranksOf = "classicFisher", topNodes = length(score(resultFisher)))
+
+# Convert character columns to numeric
+allRes$classicFisher <- as.numeric(allRes$classicFisher)
+allRes$weightFisher <- as.numeric(allRes$weightFisher)
+
+#adjust p-values 
+allRes$bh_adjust <- p.adjust(allRes$classicFisher, method="BH") #add adjusted p-values
+
+#adjust p-values 
+allRes$bh_adjust_weight <- p.adjust(allRes$weightFisher, method="BH") #add adjusted p-values
+```
+
+```{r}
+showSigOfNodes(GOdata, score(resultFisher), firstSigNodes = 5, useInfo = 'def')
+dev.off()
+
+showSigOfNodes(GOdata, score(resultWeight), firstSigNodes = 5, useInfo = 'def')
+dev.off()
+```
+
+Proceed using weighted fisher test results.  
+```{r}
+p05_res <- allRes %>% dplyr::filter(weightFisher < 0.05)
+  
+#Reduce/collapse GO term set with the rrvgo package 
+simMatrix <- calculateSimMatrix(p05_res$GO.ID,
+                                orgdb="org.Ce.eg.db", #c. elegans database
+                                ont="BP",
+                                method="Rel")
+```
+
+```{r}
+ #calculate similarity 
+scores <- setNames(-log(as.numeric(p05_res$weightFisher)), p05_res$GO.ID)
+reducedTerms <- reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Ce.eg.db")
+dim(reducedTerms)
+```
+125 terms at p<0.05
+
+```{r}
+#keep only the goterms from the reduced list
+p05_res_reduced <- p05_res %>%
+  filter(GO.ID %in% reducedTerms$go)
+
+#add in parent terms to list of go terms 
+p05_res_reduced$ParentTerm <- reducedTerms$parentTerm[match(p05_res_reduced$GO.ID, reducedTerms$go)]
+
+length(unique(p05_res_reduced$ParentTerm))
+
+p05_res_reduced <- p05_res_reduced %>% group_by(ParentTerm) %>% mutate("N_in_Parent" = dplyr::n()) %>% ungroup()
+length(unique(p05_res_reduced$ParentTerm))
+```
+
+The reduced list of terms is 125 terms that falls under 47 parent terms.
+
+```{r}
+write.csv(p05_res_reduced, "output/rna_seq/asca/functional_enrichment/PC3_topGO_results.csv")
+```
+
+Try some different plots. 
+```{r}
+p05_res_reduced$GeneRatio <- p05_res_reduced$Significant / p05_res_reduced$Annotated
+
+PC3_enrich_plot1 <- ggplot(p05_res_reduced, 
+       aes(x = GeneRatio, 
+           y = reorder(Term, GeneRatio), 
+           color = -log10(weightFisher))) +
+  geom_point(size=1) +
+  geom_segment(aes(x=0, xend=GeneRatio, y=Term, yend=Term), color="grey70") +
+  scale_color_gradient(low="lightblue", high="darkblue", name="-log10(weightFisher)") +
+  theme_classic(base_size=10) +
+  labs(x="Gene Ratio", y="GO Term") +
+  theme(axis.text.y = element_text(size=8),
+        axis.title = element_text(size=9),
+        plot.title = element_text(hjust=0.5, size=10));PC3_enrich_plot1
+
+#summarize by parent term
+PC3_summary <- p05_res_reduced %>%
+  group_by(ParentTerm) %>%
+  summarise(
+    maxLogP = max(-log10(weightFisher)),
+    meanGeneRatio = mean(Significant/Annotated),
+    nTerms = length(maxLogP)
+  ) %>%
+  arrange(desc(maxLogP))
+
+PC3_enrich_plot2<-ggplot(PC3_summary, aes(x = meanGeneRatio, y = reorder(ParentTerm, meanGeneRatio), color = maxLogP, size = nTerms)) +
+  geom_point(size=2) +
+  scale_color_gradient(low = "lightblue", high = "darkblue", name="Max -log10(weightFisher)") +
+  scale_size_continuous(name="Number of Terms") +
+  theme_classic(base_size=10) +
+  labs(x="Mean Gene Ratio", y="Parent GO Term");PC3_enrich_plot2
+
+ggsave(PC3_enrich_plot2, filename="figures/rna_seq/asca/functional_enrichment/PC3_enrichment_parent_terms.png", width=10, height=6)
+```

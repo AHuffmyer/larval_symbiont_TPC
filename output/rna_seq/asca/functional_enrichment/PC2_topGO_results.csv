@@ -1,0 +1,86 @@
+"","GO.ID","Term","Annotated","Significant","Expected","Rank in classicFisher","classicFisher","weightFisher","bh_adjust","bh_adjust_weight","ParentTerm","N_in_Parent"
+"1","GO:0009314","response to radiation",483,48,37.75,328,0.04785,2.8e-05,1,0.103236,"response to radiation",1
+"2","GO:0042592","homeostatic process",1280,107,100.04,1312,0.231,3.6e-05,1,0.103236,"homeostatic process",2
+"3","GO:0009226","nucleotide-sugar biosynthetic process",23,7,1.8,26,0.00139,5.3e-05,0.427183448275862,0.11398975,"nucleotide-sugar biosynthetic process",6
+"4","GO:0006559","L-phenylalanine catabolic process",18,7,1.41,9,0.00026,0.00026,0.192302352941176,0.31954,"L-phenylalanine catabolic process",7
+"5","GO:0018108","peptidyl-tyrosine phosphorylation",209,24,16.33,263,0.03602,0.00076,1,0.653828,"peptidyl-tyrosine phosphorylation",2
+"6","GO:0019673","GDP-mannose metabolic process",7,4,0.55,22,0.00107,0.00107,0.40022652173913,0.767100833333333,"nucleotide-sugar biosynthetic process",6
+"7","GO:1905477","positive regulation of protein localizat...",62,9,4.85,348,0.0503,0.00183,1,1,"positive regulation of protein localization to membrane",4
+"8","GO:0006103","2-oxoglutarate metabolic process",25,7,1.95,43,0.00238,0.00238,0.476166046511628,1,"L-phenylalanine catabolic process",7
+"9","GO:0003333","amino acid transmembrane transport",57,8,4.45,483,0.0739,0.00318,1,1,"amino acid transmembrane transport",2
+"10","GO:0019878","lysine biosynthetic process via aminoadi...",9,4,0.7,57,0.00339,0.00339,0.494307966101695,1,"L-phenylalanine catabolic process",7
+"11","GO:0033260","nuclear DNA replication",47,7,3.67,469,0.07069,0.0042,1,1,"nuclear DNA replication",2
+"12","GO:0006102","isocitrate metabolic process",5,3,0.39,63,0.00422,0.00422,0.541860597014925,1,"L-phenylalanine catabolic process",7
+"13","GO:0046368","GDP-L-fucose metabolic process",5,3,0.39,66,0.00422,0.00422,0.541860597014925,1,"nucleotide-sugar biosynthetic process",6
+"14","GO:1903909","regulation of receptor clustering",5,3,0.39,67,0.00422,0.00422,0.541860597014925,1,"positive regulation of protein localization to membrane",4
+"15","GO:0007528","neuromuscular junction development",209,17,16.33,2642,0.46877,0.00493,1,1,"neuromuscular junction development",2
+"16","GO:0042420","dopamine catabolic process",10,4,0.78,73,0.0053,0.0053,0.56994875,1,"dopamine catabolic process",3
+"17","GO:0016139","glycoside catabolic process",16,5,1.25,82,0.00606,0.00606,0.620428117647059,1,"glycoside catabolic process",7
+"18","GO:0022900","electron transport chain",130,17,10.16,187,0.02431,0.00707,1,1,"electron transport chain",1
+"19","GO:0000002","mitochondrial genome maintenance",45,7,3.52,417,0.05824,0.00714,1,1,"mitochondrial genome maintenance",2
+"20","GO:0007216","G protein-coupled glutamate receptor sig...",11,4,0.86,93,0.00782,0.00782,0.629583181818182,1,"G protein-coupled glutamate receptor signaling pathway",2
+"21","GO:0050427","3'-phosphoadenosine 5'-phosphosulfate me...",11,4,0.86,95,0.00782,0.00782,0.629583181818182,1,"3'-phosphoadenosine 5'-phosphosulfate metabolic process",3
+"22","GO:0099638","endosome to plasma membrane protein tran...",11,4,0.86,96,0.00782,0.00782,0.629583181818182,1,"positive regulation of protein localization to membrane",4
+"23","GO:0042303","molting cycle",150,16,11.72,811,0.1252,0.00788,1,1,"molting cycle",1
+"24","GO:0046477","glycosylceramide catabolic process",11,5,0.86,19,0.00089,0.00789,0.3828335,1,"glycoside catabolic process",7
+"25","GO:0031991","regulation of actomyosin contractile rin...",6,3,0.47,102,0.00794,0.00794,0.629583181818182,1,"mitochondrial genome maintenance",2
+"26","GO:0099566","regulation of postsynaptic cytosolic cal...",6,3,0.47,103,0.00794,0.00794,0.629583181818182,1,"homeostatic process",2
+"27","GO:1904146","positive regulation of meiotic cell cycl...",6,3,0.47,105,0.00794,0.00794,0.629583181818182,1,"positive regulation of meiotic cell cycle process involved in oocyte maturation",3
+"28","GO:0061014","positive regulation of mRNA catabolic pr...",96,8,7.5,2818,0.47909,0.00801,1,1,"glycoside catabolic process",7
+"29","GO:0051923","sulfation",17,5,1.33,109,0.00805,0.00805,0.629583181818182,1,"3'-phosphoadenosine 5'-phosphosulfate metabolic process",3
+"30","GO:0006635","fatty acid beta-oxidation",60,11,4.69,85,0.00613,0.00818,0.620428117647059,1,"glycoside catabolic process",7
+"31","GO:0006084","acetyl-CoA metabolic process",42,7,3.28,298,0.04228,0.01043,1,1,"3'-phosphoadenosine 5'-phosphosulfate metabolic process",3
+"32","GO:0007018","microtubule-based movement",337,25,26.34,3826,0.63951,0.01163,1,1,"microtubule-based movement",1
+"33","GO:0008652","amino acid biosynthetic process",94,12,7.35,438,0.0615,0.01225,1,1,"L-phenylalanine catabolic process",7
+"34","GO:0019377","glycolipid catabolic process",18,8,1.41,4,2.9e-05,0.01288,0.06237175,1,"glycoside catabolic process",7
+"35","GO:0000466","maturation of 5.8S rRNA from tricistroni...",24,7,1.88,36,0.00184,0.01295,0.439708888888889,1,"maturation of 5.8S rRNA from tricistronic rRNA transcript (SSU-rRNA, 5.8S rRNA, LSU-rRNA)",1
+"36","GO:0014013","regulation of gliogenesis",83,9,6.49,1174,0.19842,0.01336,1,1,"regulation of gliogenesis",2
+"37","GO:0008283","cell population proliferation",1294,95,101.13,4671,0.77057,0.01406,1,1,"cell population proliferation",1
+"38","GO:0006487","protein N-linked glycosylation",78,9,6.1,962,0.15343,0.0146,1,1,"nucleotide-sugar biosynthetic process",6
+"39","GO:0043603","amide metabolic process",873,84,68.23,186,0.02324,0.01527,1,1,"amide metabolic process",2
+"40","GO:0046903","secretion",1061,83,82.92,2952,0.51532,0.01696,1,1,"secretion",2
+"41","GO:0006829","zinc ion transport",27,7,2.11,61,0.00384,0.01719,0.541156451612903,1,"zinc ion transport",3
+"42","GO:0042430","indole-containing compound metabolic pro...",31,5,2.42,579,0.09006,0.01731,1,1,"indole-containing compound metabolic process",1
+"43","GO:2000377","regulation of reactive oxygen species me...",143,17,11.18,403,0.05344,0.01874,1,1,"regulation of reactive oxygen species metabolic process",1
+"44","GO:0006448","regulation of translational elongation",16,4,1.25,235,0.03155,0.01973,1,1,"amide metabolic process",2
+"45","GO:0006527","arginine catabolic process",8,3,0.63,169,0.01976,0.01976,0.965882272727273,1,"L-phenylalanine catabolic process",7
+"46","GO:0006572","tyrosine catabolic process",8,3,0.63,170,0.01976,0.01976,0.965882272727273,1,"L-phenylalanine catabolic process",7
+"47","GO:2000535","regulation of entry of bacterium into ho...",8,3,0.63,175,0.01976,0.01976,0.965882272727273,1,"regulation of entry of bacterium into host cell",1
+"48","GO:0098656","monoatomic anion transmembrane transport",228,28,17.82,121,0.01096,0.0206,0.770073414634146,1,"zinc ion transport",3
+"49","GO:0008589","regulation of smoothened signaling pathw...",107,9,8.36,2614,0.46016,0.02074,1,1,"G protein-coupled glutamate receptor signaling pathway",2
+"50","GO:0043406","positive regulation of MAP kinase activi...",156,16,12.19,1000,0.15898,0.02186,1,1,"positive regulation of MAP kinase activity",2
+"51","GO:0007160","cell-matrix adhesion",110,11,8.6,1328,0.23971,0.02262,1,1,"cell-matrix adhesion",1
+"52","GO:0032728","positive regulation of interferon-beta p...",22,5,1.72,189,0.02476,0.02476,1,1,"regulation of gliogenesis",2
+"53","GO:0006892","post-Golgi vesicle-mediated transport",110,12,8.6,913,0.14958,0.0251,1,1,"post-Golgi vesicle-mediated transport",2
+"54","GO:0061136","regulation of proteasomal protein catabo...",171,9,13.36,5674,0.92621,0.0261,1,1,"glycoside catabolic process",7
+"55","GO:0034614","cellular response to reactive oxygen spe...",124,16,9.69,242,0.03161,0.02722,1,1,"cellular response to reactive oxygen species",4
+"56","GO:0007144","female meiosis I",14,5,1.09,48,0.00317,0.02776,0.494307966101695,1,"positive regulation of meiotic cell cycle process involved in oocyte maturation",3
+"57","GO:0009100","glycoprotein metabolic process",307,27,23.99,1543,0.28678,0.02786,1,1,"nucleotide-sugar biosynthetic process",6
+"58","GO:0032223","negative regulation of synaptic transmis...",9,3,0.7,203,0.02794,0.02794,1,1,"negative regulation of synaptic transmission, cholinergic",1
+"59","GO:0045740","positive regulation of DNA replication",41,7,3.2,274,0.03767,0.02957,1,1,"nuclear DNA replication",2
+"60","GO:0097164","ammonium ion metabolic process",142,18,11.1,202,0.02768,0.03138,1,1,"ammonium ion metabolic process",1
+"61","GO:0072553","terminal button organization",38,5,2.97,1049,0.17207,0.03166,1,1,"neuromuscular junction development",2
+"62","GO:0009309","amine biosynthetic process",42,7,3.28,299,0.04228,0.03271,1,1,"dopamine catabolic process",3
+"63","GO:0097720","calcineurin-mediated signaling",31,6,2.42,229,0.03045,0.03273,1,1,"calcineurin-mediated signaling",1
+"64","GO:0032324","molybdopterin cofactor biosynthetic proc...",10,4,0.78,75,0.0053,0.03276,0.56994875,1,"peptidyl-tyrosine phosphorylation",2
+"65","GO:0035864","response to potassium ion",24,5,1.88,256,0.03515,0.03277,1,1,"cellular response to reactive oxygen species",4
+"66","GO:0042401","biogenic amine biosynthetic process",38,5,2.97,1050,0.17207,0.03287,1,1,"dopamine catabolic process",3
+"67","GO:0051169","nuclear transport",330,21,25.79,5281,0.86749,0.03354,1,1,"positive regulation of protein localization to membrane",4
+"68","GO:0031145","anaphase-promoting complex-dependent cat...",32,6,2.5,252,0.03509,0.03509,1,1,"glycoside catabolic process",7
+"69","GO:0006893","Golgi to plasma membrane transport",60,6,4.69,1705,0.32708,0.03551,1,1,"post-Golgi vesicle-mediated transport",2
+"70","GO:0002793","positive regulation of peptide secretion",148,17,11.57,464,0.06939,0.0359,1,1,"secretion",2
+"71","GO:0051606","detection of stimulus",246,28,19.23,201,0.02767,0.03633,1,1,"detection of stimulus",1
+"72","GO:0001504","neurotransmitter uptake",23,5,1.8,222,0.02967,0.0375,1,1,"neurotransmitter uptake",1
+"73","GO:0015868","purine ribonucleotide transport",10,3,0.78,268,0.03764,0.03764,1,1,"amino acid transmembrane transport",2
+"74","GO:0009312","oligosaccharide biosynthetic process",17,4,1.33,280,0.03878,0.03878,1,1,"oligosaccharide biosynthetic process",1
+"75","GO:0031346","positive regulation of cell projection o...",367,25,28.68,4801,0.79496,0.04001,1,1,"positive regulation of cell projection organization",1
+"76","GO:0046039","GTP metabolic process",25,5,1.95,291,0.04121,0.04121,1,1,"nucleotide-sugar biosynthetic process",6
+"77","GO:0007613","memory",176,16,13.75,1636,0.30016,0.04527,1,1,"memory",2
+"78","GO:0071577","zinc ion transmembrane transport",24,5,1.88,258,0.03515,0.04676,1,1,"zinc ion transport",3
+"79","GO:0022617","extracellular matrix disassembly",53,10,4.14,88,0.00715,0.04711,0.629583181818182,1,"extracellular matrix disassembly",1
+"80","GO:0048515","spermatid differentiation",190,15,14.85,3112,0.52333,0.04742,1,1,"positive regulation of meiotic cell cycle process involved in oocyte maturation",3
+"81","GO:1901652","response to peptide",383,28,29.93,4018,0.67514,0.04792,1,1,"cellular response to reactive oxygen species",4
+"82","GO:0051092","positive regulation of NF-kappaB transcr...",71,10,5.55,331,0.04822,0.04822,1,1,"positive regulation of MAP kinase activity",2
+"83","GO:0019226","transmission of nerve impulse",61,9,4.77,314,0.04605,0.04844,1,1,"transmission of nerve impulse",1
+"84","GO:0030536","larval feeding behavior",11,3,0.86,338,0.04883,0.04883,1,1,"memory",2
+"85","GO:0046689","response to mercury ion",11,3,0.86,339,0.04883,0.04883,1,1,"cellular response to reactive oxygen species",4
