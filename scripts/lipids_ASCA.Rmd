@@ -1,0 +1,661 @@
+---
+title: "Lipidomics ASCA Analysis"
+author: "Ariana S Huffmyer"
+date: "`r Sys.Date()`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+Analysis of lipidomic data using ASCA (ANOVA Simultaneous Component Analysis) to examine how lipids changes across temperatures for each parental phenotype.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# The following setting is important, do not omit.
+options(stringsAsFactors = FALSE) #Set Strings to character
+```
+
+# Load libraries
+
+```{r}
+library("tidyverse")
+library("genefilter")
+library("DESeq2")
+library("RColorBrewer")
+library("ALASCA")
+library(purrr)
+library(readr)
+library(tibble)
+```
+
+# Data input and filtering
+
+Read in data. 
+
+```{r}
+lipids<-read_csv("output/lipids_metabolites/lipids/processed_lipids.csv")
+```
+
+# Prepare data for ASCA analysis
+
+Select data for long format for ALASCA.
+
+```{r}
+long_data <- lipids %>%
+  select(sample, temperature, parent, lipid, area_normalized)%>%
+  rename(lipid="variable", area_normalized="value")
+
+head(long_data)
+
+long_data$temperature<-factor(long_data$temperature, levels=c("Ambient", "Moderate (+3)", "High (+6)"))
+
+long_data$parent<-factor(long_data$parent, levels=c("Wildtype", "Bleached", "Nonbleached"))
+```
+
+View any NA or Inf values. 
+
+```{r}
+long_data%>%
+  filter(if_any(everything(), is.na))
+
+long_data%>%
+  filter(is.infinite(value))
+```
+
+No NA or INF values. 
+
+Data in format of sample, temperature, parent, variable (lipid), and value (normalized concentration)
+
+# Run ASCA analysis for all parental phenotypes
+
+Start with 10 runs, increase to 100 for full analysis. 
+
+Run ASCA model with temperature and phenotype as the main effect and sample as random effect.
+
+```{r}
+res_all <- ALASCA(
+  long_data,
+  value ~ temperature * parent + (1|sample),
+  n_validation_runs = 20,
+  validate = TRUE,
+  reduce_dimensions = TRUE
+)
+```
+
+Generate scree plot.
+
+```{r}
+pdf(file="figures/lipids/asca/scree_plot.pdf", width=6, height=4)
+plot(res_all, component = seq(1,10), effect = 1, type = 'scree')
+dev.off()
+```
+
+Plot significant components (>10% variance explained).
+
+```{r}
+# PC1
+pdf(file="figures/lipids/asca/PC1.pdf", width=10, height=6)
+plot(res_all, effect = 1, component = 1, type = 'effect', 
+     n_limit=20, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     flip_axis=TRUE,
+     palette = c("darkgray", "orange", "darkred"),
+     my_theme = theme_classic())
+dev.off()
+
+# PC1
+pdf(file="figures/lipids/asca/PC2.pdf", width=10, height=6)
+plot(res_all, effect = 1, component = 2, type = 'effect', 
+     n_limit=20, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     flip_axis=TRUE,
+     palette = c("darkgray", "orange", "darkred"),
+     my_theme = theme_classic())
+dev.off()
+
+# PC3
+pdf(file="figures/lipids/asca/PC3.pdf", width=10, height=6)
+plot(res_all, effect = 1, component = 3, type = 'effect', 
+     n_limit=20, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     palette = c("darkgray", "orange", "darkred"),
+     flip_axis=TRUE,
+     my_theme = theme_classic())
+dev.off()
+
+pdf(file="figures/lipids/asca/PC4.pdf", width=10, height=4)
+plot(res_all, effect = 1, component = 4, type = 'effect', 
+     n_limit=10, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     palette = c("darkgray", "orange", "darkred"),
+     flip_axis=TRUE,
+     my_theme = theme_classic())
+dev.off()
+
+pdf(file="figures/lipids/asca/PC5.pdf", width=10, height=4)
+plot(res_all, effect = 1, component = 5, type = 'effect', 
+     n_limit=10, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     palette = c("darkgray", "orange", "darkred"),
+     flip_axis=TRUE,
+     my_theme = theme_classic())
+dev.off()
+
+pdf(file="figures/lipids/asca/PC6.pdf", width=10, height=4)
+plot(res_all, effect = 1, component = 6, type = 'effect', 
+     n_limit=10, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     palette = c("darkgray", "orange", "darkred"),
+     flip_axis=TRUE,
+     my_theme = theme_classic())
+dev.off()
+
+pdf(file="figures/lipids/asca/PC7.pdf", width=10, height=4)
+plot(res_all, effect = 1, component = 7, type = 'effect', 
+     n_limit=10, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     palette = c("darkgray", "orange", "darkred"),
+     flip_axis=TRUE,
+     my_theme = theme_classic())
+dev.off()
+
+pdf(file="figures/lipids/asca/PC8.pdf", width=10, height=4)
+plot(res_all, effect = 1, component = 8, type = 'effect', 
+     n_limit=10, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     palette = c("darkgray", "orange", "darkred"),
+     flip_axis=TRUE,
+     my_theme = theme_classic())
+dev.off()
+
+pdf(file="figures/lipids/asca/PC9.pdf", width=10, height=4)
+plot(res_all, effect = 1, component = 9, type = 'effect', 
+     n_limit=10, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     palette = c("darkgray", "orange", "darkred"),
+     flip_axis=TRUE,
+     my_theme = theme_classic())
+dev.off()
+
+pdf(file="figures/lipids/asca/PC10.pdf", width=10, height=4)
+plot(res_all, effect = 1, component = 10, type = 'effect', 
+     n_limit=10, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     palette = c("darkgray", "orange", "darkred"),
+     flip_axis=TRUE,
+     my_theme = theme_classic())
+dev.off()
+```
+
+Make combined plot for PC1-3. 
+```{r}
+# PC1-3
+pdf(file="figures/lipids/asca/PC1-PC3.pdf", width=12, height=12)
+plot(res_all, effect = 1, component = c(1,2,3), type = 'effect', 
+     n_limit=10, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     flip_axis=TRUE,
+     palette = c("darkgray", "orange", "darkred"),
+     my_theme = theme_classic())
+dev.off()
+```
+
+Plot top genes contributing to each component.
+
+```{r}
+# PC1 genes
+pdf(file="figures/lipids/asca/PC1_genes.pdf", width=16, height=6)
+plot(res_all, component = 1, effect = 1, type = 'prediction', n_limit = 20, variable = c(), palette = c("darkgray", "orange", "darkred"))
+dev.off()
+
+# PC2 genes
+pdf(file="figures/lipids/asca/PC2_genes.pdf", width=16, height=6)
+plot(res_all, component = 2, effect = 1, type = 'prediction', n_limit = 20, variable = c(), palette = c("darkgray", "orange", "darkred"))
+dev.off()
+
+# PC3 genes
+pdf(file="figures/lipids/asca/PC3_genes.pdf", width=16, height=6)
+plot(res_all, component = 3, effect = 1, type = 'prediction', n_limit = 20, variable = c(), palette = c("darkgray", "orange", "darkred"))
+dev.off()
+```
+
+Extract top genes from PC1 to PC3 for each component.
+
+```{r}
+loadings1 <- get_loadings(res_all, component=1, effect=1, n_limit=20)
+list1 <- loadings1[[1]]$covars
+
+loadings2 <- get_loadings(res_all, component=2, effect=1, n_limit=20)
+list2 <- loadings2[[1]]$covars
+
+loadings3 <- get_loadings(res_all, component=3, effect=1, n_limit=20)
+list3 <- loadings3[[1]]$covars
+
+# Combine all lists
+list_wt <- data.frame(
+  PC1 = c(list1, rep(NA, max(0, 20 - length(list1)))),
+  PC2 = c(list2, rep(NA, max(0, 20 - length(list2)))),
+  PC3 = c(list3, rep(NA, max(0, 20 - length(list3))))
+)
+```
+
+# Determine top contributing lipids to PC1, PC2, and PC3 quantitatively 
+
+Identify top genes for PC1–PC3 using a cumulative variance explained method for each PC. 
+
+I am going to use an 50% threshold cut off (lipids explaining the first 50% of variance on each PC).
+
+## PC1: temperature 
+
+### Variance explained threshold method 
+
+```{r}
+# 1. Extract all loadings for PC1 (effect 1 = temperature * parent)
+pc1_raw <- get_loadings(res_all, effect = 1, component = 1)
+
+# ALASCA usually returns a list; first element holds the data
+if (is.list(pc1_raw) && !inherits(pc1_raw, "data.frame")) {
+  pc1_df <- as.data.frame(pc1_raw[[1]])
+} else {
+  pc1_df <- as.data.frame(pc1_raw)
+}
+
+# Identify gene column and numeric loading column
+# (You can change "covars" if your object uses a different name)
+if (!"covars" %in% names(pc1_df)) {
+  stop("Could not find 'covars' column in PC1 loadings; check the structure of pc1_df.")
+}
+
+gene_vec <- pc1_df$covars
+
+num_cols <- names(pc1_df)[sapply(pc1_df, is.numeric)]
+
+if (length(num_cols) == 0) {
+  stop("No numeric loading column found in PC1 loadings.")
+}
+loading_col <- num_cols[2]  # typically the PC1 loading column
+
+pc1_load <- pc1_df %>%
+  transmute(
+    gene    = gene_vec,
+    loading = .data[[loading_col]]
+  ) %>%
+  mutate(
+    abs_loading = abs(loading)
+  ) %>%
+  arrange(desc(abs_loading)) %>%
+  mutate(
+    rank           = row_number(),
+    cum_abs        = cumsum(abs_loading),
+    cum_abs_prop   = cum_abs / sum(abs_loading),
+    var_contrib    = loading^2,
+    cum_var        = cumsum(var_contrib) / sum(var_contrib)
+  )
+
+# 2. Find "elbow" on normalized abs(loadings) curve (Kneedle-style)
+n <- nrow(pc1_load)
+x <- (pc1_load$rank - 1) / (n - 1 + 1e-9)  # normalized rank
+y <- (pc1_load$abs_loading - min(pc1_load$abs_loading)) /
+     (max(pc1_load$abs_loading) - min(pc1_load$abs_loading) + 1e-9)
+
+#elbow is selected at the rank of the maximum deviation between the loading curve and diagonal reference
+diff_xy <- x - y
+elbow_idx  <- which.max(diff_xy)
+elbow_rank <- pc1_load$rank[elbow_idx]
+elbow_gene <- pc1_load$gene[elbow_idx]
+
+# 3. 80% cumulative variance threshold as a comparison
+idx_80_var <- which(pc1_load$cum_var >= 0.50)[1]
+
+pc1_load <- pc1_load %>%
+  mutate(
+    selected_elbow  = rank <= elbow_rank,
+    selected_80_var = rank <= idx_80_var
+  )
+
+cat("PC1 important genes by elbow selection: ",
+    sum(pc1_load$selected_elbow), "\n")
+cat("PC1 important genes by 80% variance selection: ",
+    sum(pc1_load$selected_80_var), "\n")
+
+# 5. Diagnostic plots ------------------------------------------
+
+# (a) Absolute loadings vs rank, with elbow + 80% var lines
+pdf("figures/lipids/asca/PC1_abs_loadings_rank.pdf", width = 7, height = 5)
+ggplot(pc1_load, aes(x = rank, y = abs_loading)) +
+  geom_line() +
+  geom_point(size = 0.7) +
+  geom_vline(xintercept = idx_80_var, linetype = "dashed") +
+  annotate("text",
+           x = idx_80_var,
+           y = max(pc1_load$abs_loading) * 0.9,
+           label = paste0("50% var (", idx_80_var, " lipids)"),
+           hjust = -0.1, vjust = 1) +
+  labs(
+    x = "Rank (sorted by |loading|)",
+    y = "|PC1 loading|",
+    title = "PC1 absolute loadings and selection thresholds"
+  ) +
+  theme_classic()
+dev.off()
+
+# Cumulative proportion of variance (squared loadings)
+pdf("figures/lipids/asca/PC1_cumulative_variance.pdf", width = 7, height = 5)
+ggplot(pc1_load, aes(x = rank, y = cum_var)) +
+  geom_line() +
+  geom_vline(xintercept = idx_80_var, linetype = "dashed") +
+   annotate("text",
+           x = idx_80_var,
+           y = max(pc1_load$abs_loading) * 0.9,
+           label = paste0("50% var (", idx_80_var, " lipids)"),
+           hjust = -0.1, vjust = 1) +
+  labs(
+    x = "Rank",
+    y = "Cumulative proportion of variance (loading^2)",
+    title = "PC1 cumulative variance contribution"
+  ) +
+  theme_classic()
+dev.off()
+
+#export a list of genes contributing 80% of variance to PC1
+pc1_important_80 <- pc1_load %>%
+  filter(rank <= idx_80_var)
+
+write.csv(pc1_important_80,
+          "output/lipids_metabolites/lipids/asca/PC1_important_lipids_50pct_variance.csv",
+          row.names = FALSE)
+
+```
+
+451 lipids are most important in describing PC1 at 80% and 198 at 50% - proceeding with 50% cut off. 
+
+## PC2: symbiont (C-only different than C&D mix symbionts) 
+
+```{r}
+# 1. Extract all loadings for PC1 (effect 1 = temperature * parent)
+pc2_raw <- get_loadings(res_all, effect = 1, component = 2)
+
+# ALASCA usually returns a list; first element holds the data
+if (is.list(pc2_raw) && !inherits(pc2_raw, "data.frame")) {
+  pc2_df <- as.data.frame(pc2_raw[[1]])
+} else {
+  pc2_df <- as.data.frame(pc2_raw)
+}
+
+# Identify gene column and numeric loading column
+# (You can change "covars" if your object uses a different name)
+if (!"covars" %in% names(pc2_df)) {
+  stop("Could not find 'covars' column in PC2 loadings; check the structure of pc2_df.")
+}
+
+gene_vec <- pc2_df$covars
+
+num_cols <- names(pc2_df)[sapply(pc2_df, is.numeric)]
+
+if (length(num_cols) == 0) {
+  stop("No numeric loading column found in PC2 loadings.")
+}
+loading_col <- num_cols[2]  # typically the PC2 loading column
+
+pc2_load <- pc2_df %>%
+  transmute(
+    gene    = gene_vec,
+    loading = .data[[loading_col]]
+  ) %>%
+  mutate(
+    abs_loading = abs(loading)
+  ) %>%
+  arrange(desc(abs_loading)) %>%
+  mutate(
+    rank           = row_number(),
+    cum_abs        = cumsum(abs_loading),
+    cum_abs_prop   = cum_abs / sum(abs_loading),
+    var_contrib    = loading^2,
+    cum_var        = cumsum(var_contrib) / sum(var_contrib)
+  )
+
+# 2. Find "elbow" on normalized abs(loadings) curve (Kneedle-style)
+n <- nrow(pc2_load)
+x <- (pc2_load$rank - 1) / (n - 1 + 1e-9)  # normalized rank
+y <- (pc2_load$abs_loading - min(pc2_load$abs_loading)) /
+     (max(pc2_load$abs_loading) - min(pc2_load$abs_loading) + 1e-9)
+
+#elbow is selected at the rank of the maximum deviation between the loading curve and diagonal reference
+diff_xy <- x - y
+elbow_idx  <- which.max(diff_xy)
+elbow_rank <- pc2_load$rank[elbow_idx]
+elbow_gene <- pc2_load$gene[elbow_idx]
+
+# 3. 80% cumulative variance threshold as a comparison
+idx_80_var <- which(pc2_load$cum_var >= 0.50)[1]
+
+pc2_load <- pc2_load %>%
+  mutate(
+    selected_elbow  = rank <= elbow_rank,
+    selected_80_var = rank <= idx_80_var
+  )
+
+cat("PC2 important genes by elbow selection: ",
+    sum(pc2_load$selected_elbow), "\n")
+cat("PC2 important genes by 80% variance selection: ",
+    sum(pc2_load$selected_80_var), "\n")
+
+# 5. Diagnostic plots ------------------------------------------
+
+# (a) Absolute loadings vs rank, with elbow + 80% var lines
+pdf("figures/lipids/asca/PC2_abs_loadings_rank.pdf", width = 7, height = 5)
+ggplot(pc2_load, aes(x = rank, y = abs_loading)) +
+  geom_line() +
+  geom_point(size = 0.7) +
+  geom_vline(xintercept = idx_80_var, linetype = "dashed") +
+  annotate("text",
+           x = idx_80_var,
+           y = max(pc2_load$abs_loading) * 0.9,
+           label = paste0("50% var (", idx_80_var, " lipids)"),
+           hjust = -0.1, vjust = 1) +
+  labs(
+    x = "Rank (sorted by |loading|)",
+    y = "|PC2 loading|",
+    title = "PC2 absolute loadings and selection thresholds"
+  ) +
+  theme_classic()
+dev.off()
+
+# Cumulative proportion of variance (squared loadings)
+pdf("figures/lipids/asca/PC2_cumulative_variance.pdf", width = 7, height = 5)
+ggplot(pc2_load, aes(x = rank, y = cum_var)) +
+  geom_line() +
+  geom_vline(xintercept = idx_80_var, linetype = "dashed") +
+   annotate("text",
+           x = idx_80_var,
+           y = max(pc2_load$abs_loading) * 0.9,
+           label = paste0("50% var (", idx_80_var, " lipids)"),
+           hjust = -0.1, vjust = 1) +
+  labs(
+    x = "Rank",
+    y = "Cumulative proportion of variance (loading^2)",
+    title = "PC2 cumulative variance contribution"
+  ) +
+  theme_classic()
+dev.off()
+
+#export a list of genes contributing 80% of variance to PC1
+pc2_important_80 <- pc2_load %>%
+  filter(rank <= idx_80_var)
+
+write.csv(pc2_important_80,
+          "output/lipids_metabolites/lipids/asca/PC2_important_lipids_50pct_variance.csv",
+          row.names = FALSE)
+
+```
+
+99 lipids are important in describing PC2 (differences between C only and C&D mixed symbiont groups) 
+
+## PC3: parental signature (different between each parent type) 
+
+```{r}
+# 1. Extract all loadings for PC1 (effect 1 = temperature * parent)
+pc3_raw <- get_loadings(res_all, effect = 1, component = 3)
+
+# ALASCA usually returns a list; first element holds the data
+if (is.list(pc3_raw) && !inherits(pc3_raw, "data.frame")) {
+  pc3_df <- as.data.frame(pc3_raw[[1]])
+} else {
+  pc3_df <- as.data.frame(pc3_raw)
+}
+
+# Identify gene column and numeric loading column
+# (You can change "covars" if your object uses a different name)
+if (!"covars" %in% names(pc3_df)) {
+  stop("Could not find 'covars' column in PC3 loadings; check the structure of pc3_df.")
+}
+
+gene_vec <- pc3_df$covars
+
+num_cols <- names(pc3_df)[sapply(pc3_df, is.numeric)]
+
+if (length(num_cols) == 0) {
+  stop("No numeric loading column found in PC3 loadings.")
+}
+loading_col <- num_cols[2]  # typically the PC3 loading column
+
+pc3_load <- pc3_df %>%
+  transmute(
+    gene    = gene_vec,
+    loading = .data[[loading_col]]
+  ) %>%
+  mutate(
+    abs_loading = abs(loading)
+  ) %>%
+  arrange(desc(abs_loading)) %>%
+  mutate(
+    rank           = row_number(),
+    cum_abs        = cumsum(abs_loading),
+    cum_abs_prop   = cum_abs / sum(abs_loading),
+    var_contrib    = loading^2,
+    cum_var        = cumsum(var_contrib) / sum(var_contrib)
+  )
+
+# 2. Find "elbow" on normalized abs(loadings) curve (Kneedle-style)
+n <- nrow(pc3_load)
+x <- (pc3_load$rank - 1) / (n - 1 + 1e-9)  # normalized rank
+y <- (pc3_load$abs_loading - min(pc3_load$abs_loading)) /
+     (max(pc3_load$abs_loading) - min(pc3_load$abs_loading) + 1e-9)
+
+#elbow is selected at the rank of the maximum deviation between the loading curve and diagonal reference
+diff_xy <- x - y
+elbow_idx  <- which.max(diff_xy)
+elbow_rank <- pc3_load$rank[elbow_idx]
+elbow_gene <- pc3_load$gene[elbow_idx]
+
+# 3. 80% cumulative variance threshold as a comparison
+idx_80_var <- which(pc3_load$cum_var >= 0.50)[1]
+
+pc3_load <- pc3_load %>%
+  mutate(
+    selected_elbow  = rank <= elbow_rank,
+    selected_80_var = rank <= idx_80_var
+  )
+
+cat("PC3 important genes by elbow selection: ",
+    sum(pc3_load$selected_elbow), "\n")
+cat("PC3 important genes by 80% variance selection: ",
+    sum(pc3_load$selected_80_var), "\n")
+
+# 5. Diagnostic plots ------------------------------------------
+
+# (a) Absolute loadings vs rank, with elbow + 80% var lines
+pdf("figures/lipids/asca/PC3_abs_loadings_rank.pdf", width = 7, height = 5)
+ggplot(pc3_load, aes(x = rank, y = abs_loading)) +
+  geom_line() +
+  geom_point(size = 0.7) +
+  geom_vline(xintercept = idx_80_var, linetype = "dashed") +
+  annotate("text",
+           x = idx_80_var,
+           y = max(pc3_load$abs_loading) * 0.9,
+           label = paste0("50% var (", idx_80_var, " lipids)"),
+           hjust = -0.1, vjust = 1) +
+  labs(
+    x = "Rank (sorted by |loading|)",
+    y = "|PC3 loading|",
+    title = "PC3 absolute loadings and selection thresholds"
+  ) +
+  theme_classic()
+dev.off()
+
+# Cumulative proportion of variance (squared loadings)
+pdf("figures/lipids/asca/PC3_cumulative_variance.pdf", width = 7, height = 5)
+ggplot(pc3_load, aes(x = rank, y = cum_var)) +
+  geom_line() +
+  geom_vline(xintercept = idx_80_var, linetype = "dashed") +
+   annotate("text",
+           x = idx_80_var,
+           y = max(pc3_load$abs_loading) * 0.9,
+           label = paste0("50% var (", idx_80_var, " lipids)"),
+           hjust = -0.1, vjust = 1) +
+  labs(
+    x = "Rank",
+    y = "Cumulative proportion of variance (loading^2)",
+    title = "PC3 cumulative variance contribution"
+  ) +
+  theme_classic()
+dev.off()
+
+#export a list of genes contributing 80% of variance to PC1
+pc3_important_80 <- pc3_load %>%
+  filter(rank <= idx_80_var)
+
+write.csv(pc3_important_80,
+          "output/lipids_metabolites/lipids/asca/PC3_important_lipids_50pct_variance.csv",
+          row.names = FALSE)
+
+```
+
+89 lipids are important in describing PC3 (differences between parent groups) 
+
+## Compare lists of lipids 
+
+```{r}
+pc1_list<-pc1_important_80%>%pull(gene)
+pc2_list<-pc2_important_80%>%pull(gene)
+pc3_list<-pc3_important_80%>%pull(gene)
+```
+
+```{r}
+# install.packages("UpSetR")   # if needed
+library(UpSetR)
+
+# Create list object for upset
+gene_lists <- list(
+  PC1 = pc1_list,
+  PC2 = pc2_list,
+  PC3 = pc3_list
+)
+
+# Convert list to binary matrix for UpSetR
+upset_data <- fromList(gene_lists)
+
+# Plot
+pdf("figures/lipids/asca/PC1_PC2_PC3_upset.pdf", width = 8, height = 6)
+upset(upset_data,
+      order.by = "freq",
+      sets = c("PC1", "PC2", "PC3"),
+      sets.bar.color = "black",
+      mainbar.y.label = "Intersection size",
+      sets.x.label = "Set size"
+)
+dev.off()
+```
+
