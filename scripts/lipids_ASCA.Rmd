@@ -52,7 +52,7 @@ head(long_data)
 
 long_data$temperature<-factor(long_data$temperature, levels=c("Ambient", "Moderate (+3)", "High (+6)"))
 
-long_data$parent<-factor(long_data$parent, levels=c("Wildtype", "Bleached", "Nonbleached"))
+long_data$parent<-factor(long_data$parent, levels=c("Wildtype", "Nonbleached", "Bleached"))
 ```
 
 View any NA or Inf values. 
@@ -103,18 +103,18 @@ plot(res_all, effect = 1, component = 1, type = 'effect',
      ribbon = TRUE,
      x_angle = 0, x_h_just= 0.5,
      flip_axis=TRUE,
-     palette = c("darkgray", "orange", "darkred"),
+     palette = c("darkgray", "darkred", "orange"),
      my_theme = theme_classic())
 dev.off()
 
-# PC1
+# PC2
 pdf(file="figures/lipids/asca/PC2.pdf", width=10, height=6)
 plot(res_all, effect = 1, component = 2, type = 'effect', 
      n_limit=20, 
      ribbon = TRUE,
      x_angle = 0, x_h_just= 0.5,
      flip_axis=TRUE,
-     palette = c("darkgray", "orange", "darkred"),
+     palette = c("darkgray", "darkred", "orange"),
      my_theme = theme_classic())
 dev.off()
 
@@ -124,77 +124,7 @@ plot(res_all, effect = 1, component = 3, type = 'effect',
      n_limit=20, 
      ribbon = TRUE,
      x_angle = 0, x_h_just= 0.5,
-     palette = c("darkgray", "orange", "darkred"),
-     flip_axis=TRUE,
-     my_theme = theme_classic())
-dev.off()
-
-pdf(file="figures/lipids/asca/PC4.pdf", width=10, height=4)
-plot(res_all, effect = 1, component = 4, type = 'effect', 
-     n_limit=10, 
-     ribbon = TRUE,
-     x_angle = 0, x_h_just= 0.5,
-     palette = c("darkgray", "orange", "darkred"),
-     flip_axis=TRUE,
-     my_theme = theme_classic())
-dev.off()
-
-pdf(file="figures/lipids/asca/PC5.pdf", width=10, height=4)
-plot(res_all, effect = 1, component = 5, type = 'effect', 
-     n_limit=10, 
-     ribbon = TRUE,
-     x_angle = 0, x_h_just= 0.5,
-     palette = c("darkgray", "orange", "darkred"),
-     flip_axis=TRUE,
-     my_theme = theme_classic())
-dev.off()
-
-pdf(file="figures/lipids/asca/PC6.pdf", width=10, height=4)
-plot(res_all, effect = 1, component = 6, type = 'effect', 
-     n_limit=10, 
-     ribbon = TRUE,
-     x_angle = 0, x_h_just= 0.5,
-     palette = c("darkgray", "orange", "darkred"),
-     flip_axis=TRUE,
-     my_theme = theme_classic())
-dev.off()
-
-pdf(file="figures/lipids/asca/PC7.pdf", width=10, height=4)
-plot(res_all, effect = 1, component = 7, type = 'effect', 
-     n_limit=10, 
-     ribbon = TRUE,
-     x_angle = 0, x_h_just= 0.5,
-     palette = c("darkgray", "orange", "darkred"),
-     flip_axis=TRUE,
-     my_theme = theme_classic())
-dev.off()
-
-pdf(file="figures/lipids/asca/PC8.pdf", width=10, height=4)
-plot(res_all, effect = 1, component = 8, type = 'effect', 
-     n_limit=10, 
-     ribbon = TRUE,
-     x_angle = 0, x_h_just= 0.5,
-     palette = c("darkgray", "orange", "darkred"),
-     flip_axis=TRUE,
-     my_theme = theme_classic())
-dev.off()
-
-pdf(file="figures/lipids/asca/PC9.pdf", width=10, height=4)
-plot(res_all, effect = 1, component = 9, type = 'effect', 
-     n_limit=10, 
-     ribbon = TRUE,
-     x_angle = 0, x_h_just= 0.5,
-     palette = c("darkgray", "orange", "darkred"),
-     flip_axis=TRUE,
-     my_theme = theme_classic())
-dev.off()
-
-pdf(file="figures/lipids/asca/PC10.pdf", width=10, height=4)
-plot(res_all, effect = 1, component = 10, type = 'effect', 
-     n_limit=10, 
-     ribbon = TRUE,
-     x_angle = 0, x_h_just= 0.5,
-     palette = c("darkgray", "orange", "darkred"),
+     palette = c("darkgray", "darkred", "orange"),
      flip_axis=TRUE,
      my_theme = theme_classic())
 dev.off()
@@ -209,7 +139,7 @@ plot(res_all, effect = 1, component = c(1,2,3), type = 'effect',
      ribbon = TRUE,
      x_angle = 0, x_h_just= 0.5,
      flip_axis=TRUE,
-     palette = c("darkgray", "orange", "darkred"),
+     palette = c("darkgray", "darkred", "orange"),
      my_theme = theme_classic())
 dev.off()
 ```
@@ -219,17 +149,17 @@ Plot top genes contributing to each component.
 ```{r}
 # PC1 genes
 pdf(file="figures/lipids/asca/PC1_genes.pdf", width=16, height=6)
-plot(res_all, component = 1, effect = 1, type = 'prediction', n_limit = 20, variable = c(), palette = c("darkgray", "orange", "darkred"))
+plot(res_all, component = 1, effect = 1, type = 'prediction', n_limit = 20, variable = c(), palette = c("darkgray", "darkred", "orange"))
 dev.off()
 
 # PC2 genes
 pdf(file="figures/lipids/asca/PC2_genes.pdf", width=16, height=6)
-plot(res_all, component = 2, effect = 1, type = 'prediction', n_limit = 20, variable = c(), palette = c("darkgray", "orange", "darkred"))
+plot(res_all, component = 2, effect = 1, type = 'prediction', n_limit = 20, variable = c(), palette = c("darkgray", "darkred", "orange"))
 dev.off()
 
 # PC3 genes
 pdf(file="figures/lipids/asca/PC3_genes.pdf", width=16, height=6)
-plot(res_all, component = 3, effect = 1, type = 'prediction', n_limit = 20, variable = c(), palette = c("darkgray", "orange", "darkred"))
+plot(res_all, component = 3, effect = 1, type = 'prediction', n_limit = 20, variable = c(), palette = c("darkgray", "darkred", "orange"))
 dev.off()
 ```
 
@@ -778,9 +708,7 @@ temp_cols <- c(
 parent_cols <- c(
   "Wildtype"    = "darkgray",
   "Bleached"    = "orange",
-  "Nonbleached" = "darkred",
-  "Non-bleached" = "darkred",
-  "Resistant"   = "darkred"
+  "Nonbleached" = "darkred"
 )
 
 ha <- HeatmapAnnotation(
@@ -1095,7 +1023,7 @@ pc_plot1<-pc1_conc%>%
   facet_wrap(~variable, scales="free_y")+
   geom_boxplot(outliers=FALSE)+
   geom_point(position=position_dodge(0.8))+
-  scale_colour_manual(name="Parent (Symbiont)", labels=c("Wildtype (C/D)", "Bleached (C)", "Nonbleached (C/D)"), values=c("darkgray", "orange", "darkred"))+
+  scale_colour_manual(name="Parent (Symbiont)", labels=c("Wildtype (C/D)", "Nonbleached (C/D)", "Bleached (C)"), values=c("darkgray", "darkred", "orange"))+
   ggtitle("PC1: Temperature Effects")+
   xlab("Temperature")+
   ylab("Concentration")+
@@ -1122,7 +1050,7 @@ pc_plot2<-pc2_conc%>%
   facet_wrap(~variable, scales="free_y")+
   geom_boxplot(outliers=FALSE)+
   geom_point(position=position_dodge(0.8))+
-  scale_colour_manual(name="Parent (Symbiont)", labels=c("Wildtype (C/D)", "Bleached (C)", "Nonbleached (C/D)"), values=c("darkgray", "orange", "darkred"))+
+  scale_colour_manual(name="Parent (Symbiont)", labels=c("Wildtype (C/D)", "Nonbleached (C/D)", "Bleached (C)"), values=c("darkgray", "darkred", "orange"))+
   ggtitle("PC2: Symbiont Effects")+
   xlab("Temperature")+
   ylab("Concentration")+
@@ -1149,7 +1077,7 @@ pc_plot3<-pc3_conc%>%
   facet_wrap(~variable, scales="free_y")+
   geom_boxplot(outliers=FALSE)+
   geom_point(position=position_dodge(0.8))+
-  scale_colour_manual(name="Parent (Symbiont)", labels=c("Wildtype (C/D)", "Bleached (C)", "Nonbleached (C/D)"), values=c("darkgray", "orange", "darkred"))+
+  scale_colour_manual(name="Parent (Symbiont)", labels=c("Wildtype (C/D)", "Nonbleached (C/D)", "Bleached (C)"), values=c("darkgray", "darkred", "orange"))+
   ggtitle("PC3: Parent Effects")+
   xlab("Temperature")+
   ylab("Concentration")+
