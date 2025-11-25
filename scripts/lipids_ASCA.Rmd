@@ -1085,7 +1085,7 @@ top10_pc1<-pc1_conc%>%
   arrange(desc(abs_loading))%>%
   select(variable, abs_loading)%>%
   unique()%>%
-  slice_head(n=10)%>%
+  slice_head(n=12)%>%
   pull(variable)
 
 pc_plot1<-pc1_conc%>%
@@ -1112,7 +1112,7 @@ top10_pc2<-pc2_conc%>%
   arrange(desc(abs_loading))%>%
   select(variable, abs_loading)%>%
   unique()%>%
-  slice_head(n=10)%>%
+  slice_head(n=12)%>%
   pull(variable)
 
 pc_plot2<-pc2_conc%>%
@@ -1139,7 +1139,7 @@ top10_pc3<-pc3_conc%>%
   arrange(desc(abs_loading))%>%
   select(variable, abs_loading)%>%
   unique()%>%
-  slice_head(n=10)%>%
+  slice_head(n=12)%>%
   pull(variable)
 
 pc_plot3<-pc3_conc%>%
