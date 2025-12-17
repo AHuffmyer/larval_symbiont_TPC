@@ -11,19 +11,6 @@ Trigg et al 2020 BMC Genomics
 - Found location of "diminishing returns" of PC loading scores to determine which proteins were "most important" to each PC 
 https://doi.org/10.1186/s12864-020-07127-3
 
--> Pull out "most important" genes on each PC
--> Describe PCs1-3 primarily 
--> Functional enrichment and heat map of important genes to each pattern 
-
-1. ASCA for high level patterns
-2. DESeq2 for specific comparisons of interest (B vs NB at 33°C) for testing hypotheses 
-
-REPEAT WITH LIPIDS 
-- ASCA first 
-- Then VIP/PLSDA as follow up for specific tests 
-
-
-
 Analysis of RNAseq data using ASCA (ANOVA Simultaneous Component Analysis) to examine how gene expression changes across temperatures for each parental phenotype.
 
 ```{r setup, include=FALSE}
@@ -216,6 +203,38 @@ normalized_df <- normalized_df %>%
 head(normalized_df[, 1:10])
 ```
 
+Make sure there are no missing values or NAs. 
+```{r}
+str(normalized_df)
+
+sum(is.na(normalized_df))
+sum(is.infinite(as.matrix(normalized_df[, -(1:3)])))
+
+na_per_col <- colSums(is.na(normalized_df))
+summary(na_per_col)
+
+cols_with_na <- names(na_per_col[na_per_col > 0])
+length(cols_with_na)
+cols_with_na[1:10]
+
+inf_per_col <- colSums(is.infinite(as.matrix(normalized_df[, -(1:3)])))
+names(inf_per_col[inf_per_col > 0])
+
+na_per_row <- rowSums(is.na(normalized_df))
+summary(na_per_row)
+
+expr_mat <- normalized_df[, -(1:3)]  # expression only
+
+zero_var_cols <- apply(expr_mat, 2, function(x) sd(x, na.rm = TRUE) == 0)
+sum(zero_var_cols)
+names(zero_var_cols[zero_var_cols])[1:10]
+
+nzv_cols <- apply(expr_mat, 2, function(x) sd(x, na.rm = TRUE) < 1e-6)
+sum(nzv_cols)
+
+with(normalized_df, table(temperature, parent))
+```
+
 Convert to long format for ALASCA.
 
 ```{r}
@@ -255,6 +274,62 @@ res_all <- ALASCA(
   reduce_dimensions = TRUE
 )
 ```
+
+Run full analysis to obtain 1000 successful validation runs (dealing with SVD error)
+```{r}
+# Target number of successful validation runs
+target_success <- 1000
+
+# How many validation runs to attempt per chunk
+chunk_runs <- 250
+
+# Safety cap so you don’t loop forever if something is fundamentally wrong
+max_attempts <- 20  # 20 * 250 = 5000 attempted runs maximum
+
+# Storage
+fits <- list()
+success_total <- 0
+attempt <- 0
+
+set.seed(123)  # for reproducibility of the resampling sequence
+
+while (success_total < target_success && attempt < max_attempts) {
+  attempt <- attempt + 1
+  message("Attempt ", attempt, " (trying ", chunk_runs, " validation runs)...")
+
+  fit_i <- tryCatch(
+    ALASCA(
+      long_data,
+      value ~ temperature * parent + (1|sample),
+      n_validation_runs = chunk_runs,
+      validate = TRUE,
+      reduce_dimensions = TRUE
+    ),
+    error = function(e) {
+      message("  -> failed: ", conditionMessage(e))
+      return(NULL)
+    }
+  )
+
+  if (!is.null(fit_i)) {
+    fits[[length(fits) + 1]] <- fit_i
+    success_total <- success_total + chunk_runs
+    message("  -> success_total = ", success_total)
+  }
+}
+
+if (success_total < target_success) {
+  stop("Could not reach ", target_success,
+       " successful validation runs. Reached ", success_total,
+       " after ", attempt, " attempts.")
+}
+
+# Use the last successful fit object for downstream plotting/loadings
+# (Validation was performed; this object is consistent with your existing workflow.)
+res_all <- fits[[length(fits)]]
+
+```
+
 
 Generate scree plot.
 
