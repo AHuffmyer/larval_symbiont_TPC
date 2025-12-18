@@ -238,6 +238,8 @@ with(normalized_df, table(temperature, parent))
 Convert to long format for ALASCA.
 
 ```{r}
+str(normalized_df)
+
 long_data <- normalized_df %>%
   pivot_longer(cols = -c(sample, temperature, parent), 
                names_to = "variable", 
@@ -261,30 +263,49 @@ No NA or INF values.
 
 # Run ASCA analysis for all parental phenotypes
 
-Start with 10 runs, increase to 100 for full analysis. 
+For initial analysis run with 10 runs, do full validation at 1000 runs. 
 
 Run ASCA model with temperature and phenotype as the main effect and sample as random effect.
 
+Samples are stratified by group. With an n=6, random resampling can sometimes cause validation to fail if resampling excludes a group randomly. This conducts random resampling with representatives of each group in each run. We will not perform additional scaling because data is already variance stabilize transformed. 
+
+Analyze effects in the model of parent, temperature, and parent:temperature. Determine PC's for each effect. 
+
+Full validation with 1000 runs takes about 1.5 h to run. Suggest to run this script as a background job. Needs to run with larger memory. 
 ```{r}
+long_data<-long_data%>%
+  mutate(code = interaction(temperature, parent, drop = TRUE))
+
+set.seed(123)
+
 res_all <- ALASCA(
   long_data,
   value ~ temperature * parent + (1|sample),
-  n_validation_runs = 10,
+  effects=c("temperature", "parent", "temperature:parent"),
+  n_validation_runs = 1000,
+  scale_function = "none",
   validate = TRUE,
+  stratification_column = "code",
+  p_adjust_method = "fdr",
   reduce_dimensions = TRUE
 )
 ```
 
-Run full analysis to obtain 1000 successful validation runs (dealing with SVD error)
+
+
+
+
+
+Run full analysis to obtain 1000 successful validation runs. 
 ```{r}
 # Target number of successful validation runs
 target_success <- 1000
 
 # How many validation runs to attempt per chunk
-chunk_runs <- 250
+chunk_runs <- 100
 
 # Safety cap so you don’t loop forever if something is fundamentally wrong
-max_attempts <- 20  # 20 * 250 = 5000 attempted runs maximum
+max_attempts <- 50  # 50 * 100 = 5000 attempted runs maximum
 
 # Storage
 fits <- list()
@@ -303,6 +324,7 @@ while (success_total < target_success && attempt < max_attempts) {
       value ~ temperature * parent + (1|sample),
       n_validation_runs = chunk_runs,
       validate = TRUE,
+      stratification_column = "code",
       reduce_dimensions = TRUE
     ),
     error = function(e) {
@@ -329,6 +351,118 @@ if (success_total < target_success) {
 res_all <- fits[[length(fits)]]
 
 ```
+
+```{r}
+#temp
+plot(res_all, component = seq(1,10), effect = 1, type = 'scree')
+#2 PCs >10%
+
+#parent
+plot(res_all, component = seq(1,10), effect = 2, type = 'scree')
+#2 PCs >10%
+
+#parent:temperature
+plot(res_all, component = seq(1,10), effect = 3, type = 'scree')
+#3 PCs >10%
+
+#temp
+
+#increase with temp
+plot(res_all, effect = 1, component = 1, type = 'effect', 
+     n_limit=20, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     flip_axis=TRUE,
+     #palette = c("darkgray", "orange", "darkred"),
+     my_theme = theme_classic())
+
+#different at 30C than 27 and 33 
+plot(res_all, effect = 1, component = 2, type = 'effect', 
+     n_limit=20, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     flip_axis=TRUE,
+     #palette = c("darkgray", "orange", "darkred"),
+     my_theme = theme_classic())
+
+#parent
+
+#Different in bleached
+plot(res_all, effect = 2, component = 1, type = 'effect', 
+     n_limit=20, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     flip_axis=TRUE,
+     #palette = c("darkgray", "orange", "darkred"),
+     my_theme = theme_classic())
+
+#Different between all parents
+plot(res_all, effect = 2, component = 2, type = 'effect', 
+     n_limit=20, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     flip_axis=TRUE,
+     #palette = c("darkgray", "orange", "darkred"),
+     my_theme = theme_classic())
+
+#parent:temperature
+
+#Different between parents at high temperature, linear response to temperature 
+plot(res_all, effect = 3, component = 1, type = 'effect', 
+     n_limit=20, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     flip_axis=TRUE,
+     palette = c("darkgray", "orange", "darkred"),
+     my_theme = theme_classic())
+
+#Different between parents at high temperature, with peak/decrease at 30C 
+plot(res_all, effect = 3, component = 2, type = 'effect', 
+     n_limit=20, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     flip_axis=TRUE,
+     #palette = c("darkgray", "orange", "darkred"),
+     my_theme = theme_classic())
+
+#Higher in bleached across temperatures than NB/WT  
+plot(res_all, effect = 3, component = 3, type = 'effect', 
+     n_limit=20, 
+     ribbon = TRUE,
+     x_angle = 0, x_h_just= 0.5,
+     flip_axis=TRUE,
+     #palette = c("darkgray", "orange", "darkred"),
+     my_theme = theme_classic())
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 Generate scree plot.
