@@ -289,67 +289,13 @@ res_all <- ALASCA(
   p_adjust_method = "fdr",
   reduce_dimensions = TRUE
 )
+
+saveRDS(res_all, file = "output/rna_seq/asca/asca_results_genes.rds")
 ```
 
-
-
-
-
-
-Run full analysis to obtain 1000 successful validation runs. 
+Read in R data file of full validation run if not running full validation.
 ```{r}
-# Target number of successful validation runs
-target_success <- 1000
-
-# How many validation runs to attempt per chunk
-chunk_runs <- 100
-
-# Safety cap so you don’t loop forever if something is fundamentally wrong
-max_attempts <- 50  # 50 * 100 = 5000 attempted runs maximum
-
-# Storage
-fits <- list()
-success_total <- 0
-attempt <- 0
-
-set.seed(123)  # for reproducibility of the resampling sequence
-
-while (success_total < target_success && attempt < max_attempts) {
-  attempt <- attempt + 1
-  message("Attempt ", attempt, " (trying ", chunk_runs, " validation runs)...")
-
-  fit_i <- tryCatch(
-    ALASCA(
-      long_data,
-      value ~ temperature * parent + (1|sample),
-      n_validation_runs = chunk_runs,
-      validate = TRUE,
-      stratification_column = "code",
-      reduce_dimensions = TRUE
-    ),
-    error = function(e) {
-      message("  -> failed: ", conditionMessage(e))
-      return(NULL)
-    }
-  )
-
-  if (!is.null(fit_i)) {
-    fits[[length(fits) + 1]] <- fit_i
-    success_total <- success_total + chunk_runs
-    message("  -> success_total = ", success_total)
-  }
-}
-
-if (success_total < target_success) {
-  stop("Could not reach ", target_success,
-       " successful validation runs. Reached ", success_total,
-       " after ", attempt, " attempts.")
-}
-
-# Use the last successful fit object for downstream plotting/loadings
-# (Validation was performed; this object is consistent with your existing workflow.)
-res_all <- fits[[length(fits)]]
-
+res_all <- readRDS("output/rna_seq/asca/asca_results_genes.rds")
 ```
 
 ```{r}
