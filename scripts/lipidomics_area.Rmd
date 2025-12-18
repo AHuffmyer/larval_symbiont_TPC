@@ -12,6 +12,13 @@ editor_options:
   chunk_output_type: console
 ---
 
+ADD LOG TRANSFORM? mutate(value = log1p(value)) 
+
+
+
+
+
+
 # Set Up    
 
 ```{r setup, include=FALSE}
@@ -431,6 +438,16 @@ We have 1009 lipids in our dataset.
 
 ```{r}
 hist(lipids_filtered$area_normalized)
+summary(lipids_filtered$area_normalized)
+max(lipids_filtered$area_normalized)
+```
+
+There is one value >10 with other values, remove this value. 
+```{r}
+lipids_filtered<-lipids_filtered%>%
+  filter(area_normalized<10)
+
+hist(lipids_filtered$area_normalized)
 ```
 
 Plot and remove outliers. 
@@ -449,13 +466,22 @@ wide_data%>%
     select_if(~ any(is.na(.)))
 ```
 
-Replace NA's with 0's. 
+Replace NA's and -Inf with 0's. 
 
 ```{r}
 wide_data[is.na(wide_data)] <- 0
 
 wide_data%>%
     select_if(~ any(is.na(.)))
+
+wide_data%>%
+    select_if(~ any(is.infinite(.)))
+
+wide_data <- wide_data %>%
+  mutate(across(everything(), ~ replace(., is.infinite(.), 0)))
+
+wide_data%>%
+    select_if(~ any(is.infinite(.)))
 ```
 
 ```{r}
@@ -489,7 +515,7 @@ pca1<-ggplot2::autoplot(scaled.pca, data=wide_data, frame.colour="parent", loadi
         axis.title = element_text(size=18,  face="bold"));pca1
 ```
 
-Sample 23 and 48 are outliers, remove. 
+Sample 23 and 48 is an outlier, remove. 
 
 ```{r}
 wide_data<-wide_data%>%
@@ -532,6 +558,8 @@ length(unique(test$lipid))
 keep_list<-c(unique(test$lipid))
 
 hist(test$RSD)
+
+summary(test$RSD)
 ```
 843 lipids after 
 
@@ -595,6 +623,8 @@ Prepare a PCA plot
 vegan <- scale(wide_data%>%select(where(is.numeric)))
 
 # PerMANOVA 
+set.seed(123)
+
 permanova<-adonis2(vegan ~ parent*temperature, data = wide_data, method='eu')
 permanova
 ```
@@ -1262,6 +1292,8 @@ for(compound in name_list){
     filter(lipid==compound)%>%
     
     aov(area_normalized ~ temperature * parent, data = .)
+  
+  qqPlot(residuals(model))
 
   #Extract the relevant coefficients for interaction of treatment x position
   anova_output <- anova(model)
@@ -1292,6 +1324,8 @@ head(results_table_sign)
 
 write.csv(results_table, file="output/lipids_metabolites/lipids/anova_full_results.csv")
 ```
+
+Residuals pass 
 
 # View concentrations of lipids by class 
 
@@ -1357,6 +1391,8 @@ results_table_sign<-results_table%>%
 
 results_table_sign
 ```
+
+Residuals pass 
 
    Ontology        term df        sumsq statistic      p.value  adj_pvalues
 1  BileAcid temperature  2 7.800681e-06  8.327628 8.990615e-04 0.0277424700
