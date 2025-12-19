@@ -67,7 +67,7 @@ long_data%>%
 
 No NA or INF values. 
 
-# Run ASCA analysis for all parental phenotypes
+# Run ASCA analysis 
 
 For initial analysis run with 10 runs, do full validation at 1000 runs. 
 
@@ -130,7 +130,6 @@ dev.off()
 
 Temperature PCs
 ```{r}
-str(p)
 pdf(file="figures/lipids/asca/temp_PC1.pdf", width=10, height=6)
 plot(res_all, effect = 1, component = 1, type = 'effect', 
      n_limit=20, 
@@ -290,7 +289,7 @@ ggplot(temp_pc1_load, aes(x = rank, y = abs_loading)) +
   geom_point(size = 0.7) +
   geom_vline(xintercept = idx_25_var, linetype = "dashed") +
   annotate("text",
-           x = idx_80_var,
+           x = idx_25_var,
            y = max(temp_pc1_load$abs_loading) * 0.9,
            label = paste0("25% var (", idx_25_var, " lipids)"),
            hjust = -0.1, vjust = 1) +
@@ -408,9 +407,9 @@ pdf("figures/lipids/asca/temp_PC2_abs_loadings_rank.pdf", width = 7, height = 5)
 ggplot(temp_pc2_load, aes(x = rank, y = abs_loading)) +
   geom_line() +
   geom_point(size = 0.7) +
-  geom_vline(xintercept = idx_80_var, linetype = "dashed") +
+  geom_vline(xintercept = idx_25_var, linetype = "dashed") +
   annotate("text",
-           x = idx_80_var,
+           x = idx_25_var,
            y = max(temp_pc2_load$abs_loading) * 0.9,
            label = paste0("25% var (", idx_25_var, " lipids)"),
            hjust = -0.1, vjust = 1) +
@@ -544,7 +543,7 @@ ggplot(parent_pc1_load, aes(x = rank, y = abs_loading)) +
   geom_point(size = 0.7) +
   geom_vline(xintercept = idx_25_var, linetype = "dashed") +
   annotate("text",
-           x = idx_80_var,
+           x = idx_25_var,
            y = max(parent_pc1_load$abs_loading) * 0.9,
            label = paste0("25% var (", idx_25_var, " lipids)"),
            hjust = -0.1, vjust = 1) +
@@ -673,7 +672,7 @@ ggplot(parent_pc2_load, aes(x = rank, y = abs_loading)) +
   geom_point(size = 0.7) +
   geom_vline(xintercept = idx_25_var, linetype = "dashed") +
   annotate("text",
-           x = idx_80_var,
+           x = idx_25_var,
            y = max(parent_pc2_load$abs_loading) * 0.9,
            label = paste0("25% var (", idx_25_var, " lipids)"),
            hjust = -0.1, vjust = 1) +
@@ -802,7 +801,7 @@ ggplot(int_pc1_load, aes(x = rank, y = abs_loading)) +
   geom_point(size = 0.7) +
   geom_vline(xintercept = idx_25_var, linetype = "dashed") +
   annotate("text",
-           x = idx_80_var,
+           x = idx_25_var,
            y = max(int_pc1_load$abs_loading) * 0.9,
            label = paste0("25% var (", idx_25_var, " lipids)"),
            hjust = -0.1, vjust = 1) +
@@ -931,7 +930,7 @@ ggplot(int_pc2_load, aes(x = rank, y = abs_loading)) +
   geom_point(size = 0.7) +
   geom_vline(xintercept = idx_25_var, linetype = "dashed") +
   annotate("text",
-           x = idx_80_var,
+           x = idx_25_var,
            y = max(int_pc2_load$abs_loading) * 0.9,
            label = paste0("25% var (", idx_25_var, " lipids)"),
            hjust = -0.1, vjust = 1) +
@@ -1026,6 +1025,7 @@ There is more overlap in lipids between the temperature and interaction PCs. In 
 
 # Plot a heatmap of the most important lipids from each PC
 
+Use log1p transformed area normalized lipid values. 
 ```{r}
 #make data frames for each PC
 temp_pc1_important_25<-temp_pc1_important_25%>%mutate(PC="Temp 1")

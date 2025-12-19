@@ -1,0 +1,72 @@
+"","GO.ID","Term","Annotated","Significant","Expected","Rank in classicFisher","classicFisher","weightFisher","bh_adjust","bh_adjust_weight","ParentTerm","N_in_Parent"
+"1","GO:0006986","response to unfolded protein",124,7,1.11,22,0.00011,8.8e-06,0.043015,0.0189266,"response to unfolded protein",7
+"2","GO:1900034","regulation of cellular response to heat",43,5,0.38,17,3.7e-05,3.7e-05,0.0176839444444444,0.039788875,"regulation of cellular response to heat",2
+"3","GO:0001101","response to acid chemical",319,10,2.85,51,5e-04,0.00025,0.084343137254902,0.215075,"response to unfolded protein",7
+"4","GO:0045471","response to ethanol",198,8,1.77,45,0.00036,0.00036,0.068824,0.238236923076923,"response to unfolded protein",7
+"5","GO:0051085","chaperone cofactor-dependent protein ref...",17,3,0.15,49,0.00043,0.00043,0.0754957142857143,0.264235,"chaperone cofactor-dependent protein refolding",3
+"6","GO:0071276","cellular response to cadmium ion",23,3,0.21,66,0.00107,0.00107,0.135526712328767,0.412227083333333,"cellular response to cadmium ion",2
+"7","GO:0016237","microautophagy",6,2,0.05,68,0.00115,0.00115,0.135526712328767,0.412227083333333,"microautophagy",1
+"8","GO:1903475","mitotic actomyosin contractile ring asse...",6,2,0.05,72,0.00115,0.00115,0.135526712328767,0.412227083333333,"mitotic actomyosin contractile ring assembly",4
+"9","GO:0009636","response to toxic substance",509,12,4.55,85,0.00171,0.00139,0.171071149425287,0.446800967741936,"response to unfolded protein",7
+"10","GO:0016191","synaptic vesicle uncoating",7,2,0.06,78,0.00161,0.00161,0.164890833333333,0.446800967741936,"synaptic vesicle uncoating",4
+"11","GO:0030241","skeletal muscle myosin thick filament as...",7,2,0.06,79,0.00161,0.00161,0.164890833333333,0.446800967741936,"mitotic actomyosin contractile ring assembly",4
+"12","GO:0042572","retinol metabolic process",27,3,0.24,86,0.00172,0.00172,0.171071149425287,0.46241125,"retinol metabolic process",3
+"13","GO:1901570","fatty acid derivative biosynthetic proce...",100,5,0.89,91,0.00194,0.00194,0.1832439,0.495253783783784,"retinol metabolic process",3
+"14","GO:0030950","establishment or maintenance of actin cy...",8,2,0.07,96,0.00213,0.00213,0.1832439,0.495253783783784,"establishment or maintenance of actin cytoskeleton polarity",2
+"15","GO:0071896","protein localization to adherens junctio...",8,2,0.07,98,0.00213,0.00213,0.1832439,0.495253783783784,"protein localization to adherens junction",6
+"16","GO:1990834","response to odorant",9,2,0.08,108,0.00272,0.00272,0.214680366972477,0.600004102564103,"response to unfolded protein",7
+"17","GO:0090251","protein localization involved in establi...",10,2,0.09,114,0.00338,0.00338,0.252853391304348,0.676235813953488,"protein localization to adherens junction",6
+"18","GO:1902946","protein localization to early endosome",13,2,0.12,150,0.00576,0.00576,0.326008421052632,0.917653333333333,"protein localization to adherens junction",6
+"19","GO:0042060","wound healing",378,11,3.38,50,0.00049,0.00649,0.0843094,1,"regulation of cellular response to heat",2
+"20","GO:0006606","protein import into nucleus",154,5,1.38,249,0.012,0.00677,0.407141976744186,1,"protein localization to adherens junction",6
+"21","GO:0014057","positive regulation of acetylcholine sec...",16,2,0.14,185,0.00871,0.00871,0.378840627802691,1,"positive regulation of acetylcholine secretion, neurotransmission",3
+"22","GO:0034334","adherens junction maintenance",16,2,0.14,186,0.00871,0.00871,0.378840627802691,1,"adherens junction maintenance",3
+"23","GO:0045199","maintenance of epithelial cell apical/ba...",16,2,0.14,190,0.00871,0.00871,0.378840627802691,1,"establishment or maintenance of actin cytoskeleton polarity",2
+"24","GO:0048026","positive regulation of mRNA splicing, vi...",16,2,0.14,191,0.00871,0.00871,0.378840627802691,1,"positive regulation of mRNA splicing, via spliceosome",4
+"25","GO:0051235","maintenance of location",287,5,2.56,1114,0.11309,0.00876,0.873351229802513,1,"maintenance of location",1
+"26","GO:0043488","regulation of mRNA stability",141,4,1.26,505,0.03705,0.01041,0.629923221343874,1,"positive regulation of mRNA splicing, via spliceosome",4
+"27","GO:0008088","axo-dendritic transport",79,3,0.71,481,0.03337,0.01085,0.596844303534304,1,"synaptic vesicle uncoating",4
+"28","GO:0051124","synaptic assembly at neuromuscular junct...",154,3,1.38,1371,0.15854,0.01104,0.994110510204081,1,"adherens junction maintenance",3
+"29","GO:0002698","negative regulation of immune effector p...",44,3,0.39,164,0.00697,0.01321,0.363411575757576,1,"negative regulation of immune effector process",4
+"30","GO:0007623","circadian rhythm",222,6,1.98,276,0.01413,0.01405,0.440436195652174,1,"circadian rhythm",1
+"31","GO:0031581","hemidesmosome assembly",21,2,0.19,281,0.01481,0.01481,0.442566701030928,1,"adherens junction maintenance",3
+"32","GO:0042574","retinal metabolic process",21,2,0.19,283,0.01481,0.01481,0.442566701030928,1,"retinol metabolic process",3
+"33","GO:0008045","motor neuron axon guidance",59,3,0.53,294,0.01556,0.01556,0.444579082278481,1,"motor neuron axon guidance",3
+"34","GO:0070593","dendrite self-avoidance",22,2,0.2,304,0.0162,0.0162,0.444579082278481,1,"motor neuron axon guidance",3
+"35","GO:0007265","Ras protein signal transduction",267,5,2.38,947,0.08985,0.01643,0.816240285110876,1,"Ras protein signal transduction",3
+"36","GO:0051384","response to glucocorticoid",130,5,1.16,154,0.00599,0.01702,0.334623181818182,1,"response to unfolded protein",7
+"37","GO:0051017","actin filament bundle assembly",91,4,0.81,195,0.00874,0.01703,0.378840627802691,1,"mitotic actomyosin contractile ring assembly",4
+"38","GO:0043085","positive regulation of catalytic activit...",869,11,7.76,1301,0.14873,0.01718,0.972119462528388,1,"positive regulation of catalytic activity",3
+"39","GO:1903427","negative regulation of reactive oxygen s...",23,2,0.21,326,0.01764,0.01764,0.459085015015015,1,"negative regulation of reactive oxygen species biosynthetic process",2
+"40","GO:0000122","negative regulation of transcription by ...",526,10,4.7,335,0.01798,0.01798,0.461737134328358,1,"negative regulation of reactive oxygen species biosynthetic process",2
+"41","GO:0016055","Wnt signaling pathway",337,7,3.01,443,0.03033,0.01806,0.589004492099323,1,"Ras protein signal transduction",3
+"42","GO:0016476","regulation of embryonic cell shape",25,2,0.22,362,0.02068,0.02068,0.487348324324324,1,"regulation of embryonic cell shape",2
+"43","GO:0072488","ammonium transmembrane transport",25,2,0.22,363,0.02068,0.02068,0.487348324324324,1,"positive regulation of acetylcholine secretion, neurotransmission",3
+"44","GO:0002819","regulation of adaptive immune response",75,4,0.67,135,0.00442,0.02574,0.281668592592593,1,"negative regulation of immune effector process",4
+"45","GO:0032456","endocytic recycling",72,3,0.64,410,0.0263,0.0263,0.546519082125604,1,"synaptic vesicle uncoating",4
+"46","GO:0032502","developmental process",4289,47,38.31,429,0.02912,0.02633,0.57763,1,"motor neuron axon guidance",3
+"47","GO:0045184","establishment of protein localization",1222,13,10.91,1955,0.29165,0.02705,1,1,"protein localization to adherens junction",6
+"48","GO:0051591","response to cAMP",73,3,0.65,419,0.02726,0.02726,0.556449361702128,1,"response to unfolded protein",7
+"49","GO:0045824","negative regulation of innate immune res...",29,2,0.26,421,0.02736,0.02736,0.556449361702128,1,"negative regulation of immune effector process",4
+"50","GO:0051496","positive regulation of stress fiber asse...",30,2,0.27,430,0.02914,0.02914,0.57763,1,"mitotic actomyosin contractile ring assembly",4
+"51","GO:0006915","apoptotic process",1164,17,10.4,408,0.02568,0.03174,0.541482941176471,1,"apoptotic process",1
+"52","GO:0043903","regulation of biological process involve...",135,4,1.21,461,0.03233,0.03233,0.5930693125,1,"regulation of biological process involved in symbiotic interaction",1
+"53","GO:0048568","embryonic organ development",391,8,3.49,386,0.0228,0.03234,0.508156476683938,1,"regulation of embryonic cell shape",2
+"54","GO:0007076","mitotic chromosome condensation",32,2,0.29,465,0.03285,0.03285,0.5930693125,1,"mitotic chromosome condensation",3
+"55","GO:1905710","positive regulation of membrane permeabi...",32,2,0.29,467,0.03285,0.03285,0.5930693125,1,"positive regulation of membrane permeability",2
+"56","GO:0002921","negative regulation of humoral immune re...",13,2,0.12,151,0.00576,0.03484,0.326008421052632,1,"negative regulation of immune effector process",4
+"57","GO:0035864","response to potassium ion",24,2,0.21,341,0.01914,0.03488,0.473165,1,"cellular response to cadmium ion",2
+"58","GO:0051726","regulation of cell cycle",961,11,8.58,1728,0.23522,0.03529,1,1,"mitotic chromosome condensation",3
+"59","GO:0050821","protein stabilization",140,4,1.25,500,0.03624,0.03624,0.62354544,1,"positive regulation of membrane permeability",2
+"60","GO:0045862","positive regulation of proteolysis",289,8,2.58,124,0.00409,0.03709,0.267866136363636,1,"positive regulation of mRNA splicing, via spliceosome",4
+"61","GO:0044743","protein transmembrane import into intrac...",35,2,0.31,511,0.03874,0.03874,0.644642591876209,1,"protein localization to adherens junction",6
+"62","GO:0042026","protein refolding",13,3,0.12,29,0.00018,0.04278,0.052728064516129,1,"chaperone cofactor-dependent protein refolding",3
+"63","GO:0015837","amine transport",89,3,0.79,577,0.04502,0.04316,0.668924110535406,1,"positive regulation of acetylcholine secretion, neurotransmission",3
+"64","GO:0031589","cell-substrate adhesion",161,3,1.44,1464,0.17378,0.04353,1,1,"cell-substrate adhesion",1
+"65","GO:0032877","positive regulation of DNA endoreduplica...",5,1,0.04,551,0.04388,0.04388,0.665369348591549,1,"mitotic chromosome condensation",3
+"66","GO:0061365","positive regulation of triglyceride lipa...",5,1,0.04,557,0.04388,0.04388,0.665369348591549,1,"positive regulation of catalytic activity",3
+"67","GO:0098700","neurotransmitter loading into synaptic v...",5,1,0.04,559,0.04388,0.04388,0.665369348591549,1,"synaptic vesicle uncoating",4
+"68","GO:1903026","negative regulation of RNA polymerase II...",5,1,0.04,560,0.04388,0.04388,0.665369348591549,1,"positive regulation of catalytic activity",3
+"69","GO:1903753","negative regulation of p38MAPK cascade",5,1,0.04,562,0.04388,0.04388,0.665369348591549,1,"Ras protein signal transduction",3
+"70","GO:0061077","chaperone-mediated protein folding",58,5,0.52,26,0.00016,0.04819,0.0509807407407407,1,"chaperone cofactor-dependent protein refolding",3
+"71","GO:0032436","positive regulation of proteasomal ubiqu...",92,3,0.82,590,0.04886,0.04886,0.697813663060278,1,"positive regulation of mRNA splicing, via spliceosome",4

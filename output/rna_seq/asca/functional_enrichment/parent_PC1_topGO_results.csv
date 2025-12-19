@@ -1,0 +1,45 @@
+"","GO.ID","Term","Annotated","Significant","Expected","Rank in classicFisher","classicFisher","weightFisher","bh_adjust","bh_adjust_weight","ParentTerm","N_in_Parent"
+"1","GO:0042420","dopamine catabolic process",10,3,0.04,1,7.5e-06,7.5e-06,0.0215075,0.0645225,"dopamine catabolic process",4
+"2","GO:0006589","octopamine biosynthetic process",6,2,0.02,12,0.00024,0.00024,0.14748,0.292502,"dopamine catabolic process",4
+"3","GO:0098719","sodium ion import across plasma membrane",7,2,0.03,17,0.00034,0.00034,0.162501111111111,0.292502,"sodium ion import across plasma membrane",3
+"4","GO:0035435","phosphate ion transmembrane transport",9,2,0.04,23,0.00058,0.00058,0.216945217391304,0.415811666666667,"sodium ion import across plasma membrane",3
+"5","GO:0046689","response to mercury ion",11,2,0.05,29,0.00088,0.00088,0.252539677419355,0.536422352941176,"response to mercury ion",5
+"6","GO:0042421","norepinephrine biosynthetic process",12,2,0.05,35,0.00106,0.00106,0.253310555555556,0.536422352941176,"dopamine catabolic process",4
+"7","GO:0008045","motor neuron axon guidance",59,3,0.24,44,0.00177,0.00177,0.346075227272727,0.845961666666667,"motor neuron axon guidance",2
+"8","GO:0097164","ammonium ion metabolic process",142,4,0.58,53,0.0026,0.0026,0.422033962264151,1,"ammonium ion metabolic process",1
+"9","GO:0010288","response to lead ion",24,2,0.1,61,0.00429,0.00429,0.595272096774194,1,"response to mercury ion",5
+"10","GO:0035864","response to potassium ion",24,2,0.1,62,0.00429,0.00429,0.595272096774194,1,"response to mercury ion",5
+"11","GO:0032026","response to magnesium ion",26,2,0.11,63,0.00502,0.00502,0.685508888888889,1,"response to mercury ion",5
+"12","GO:0019369","arachidonic acid metabolic process",68,4,0.28,6,0.00016,0.00598,0.137648,1,"arachidonic acid metabolic process",4
+"13","GO:0045838","positive regulation of membrane potentia...",30,2,0.12,67,0.00665,0.00665,0.839373783783784,1,"positive regulation of membrane potential",1
+"14","GO:0042430","indole-containing compound metabolic pro...",31,2,0.13,71,0.00709,0.00709,0.839373783783784,1,"indole-containing compound metabolic process",1
+"15","GO:1901570","fatty acid derivative biosynthetic proce...",100,3,0.41,75,0.00785,0.00785,0.900447333333333,1,"arachidonic acid metabolic process",4
+"16","GO:0051260","protein homooligomerization",202,4,0.83,81,0.00908,0.00908,0.960499647058824,1,"protein homooligomerization",1
+"17","GO:0009309","amine biosynthetic process",42,3,0.17,24,0.00066,0.01549,0.2365825,1,"dopamine catabolic process",4
+"18","GO:0072350","tricarboxylic acid metabolic process",51,2,0.21,95,0.01847,0.01847,1,1,"tricarboxylic acid metabolic process",2
+"19","GO:0000103","sulfate assimilation",5,1,0.02,98,0.0204,0.0204,1,1,"sulfate assimilation",2
+"20","GO:0006032","chitin catabolic process",5,1,0.02,99,0.0204,0.0204,1,1,"chitin catabolic process",2
+"21","GO:0030091","protein repair",5,1,0.02,104,0.0204,0.0204,1,1,"protein repair",1
+"22","GO:1903026","negative regulation of RNA polymerase II...",5,1,0.02,108,0.0204,0.0204,1,1,"negative regulation of RNA polymerase II regulatory region sequence-specific DNA binding",1
+"23","GO:0045229","external encapsulating structure organiz...",273,3,1.12,426,0.10088,0.02336,1,1,"external encapsulating structure organization",1
+"24","GO:0046686","response to cadmium ion",58,2,0.24,115,0.02353,0.02353,1,1,"response to mercury ion",5
+"25","GO:0006037","cell wall chitin metabolic process",6,1,0.02,117,0.02443,0.02443,1,1,"chitin catabolic process",2
+"26","GO:0006269","DNA replication, synthesis of RNA primer",6,1,0.02,118,0.02443,0.02443,1,1,"DNA replication, synthesis of RNA primer",2
+"27","GO:0006833","water transport",6,1,0.02,119,0.02443,0.02443,1,1,"water transport",1
+"28","GO:0045977","positive regulation of mitotic cell cycl...",6,1,0.02,123,0.02443,0.02443,1,1,"positive regulation of mitotic cell cycle, embryonic",2
+"29","GO:1903475","mitotic actomyosin contractile ring asse...",6,1,0.02,129,0.02443,0.02443,1,1,"mitotic actomyosin contractile ring assembly",3
+"30","GO:0030241","skeletal muscle myosin thick filament as...",7,1,0.03,137,0.02845,0.02845,1,1,"mitotic actomyosin contractile ring assembly",3
+"31","GO:0048664","neuron fate determination",7,1,0.03,141,0.02845,0.02845,1,1,"motor neuron axon guidance",2
+"32","GO:0034220","monoatomic ion transmembrane transport",668,3,2.75,1141,0.52573,0.02908,1,1,"sodium ion import across plasma membrane",3
+"33","GO:0030950","establishment or maintenance of actin cy...",8,1,0.03,155,0.03245,0.03245,1,1,"mitotic actomyosin contractile ring assembly",3
+"34","GO:0071896","protein localization to adherens junctio...",8,1,0.03,158,0.03245,0.03245,1,1,"protein localization to adherens junction",1
+"35","GO:2000042","negative regulation of double-strand bre...",8,1,0.03,161,0.03245,0.03245,1,1,"DNA replication, synthesis of RNA primer",2
+"36","GO:0019878","lysine biosynthetic process via aminoadi...",9,1,0.04,175,0.03643,0.03643,1,1,"tricarboxylic acid metabolic process",2
+"37","GO:0032223","negative regulation of synaptic transmis...",9,1,0.04,176,0.03643,0.03643,1,1,"negative regulation of synaptic transmission, cholinergic",1
+"38","GO:0036149","phosphatidylinositol acyl-chain remodeli...",9,1,0.04,177,0.03643,0.03643,1,1,"arachidonic acid metabolic process",4
+"39","GO:0008611","ether lipid biosynthetic process",10,1,0.04,192,0.0404,0.0404,1,1,"arachidonic acid metabolic process",4
+"40","GO:0009957","epidermal cell fate specification",10,1,0.04,193,0.0404,0.0404,1,1,"protein localization involved in establishment of planar polarity",2
+"41","GO:0090251","protein localization involved in establi...",10,1,0.04,201,0.0404,0.0404,1,1,"protein localization involved in establishment of planar polarity",2
+"42","GO:0018149","peptide cross-linking",11,1,0.05,219,0.04435,0.04435,1,1,"peptide cross-linking",1
+"43","GO:0031340","positive regulation of vesicle fusion",11,1,0.05,222,0.04435,0.04435,1,1,"positive regulation of mitotic cell cycle, embryonic",2
+"44","GO:0050427","3'-phosphoadenosine 5'-phosphosulfate me...",11,1,0.05,223,0.04435,0.04435,1,1,"sulfate assimilation",2

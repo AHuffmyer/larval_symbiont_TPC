@@ -86,9 +86,13 @@ all_genes<-read.csv("output/rna_seq/all_genes.csv")
 
 Read in files of PC top genes from ASCA
 ```{r}
-PC1_list<-read.csv("output/rna_seq/asca/PC1_important_genes_50pct_variance.csv")%>%pull(gene)
-PC2_list<-read.csv("output/rna_seq/asca/PC2_important_genes_50pct_variance.csv")%>%pull(gene)
-PC3_list<-read.csv("output/rna_seq/asca/PC3_important_genes_50pct_variance.csv")%>%pull(gene)
+temp_PC1_list<-read.csv("output/rna_seq/asca/temp_PC1_important_genes.csv")%>%pull(gene)
+temp_PC2_list<-read.csv("output/rna_seq/asca/temp_PC2_important_genes.csv")%>%pull(gene)
+parent_PC1_list<-read.csv("output/rna_seq/asca/parent_PC1_important_genes.csv")%>%pull(gene)
+parent_PC2_list<-read.csv("output/rna_seq/asca/parent_PC2_important_genes.csv")%>%pull(gene)
+interaction_PC1_list<-read.csv("output/rna_seq/asca/interaction_PC1_important_genes.csv")%>%pull(gene)
+interaction_PC2_list<-read.csv("output/rna_seq/asca/interaction_PC2_important_genes.csv")%>%pull(gene)
+interaction_PC3_list<-read.csv("output/rna_seq/asca/interaction_PC3_important_genes.csv")%>%pull(gene)
 ```
 
 # Read in annotation files 
@@ -184,23 +188,23 @@ Annotation setting: annFUN.gene2GO
 
 nodeSize = 5; this setting prunes GO terms that have <5 annotated genes associated with this GO term. "It is often the case that many GO terms which have few annotated genes are detected to be significantly enriched due to artifacts in the statistical test. These small sized GO terms are of less importance for the analysis and in many cases they can be omitted. By using the nodeSize argument the user can control the size of the GO terms used in the analysis. Once the genes are annotated to the each GO term and the true path rule is applied the nodes with less than nodeSize annotated genes are removed from the GO hierarchy. We found that values between 5 and 10 for the nodeSize parameter yield more stable results. The default value for the nodeSize parameter is 1, meaning that no pruning is performed." - TopGO documentation 
 
-## PC1: Temperature 
+## Temperature PC1 
 
-4053 genes from PC1 
+413 genes from PC1 
 ```{r}
-length(PC1_list)
+length(temp_PC1_list)
 
-pc1.vector=as.factor(as.integer(background %in% PC1_list)) 
-names(pc1.vector)<-background#set names
+temp_pc1.vector=as.factor(as.integer(background %in% temp_PC1_list)) 
+names(temp_pc1.vector)<-background#set names
 ```
 
 Run TopGO
 
 ```{r}
 GOdata <- new("topGOdata",
-              description = "PC1",
+              description = "Temp PC1",
               ontology = "BP",
-              allGenes = pc1.vector,
+              allGenes = temp_pc1.vector,
               nodeSize = 5,
               gene2GO = geneID2GO, annot = annFUN.gene2GO) 
 
@@ -208,7 +212,7 @@ GOdata
 numSigGenes(GOdata)
 sum(feasible(GOdata))
 
-#2074 sig genes
+#202 sig genes
 #8509 genes used in analysis 
 ```
 
@@ -265,7 +269,7 @@ reducedTerms <- reduceSimMatrix(simMatrix,
                                 orgdb="org.Ce.eg.db")
 dim(reducedTerms)
 ```
-314 terms at p<0.05
+137 terms at p<0.05
 
 ```{r}
 #keep only the goterms from the reduced list
@@ -281,17 +285,17 @@ p05_res_reduced <- p05_res_reduced %>% group_by(ParentTerm) %>% mutate("N_in_Par
 length(unique(p05_res_reduced$ParentTerm))
 ```
 
-The reduced list of terms is 314 terms that falls under 60 parent terms.
+The reduced list of terms is 137 terms that falls under 36 parent terms.
 
 ```{r}
-write.csv(p05_res_reduced, "output/rna_seq/asca/functional_enrichment/PC1_topGO_results.csv")
+write.csv(p05_res_reduced, "output/rna_seq/asca/functional_enrichment/temperature_PC1_topGO_results.csv")
 ```
 
 Try some different plots. 
 ```{r}
 p05_res_reduced$GeneRatio <- p05_res_reduced$Significant / p05_res_reduced$Annotated
 
-PC1_enrich_plot1 <- ggplot(p05_res_reduced, 
+temp_PC1_enrich_plot1 <- ggplot(p05_res_reduced, 
        aes(x = GeneRatio, 
            y = reorder(Term, GeneRatio), 
            color = -log10(weightFisher))) +
@@ -302,10 +306,10 @@ PC1_enrich_plot1 <- ggplot(p05_res_reduced,
   labs(x="Gene Ratio", y="GO Term") +
   theme(axis.text.y = element_text(size=8),
         axis.title = element_text(size=9),
-        plot.title = element_text(hjust=0.5, size=10));PC1_enrich_plot1
+        plot.title = element_text(hjust=0.5, size=10));temp_PC1_enrich_plot1
 
 #summarize by parent term
-PC1_summary <- p05_res_reduced %>%
+temp_PC1_summary <- p05_res_reduced %>%
   group_by(ParentTerm) %>%
   summarise(
     maxLogP = max(-log10(weightFisher)),
@@ -314,35 +318,34 @@ PC1_summary <- p05_res_reduced %>%
   ) %>%
   arrange(desc(maxLogP))
 
-PC1_enrich_plot2<-ggplot(PC1_summary, aes(x = meanGeneRatio, y = reorder(ParentTerm, meanGeneRatio), color = maxLogP, size = nTerms)) +
+temp_PC1_enrich_plot2<-ggplot(temp_PC1_summary, aes(x = meanGeneRatio, y = reorder(ParentTerm, meanGeneRatio), color = maxLogP, size = nTerms)) +
   geom_point(size=2) +
   scale_color_gradient(low = "lightblue", high = "darkblue", name="Max -log10(weightFisher)") +
   scale_size_continuous(name="Number of Terms") +
   theme_classic(base_size=10) +
-  labs(x="Mean Gene Ratio", y="Parent GO Term");PC1_enrich_plot2
+  labs(x="Mean Gene Ratio", y="Parent GO Term");temp_PC1_enrich_plot2
 
-ggsave(PC1_enrich_plot2, filename="figures/rna_seq/asca/functional_enrichment/PC1_enrichment_parent_terms.png", width=10, height=7)
+ggsave(temp_PC1_enrich_plot2, filename="figures/rna_seq/asca/functional_enrichment/temp_PC1_enrichment_parent_terms.png", width=10, height=7)
 ```
 
 
+## Temperature PC2 
 
-## PC2: Cladocopium vs mixture symbionts 
-
-3247 genes from PC1 
+742 genes from PC2
 ```{r}
-length(PC2_list)
+length(temp_PC2_list)
 
-pc2.vector=as.factor(as.integer(background %in% PC2_list)) 
-names(pc2.vector)<-background#set names
+temp_pc2.vector=as.factor(as.integer(background %in% temp_PC2_list)) 
+names(temp_pc2.vector)<-background#set names
 ```
 
 Run TopGO
 
 ```{r}
 GOdata <- new("topGOdata",
-              description = "PC2",
+              description = "Temp PC2",
               ontology = "BP",
-              allGenes = pc2.vector,
+              allGenes = temp_pc2.vector,
               nodeSize = 5,
               gene2GO = geneID2GO, annot = annFUN.gene2GO) 
 
@@ -350,7 +353,7 @@ GOdata
 numSigGenes(GOdata)
 sum(feasible(GOdata))
 
-#665 sig genes
+#223 sig genes
 #8509 genes used in analysis 
 ```
 
@@ -407,7 +410,7 @@ reducedTerms <- reduceSimMatrix(simMatrix,
                                 orgdb="org.Ce.eg.db")
 dim(reducedTerms)
 ```
-85 terms at p<0.05
+97 terms at p<0.05
 
 ```{r}
 #keep only the goterms from the reduced list
@@ -423,17 +426,17 @@ p05_res_reduced <- p05_res_reduced %>% group_by(ParentTerm) %>% mutate("N_in_Par
 length(unique(p05_res_reduced$ParentTerm))
 ```
 
-The reduced list of terms is 85 terms that falls under 41 parent terms.
+The reduced list of terms is 97 terms that falls under 32 parent terms.
 
 ```{r}
-write.csv(p05_res_reduced, "output/rna_seq/asca/functional_enrichment/PC2_topGO_results.csv")
+write.csv(p05_res_reduced, "output/rna_seq/asca/functional_enrichment/temperature_PC2_topGO_results.csv")
 ```
 
 Try some different plots. 
 ```{r}
 p05_res_reduced$GeneRatio <- p05_res_reduced$Significant / p05_res_reduced$Annotated
 
-PC2_enrich_plot1 <- ggplot(p05_res_reduced, 
+temp_PC2_enrich_plot1 <- ggplot(p05_res_reduced, 
        aes(x = GeneRatio, 
            y = reorder(Term, GeneRatio), 
            color = -log10(weightFisher))) +
@@ -444,10 +447,10 @@ PC2_enrich_plot1 <- ggplot(p05_res_reduced,
   labs(x="Gene Ratio", y="GO Term") +
   theme(axis.text.y = element_text(size=8),
         axis.title = element_text(size=9),
-        plot.title = element_text(hjust=0.5, size=10));PC2_enrich_plot1
+        plot.title = element_text(hjust=0.5, size=10));temp_PC2_enrich_plot1
 
 #summarize by parent term
-PC2_summary <- p05_res_reduced %>%
+temp_PC2_summary <- p05_res_reduced %>%
   group_by(ParentTerm) %>%
   summarise(
     maxLogP = max(-log10(weightFisher)),
@@ -456,35 +459,34 @@ PC2_summary <- p05_res_reduced %>%
   ) %>%
   arrange(desc(maxLogP))
 
-PC2_enrich_plot2<-ggplot(PC2_summary, aes(x = meanGeneRatio, y = reorder(ParentTerm, meanGeneRatio), color = maxLogP, size = nTerms)) +
+temp_PC2_enrich_plot2<-ggplot(temp_PC2_summary, aes(x = meanGeneRatio, y = reorder(ParentTerm, meanGeneRatio), color = maxLogP, size = nTerms)) +
   geom_point(size=2) +
   scale_color_gradient(low = "lightblue", high = "darkblue", name="Max -log10(weightFisher)") +
   scale_size_continuous(name="Number of Terms") +
   theme_classic(base_size=10) +
-  labs(x="Mean Gene Ratio", y="Parent GO Term");PC2_enrich_plot2
+  labs(x="Mean Gene Ratio", y="Parent GO Term");temp_PC2_enrich_plot2
 
-ggsave(PC2_enrich_plot2, filename="figures/rna_seq/asca/functional_enrichment/PC2_enrichment_parent_terms.png", width=10, height=6)
+ggsave(temp_PC2_enrich_plot2, filename="figures/rna_seq/asca/functional_enrichment/temp_PC2_enrichment_parent_terms.png", width=10, height=7)
 ```
 
 
+## Parent PC1 
 
-## PC3: Parental histry  
-
-3225 genes from PC3
+326 genes from PC1 
 ```{r}
-length(PC3_list)
+length(parent_PC1_list)
 
-pc3.vector=as.factor(as.integer(background %in% PC3_list)) 
-names(pc3.vector)<-background#set names
+parent_pc1.vector=as.factor(as.integer(background %in% parent_PC1_list)) 
+names(parent_pc1.vector)<-background#set names
 ```
 
 Run TopGO
 
 ```{r}
 GOdata <- new("topGOdata",
-              description = "PC3",
+              description = "Parent PC1",
               ontology = "BP",
-              allGenes = pc3.vector,
+              allGenes = parent_pc1.vector,
               nodeSize = 5,
               gene2GO = geneID2GO, annot = annFUN.gene2GO) 
 
@@ -492,7 +494,7 @@ GOdata
 numSigGenes(GOdata)
 sum(feasible(GOdata))
 
-#894 sig genes
+#35 sig genes
 #8509 genes used in analysis 
 ```
 
@@ -549,7 +551,7 @@ reducedTerms <- reduceSimMatrix(simMatrix,
                                 orgdb="org.Ce.eg.db")
 dim(reducedTerms)
 ```
-125 terms at p<0.05
+44 terms at p<0.05
 
 ```{r}
 #keep only the goterms from the reduced list
@@ -565,17 +567,17 @@ p05_res_reduced <- p05_res_reduced %>% group_by(ParentTerm) %>% mutate("N_in_Par
 length(unique(p05_res_reduced$ParentTerm))
 ```
 
-The reduced list of terms is 125 terms that falls under 47 parent terms.
+The reduced list of terms is 44 terms that falls under 23 parent terms.
 
 ```{r}
-write.csv(p05_res_reduced, "output/rna_seq/asca/functional_enrichment/PC3_topGO_results.csv")
+write.csv(p05_res_reduced, "output/rna_seq/asca/functional_enrichment/parent_PC1_topGO_results.csv")
 ```
 
 Try some different plots. 
 ```{r}
 p05_res_reduced$GeneRatio <- p05_res_reduced$Significant / p05_res_reduced$Annotated
 
-PC3_enrich_plot1 <- ggplot(p05_res_reduced, 
+parent_PC1_enrich_plot1 <- ggplot(p05_res_reduced, 
        aes(x = GeneRatio, 
            y = reorder(Term, GeneRatio), 
            color = -log10(weightFisher))) +
@@ -586,10 +588,10 @@ PC3_enrich_plot1 <- ggplot(p05_res_reduced,
   labs(x="Gene Ratio", y="GO Term") +
   theme(axis.text.y = element_text(size=8),
         axis.title = element_text(size=9),
-        plot.title = element_text(hjust=0.5, size=10));PC3_enrich_plot1
+        plot.title = element_text(hjust=0.5, size=10));parent_PC1_enrich_plot1
 
 #summarize by parent term
-PC3_summary <- p05_res_reduced %>%
+parent_PC1_summary <- p05_res_reduced %>%
   group_by(ParentTerm) %>%
   summarise(
     maxLogP = max(-log10(weightFisher)),
@@ -598,12 +600,616 @@ PC3_summary <- p05_res_reduced %>%
   ) %>%
   arrange(desc(maxLogP))
 
-PC3_enrich_plot2<-ggplot(PC3_summary, aes(x = meanGeneRatio, y = reorder(ParentTerm, meanGeneRatio), color = maxLogP, size = nTerms)) +
+parent_PC1_enrich_plot2<-ggplot(parent_PC1_summary, aes(x = meanGeneRatio, y = reorder(ParentTerm, meanGeneRatio), color = maxLogP, size = nTerms)) +
   geom_point(size=2) +
   scale_color_gradient(low = "lightblue", high = "darkblue", name="Max -log10(weightFisher)") +
   scale_size_continuous(name="Number of Terms") +
   theme_classic(base_size=10) +
-  labs(x="Mean Gene Ratio", y="Parent GO Term");PC3_enrich_plot2
+  labs(x="Mean Gene Ratio", y="Parent GO Term");parent_PC1_enrich_plot2
 
-ggsave(PC3_enrich_plot2, filename="figures/rna_seq/asca/functional_enrichment/PC3_enrichment_parent_terms.png", width=10, height=6)
+ggsave(parent_PC1_enrich_plot2, filename="figures/rna_seq/asca/functional_enrichment/parent_PC1_enrichment_parent_terms.png", width=10, height=7)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+## Parent PC2 
+
+408 genes from PC1 
+```{r}
+length(parent_PC2_list)
+
+parent_pc2.vector=as.factor(as.integer(background %in% parent_PC2_list)) 
+names(parent_pc2.vector)<-background#set names
+```
+
+Run TopGO
+
+```{r}
+GOdata <- new("topGOdata",
+              description = "Parent PC2",
+              ontology = "BP",
+              allGenes = parent_pc2.vector,
+              nodeSize = 5,
+              gene2GO = geneID2GO, annot = annFUN.gene2GO) 
+
+GOdata
+numSigGenes(GOdata)
+sum(feasible(GOdata))
+
+#76 sig genes
+#8509 genes used in analysis 
+```
+
+Run fisher test. 
+```{r}
+resultFisher <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
+resultFisher
+hist(score(resultFisher), 50, xlab = "p-values")
+
+resultWeight <- runTest(GOdata, algorithm = "weight01", statistic = "fisher")
+resultWeight
+hist(score(resultWeight), 50, xlab = "p-values")
+```
+
+```{r}
+allRes <- GenTable(GOdata, classicFisher = resultFisher, weightFisher = resultWeight, orderBy = "weightFisher", ranksOf = "classicFisher", topNodes = length(score(resultFisher)))
+
+# Convert character columns to numeric
+allRes$classicFisher <- as.numeric(allRes$classicFisher)
+allRes$weightFisher <- as.numeric(allRes$weightFisher)
+
+#adjust p-values 
+allRes$bh_adjust <- p.adjust(allRes$classicFisher, method="BH") #add adjusted p-values
+
+#adjust p-values 
+allRes$bh_adjust_weight <- p.adjust(allRes$weightFisher, method="BH") #add adjusted p-values
+```
+
+```{r}
+showSigOfNodes(GOdata, score(resultFisher), firstSigNodes = 5, useInfo = 'def')
+dev.off()
+
+showSigOfNodes(GOdata, score(resultWeight), firstSigNodes = 5, useInfo = 'def')
+dev.off()
+```
+
+Proceed using weighted fisher test results.  
+```{r}
+p05_res <- allRes %>% dplyr::filter(weightFisher < 0.05)
+  
+#Reduce/collapse GO term set with the rrvgo package 
+simMatrix <- calculateSimMatrix(p05_res$GO.ID,
+                                orgdb="org.Ce.eg.db", #c. elegans database
+                                ont="BP",
+                                method="Rel")
+```
+
+```{r}
+ #calculate similarity 
+scores <- setNames(-log(as.numeric(p05_res$weightFisher)), p05_res$GO.ID)
+reducedTerms <- reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Ce.eg.db")
+dim(reducedTerms)
+```
+71 terms at p<0.05
+
+```{r}
+#keep only the goterms from the reduced list
+p05_res_reduced <- p05_res %>%
+  filter(GO.ID %in% reducedTerms$go)
+
+#add in parent terms to list of go terms 
+p05_res_reduced$ParentTerm <- reducedTerms$parentTerm[match(p05_res_reduced$GO.ID, reducedTerms$go)]
+
+length(unique(p05_res_reduced$ParentTerm))
+
+p05_res_reduced <- p05_res_reduced %>% group_by(ParentTerm) %>% mutate("N_in_Parent" = dplyr::n()) %>% ungroup()
+length(unique(p05_res_reduced$ParentTerm))
+```
+
+The reduced list of terms is 71 terms that falls under 26 parent terms.
+
+```{r}
+write.csv(p05_res_reduced, "output/rna_seq/asca/functional_enrichment/parent_PC2_topGO_results.csv")
+```
+
+Try some different plots. 
+```{r}
+p05_res_reduced$GeneRatio <- p05_res_reduced$Significant / p05_res_reduced$Annotated
+
+parent_PC2_enrich_plot1 <- ggplot(p05_res_reduced, 
+       aes(x = GeneRatio, 
+           y = reorder(Term, GeneRatio), 
+           color = -log10(weightFisher))) +
+  geom_point(size=1) +
+  geom_segment(aes(x=0, xend=GeneRatio, y=Term, yend=Term), color="grey70") +
+  scale_color_gradient(low="lightblue", high="darkblue", name="-log10(weightFisher)") +
+  theme_classic(base_size=10) +
+  labs(x="Gene Ratio", y="GO Term") +
+  theme(axis.text.y = element_text(size=8),
+        axis.title = element_text(size=9),
+        plot.title = element_text(hjust=0.5, size=10));parent_PC2_enrich_plot1
+
+#summarize by parent term
+parent_PC2_summary <- p05_res_reduced %>%
+  group_by(ParentTerm) %>%
+  summarise(
+    maxLogP = max(-log10(weightFisher)),
+    meanGeneRatio = mean(Significant/Annotated),
+    nTerms = length(maxLogP)
+  ) %>%
+  arrange(desc(maxLogP))
+
+parent_PC2_enrich_plot2<-ggplot(parent_PC2_summary, aes(x = meanGeneRatio, y = reorder(ParentTerm, meanGeneRatio), color = maxLogP, size = nTerms)) +
+  geom_point(size=2) +
+  scale_color_gradient(low = "lightblue", high = "darkblue", name="Max -log10(weightFisher)") +
+  scale_size_continuous(name="Number of Terms") +
+  theme_classic(base_size=10) +
+  labs(x="Mean Gene Ratio", y="Parent GO Term");parent_PC2_enrich_plot2
+
+ggsave(parent_PC2_enrich_plot2, filename="figures/rna_seq/asca/functional_enrichment/parent_PC2_enrichment_parent_terms.png", width=10, height=7)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+## Interaction PC1 
+
+718 genes from PC1 
+```{r}
+length(interaction_PC1_list)
+
+int_pc1.vector=as.factor(as.integer(background %in% interaction_PC1_list)) 
+names(int_pc1.vector)<-background#set names
+```
+
+Run TopGO
+
+```{r}
+GOdata <- new("topGOdata",
+              description = "Interaction PC1",
+              ontology = "BP",
+              allGenes = int_pc1.vector,
+              nodeSize = 5,
+              gene2GO = geneID2GO, annot = annFUN.gene2GO) 
+
+GOdata
+numSigGenes(GOdata)
+sum(feasible(GOdata))
+
+#161 sig genes
+#8509 genes used in analysis 
+```
+
+Run fisher test. 
+```{r}
+resultFisher <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
+resultFisher
+hist(score(resultFisher), 50, xlab = "p-values")
+
+resultWeight <- runTest(GOdata, algorithm = "weight01", statistic = "fisher")
+resultWeight
+hist(score(resultWeight), 50, xlab = "p-values")
+```
+
+```{r}
+allRes <- GenTable(GOdata, classicFisher = resultFisher, weightFisher = resultWeight, orderBy = "weightFisher", ranksOf = "classicFisher", topNodes = length(score(resultFisher)))
+
+# Convert character columns to numeric
+allRes$classicFisher <- as.numeric(allRes$classicFisher)
+allRes$weightFisher <- as.numeric(allRes$weightFisher)
+
+#adjust p-values 
+allRes$bh_adjust <- p.adjust(allRes$classicFisher, method="BH") #add adjusted p-values
+
+#adjust p-values 
+allRes$bh_adjust_weight <- p.adjust(allRes$weightFisher, method="BH") #add adjusted p-values
+```
+
+```{r}
+showSigOfNodes(GOdata, score(resultFisher), firstSigNodes = 5, useInfo = 'def')
+dev.off()
+
+showSigOfNodes(GOdata, score(resultWeight), firstSigNodes = 5, useInfo = 'def')
+dev.off()
+```
+
+Proceed using weighted fisher test results.  
+```{r}
+p05_res <- allRes %>% dplyr::filter(weightFisher < 0.05)
+  
+#Reduce/collapse GO term set with the rrvgo package 
+simMatrix <- calculateSimMatrix(p05_res$GO.ID,
+                                orgdb="org.Ce.eg.db", #c. elegans database
+                                ont="BP",
+                                method="Rel")
+```
+
+```{r}
+ #calculate similarity 
+scores <- setNames(-log(as.numeric(p05_res$weightFisher)), p05_res$GO.ID)
+reducedTerms <- reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Ce.eg.db")
+dim(reducedTerms)
+```
+83 terms at p<0.05
+
+```{r}
+#keep only the goterms from the reduced list
+p05_res_reduced <- p05_res %>%
+  filter(GO.ID %in% reducedTerms$go)
+
+#add in parent terms to list of go terms 
+p05_res_reduced$ParentTerm <- reducedTerms$parentTerm[match(p05_res_reduced$GO.ID, reducedTerms$go)]
+
+length(unique(p05_res_reduced$ParentTerm))
+
+p05_res_reduced <- p05_res_reduced %>% group_by(ParentTerm) %>% mutate("N_in_Parent" = dplyr::n()) %>% ungroup()
+length(unique(p05_res_reduced$ParentTerm))
+```
+
+The reduced list of terms is 83 terms that falls under 37 parent terms.
+
+```{r}
+write.csv(p05_res_reduced, "output/rna_seq/asca/functional_enrichment/interaction_PC1_topGO_results.csv")
+```
+
+Try some different plots. 
+```{r}
+p05_res_reduced$GeneRatio <- p05_res_reduced$Significant / p05_res_reduced$Annotated
+
+int_PC1_enrich_plot1 <- ggplot(p05_res_reduced, 
+       aes(x = GeneRatio, 
+           y = reorder(Term, GeneRatio), 
+           color = -log10(weightFisher))) +
+  geom_point(size=1) +
+  geom_segment(aes(x=0, xend=GeneRatio, y=Term, yend=Term), color="grey70") +
+  scale_color_gradient(low="lightblue", high="darkblue", name="-log10(weightFisher)") +
+  theme_classic(base_size=10) +
+  labs(x="Gene Ratio", y="GO Term") +
+  theme(axis.text.y = element_text(size=8),
+        axis.title = element_text(size=9),
+        plot.title = element_text(hjust=0.5, size=10));int_PC1_enrich_plot1
+
+#summarize by parent term
+int_PC1_summary <- p05_res_reduced %>%
+  group_by(ParentTerm) %>%
+  summarise(
+    maxLogP = max(-log10(weightFisher)),
+    meanGeneRatio = mean(Significant/Annotated),
+    nTerms = length(maxLogP)
+  ) %>%
+  arrange(desc(maxLogP))
+
+int_PC1_enrich_plot2<-ggplot(int_PC1_summary, aes(x = meanGeneRatio, y = reorder(ParentTerm, meanGeneRatio), color = maxLogP, size = nTerms)) +
+  geom_point(size=2) +
+  scale_color_gradient(low = "lightblue", high = "darkblue", name="Max -log10(weightFisher)") +
+  scale_size_continuous(name="Number of Terms") +
+  theme_classic(base_size=10) +
+  labs(x="Mean Gene Ratio", y="Parent GO Term");int_PC1_enrich_plot2
+
+ggsave(int_PC1_enrich_plot2, filename="figures/rna_seq/asca/functional_enrichment/interaction_PC1_enrichment_parent_terms.png", width=10, height=7)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+## Interaction PC2 
+
+899 genes from PC2
+```{r}
+length(interaction_PC2_list)
+
+int_pc2.vector=as.factor(as.integer(background %in% interaction_PC2_list)) 
+names(int_pc2.vector)<-background#set names
+```
+
+Run TopGO
+
+```{r}
+GOdata <- new("topGOdata",
+              description = "Interaction PC2",
+              ontology = "BP",
+              allGenes = int_pc2.vector,
+              nodeSize = 5,
+              gene2GO = geneID2GO, annot = annFUN.gene2GO) 
+
+GOdata
+numSigGenes(GOdata)
+sum(feasible(GOdata))
+
+#194 sig genes
+#8509 genes used in analysis 
+```
+
+Run fisher test. 
+```{r}
+resultFisher <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
+resultFisher
+hist(score(resultFisher), 50, xlab = "p-values")
+
+resultWeight <- runTest(GOdata, algorithm = "weight01", statistic = "fisher")
+resultWeight
+hist(score(resultWeight), 50, xlab = "p-values")
+```
+
+```{r}
+allRes <- GenTable(GOdata, classicFisher = resultFisher, weightFisher = resultWeight, orderBy = "weightFisher", ranksOf = "classicFisher", topNodes = length(score(resultFisher)))
+
+# Convert character columns to numeric
+allRes$classicFisher <- as.numeric(allRes$classicFisher)
+allRes$weightFisher <- as.numeric(allRes$weightFisher)
+
+#adjust p-values 
+allRes$bh_adjust <- p.adjust(allRes$classicFisher, method="BH") #add adjusted p-values
+
+#adjust p-values 
+allRes$bh_adjust_weight <- p.adjust(allRes$weightFisher, method="BH") #add adjusted p-values
+```
+
+```{r}
+showSigOfNodes(GOdata, score(resultFisher), firstSigNodes = 5, useInfo = 'def')
+dev.off()
+
+showSigOfNodes(GOdata, score(resultWeight), firstSigNodes = 5, useInfo = 'def')
+dev.off()
+```
+
+Proceed using weighted fisher test results.  
+```{r}
+p05_res <- allRes %>% dplyr::filter(weightFisher < 0.05)
+  
+#Reduce/collapse GO term set with the rrvgo package 
+simMatrix <- calculateSimMatrix(p05_res$GO.ID,
+                                orgdb="org.Ce.eg.db", #c. elegans database
+                                ont="BP",
+                                method="Rel")
+```
+
+```{r}
+ #calculate similarity 
+scores <- setNames(-log(as.numeric(p05_res$weightFisher)), p05_res$GO.ID)
+reducedTerms <- reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Ce.eg.db")
+dim(reducedTerms)
+```
+69 terms at p<0.05
+
+```{r}
+#keep only the goterms from the reduced list
+p05_res_reduced <- p05_res %>%
+  filter(GO.ID %in% reducedTerms$go)
+
+#add in parent terms to list of go terms 
+p05_res_reduced$ParentTerm <- reducedTerms$parentTerm[match(p05_res_reduced$GO.ID, reducedTerms$go)]
+
+length(unique(p05_res_reduced$ParentTerm))
+
+p05_res_reduced <- p05_res_reduced %>% group_by(ParentTerm) %>% mutate("N_in_Parent" = dplyr::n()) %>% ungroup()
+length(unique(p05_res_reduced$ParentTerm))
+```
+
+The reduced list of terms is 69 terms that falls under 28 parent terms.
+
+```{r}
+write.csv(p05_res_reduced, "output/rna_seq/asca/functional_enrichment/interaction_PC2_topGO_results.csv")
+```
+
+Try some different plots. 
+```{r}
+p05_res_reduced$GeneRatio <- p05_res_reduced$Significant / p05_res_reduced$Annotated
+
+int_PC2_enrich_plot1 <- ggplot(p05_res_reduced, 
+       aes(x = GeneRatio, 
+           y = reorder(Term, GeneRatio), 
+           color = -log10(weightFisher))) +
+  geom_point(size=1) +
+  geom_segment(aes(x=0, xend=GeneRatio, y=Term, yend=Term), color="grey70") +
+  scale_color_gradient(low="lightblue", high="darkblue", name="-log10(weightFisher)") +
+  theme_classic(base_size=10) +
+  labs(x="Gene Ratio", y="GO Term") +
+  theme(axis.text.y = element_text(size=8),
+        axis.title = element_text(size=9),
+        plot.title = element_text(hjust=0.5, size=10));int_PC2_enrich_plot1
+
+#summarize by parent term
+int_PC2_summary <- p05_res_reduced %>%
+  group_by(ParentTerm) %>%
+  summarise(
+    maxLogP = max(-log10(weightFisher)),
+    meanGeneRatio = mean(Significant/Annotated),
+    nTerms = length(maxLogP)
+  ) %>%
+  arrange(desc(maxLogP))
+
+int_PC2_enrich_plot2<-ggplot(int_PC2_summary, aes(x = meanGeneRatio, y = reorder(ParentTerm, meanGeneRatio), color = maxLogP, size = nTerms)) +
+  geom_point(size=2) +
+  scale_color_gradient(low = "lightblue", high = "darkblue", name="Max -log10(weightFisher)") +
+  scale_size_continuous(name="Number of Terms") +
+  theme_classic(base_size=10) +
+  labs(x="Mean Gene Ratio", y="Parent GO Term");int_PC2_enrich_plot2
+
+ggsave(int_PC2_enrich_plot2, filename="figures/rna_seq/asca/functional_enrichment/interaction_PC2_enrichment_parent_terms.png", width=10, height=7)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+## Interaction PC3 
+
+808 genes from PC3
+```{r}
+length(interaction_PC3_list)
+
+int_pc3.vector=as.factor(as.integer(background %in% interaction_PC3_list)) 
+names(int_pc3.vector)<-background#set names
+```
+
+Run TopGO
+
+```{r}
+GOdata <- new("topGOdata",
+              description = "Interaction PC3",
+              ontology = "BP",
+              allGenes = int_pc3.vector,
+              nodeSize = 5,
+              gene2GO = geneID2GO, annot = annFUN.gene2GO) 
+
+GOdata
+numSigGenes(GOdata)
+sum(feasible(GOdata))
+
+#134 sig genes
+#8509 genes used in analysis 
+```
+
+Run fisher test. 
+```{r}
+resultFisher <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
+resultFisher
+hist(score(resultFisher), 50, xlab = "p-values")
+
+resultWeight <- runTest(GOdata, algorithm = "weight01", statistic = "fisher")
+resultWeight
+hist(score(resultWeight), 50, xlab = "p-values")
+```
+
+```{r}
+allRes <- GenTable(GOdata, classicFisher = resultFisher, weightFisher = resultWeight, orderBy = "weightFisher", ranksOf = "classicFisher", topNodes = length(score(resultFisher)))
+
+# Convert character columns to numeric
+allRes$classicFisher <- as.numeric(allRes$classicFisher)
+allRes$weightFisher <- as.numeric(allRes$weightFisher)
+
+#adjust p-values 
+allRes$bh_adjust <- p.adjust(allRes$classicFisher, method="BH") #add adjusted p-values
+
+#adjust p-values 
+allRes$bh_adjust_weight <- p.adjust(allRes$weightFisher, method="BH") #add adjusted p-values
+```
+
+```{r}
+showSigOfNodes(GOdata, score(resultFisher), firstSigNodes = 5, useInfo = 'def')
+dev.off()
+
+showSigOfNodes(GOdata, score(resultWeight), firstSigNodes = 5, useInfo = 'def')
+dev.off()
+```
+
+Proceed using weighted fisher test results.  
+```{r}
+p05_res <- allRes %>% dplyr::filter(weightFisher < 0.05)
+  
+#Reduce/collapse GO term set with the rrvgo package 
+simMatrix <- calculateSimMatrix(p05_res$GO.ID,
+                                orgdb="org.Ce.eg.db", #c. elegans database
+                                ont="BP",
+                                method="Rel")
+```
+
+```{r}
+ #calculate similarity 
+scores <- setNames(-log(as.numeric(p05_res$weightFisher)), p05_res$GO.ID)
+reducedTerms <- reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Ce.eg.db")
+dim(reducedTerms)
+```
+51 terms at p<0.05
+
+```{r}
+#keep only the goterms from the reduced list
+p05_res_reduced <- p05_res %>%
+  filter(GO.ID %in% reducedTerms$go)
+
+#add in parent terms to list of go terms 
+p05_res_reduced$ParentTerm <- reducedTerms$parentTerm[match(p05_res_reduced$GO.ID, reducedTerms$go)]
+
+length(unique(p05_res_reduced$ParentTerm))
+
+p05_res_reduced <- p05_res_reduced %>% group_by(ParentTerm) %>% mutate("N_in_Parent" = dplyr::n()) %>% ungroup()
+length(unique(p05_res_reduced$ParentTerm))
+```
+
+The reduced list of terms is 51 terms that falls under 20 parent terms.
+
+```{r}
+write.csv(p05_res_reduced, "output/rna_seq/asca/functional_enrichment/interaction_PC3_topGO_results.csv")
+```
+
+Try some different plots. 
+```{r}
+p05_res_reduced$GeneRatio <- p05_res_reduced$Significant / p05_res_reduced$Annotated
+
+int_PC3_enrich_plot1 <- ggplot(p05_res_reduced, 
+       aes(x = GeneRatio, 
+           y = reorder(Term, GeneRatio), 
+           color = -log10(weightFisher))) +
+  geom_point(size=1) +
+  geom_segment(aes(x=0, xend=GeneRatio, y=Term, yend=Term), color="grey70") +
+  scale_color_gradient(low="lightblue", high="darkblue", name="-log10(weightFisher)") +
+  theme_classic(base_size=10) +
+  labs(x="Gene Ratio", y="GO Term") +
+  theme(axis.text.y = element_text(size=8),
+        axis.title = element_text(size=9),
+        plot.title = element_text(hjust=0.5, size=10));int_PC3_enrich_plot1
+
+#summarize by parent term
+int_PC3_summary <- p05_res_reduced %>%
+  group_by(ParentTerm) %>%
+  summarise(
+    maxLogP = max(-log10(weightFisher)),
+    meanGeneRatio = mean(Significant/Annotated),
+    nTerms = length(maxLogP)
+  ) %>%
+  arrange(desc(maxLogP))
+
+int_PC3_enrich_plot2<-ggplot(int_PC3_summary, aes(x = meanGeneRatio, y = reorder(ParentTerm, meanGeneRatio), color = maxLogP, size = nTerms)) +
+  geom_point(size=2) +
+  scale_color_gradient(low = "lightblue", high = "darkblue", name="Max -log10(weightFisher)") +
+  scale_size_continuous(name="Number of Terms") +
+  theme_classic(base_size=10) +
+  labs(x="Mean Gene Ratio", y="Parent GO Term");int_PC3_enrich_plot2
+
+ggsave(int_PC3_enrich_plot2, filename="figures/rna_seq/asca/functional_enrichment/interaction_PC3_enrichment_parent_terms.png", width=10, height=7)
 ```
