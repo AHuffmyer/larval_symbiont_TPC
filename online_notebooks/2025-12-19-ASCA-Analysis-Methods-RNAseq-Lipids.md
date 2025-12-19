@@ -1,58 +1,90 @@
 ---
 layout: post
-title: ASCA Analysis Methods for RNAseq and Lipidomics Data
+title: ASCA Analysis for RNAseq and Lipidomics Data for the 2023 Hawaii project 
 date: '2025-12-19'
 categories: Larval_Symbiont_TPC_2023
-tags: Mcapitata GeneExpression Lipids Molecular ASCA Methods R
+tags: ASCA GeneExpression Lipidomics Lipids Mcapitata Molecular Multivariate R 
 ---
 
-This post describes the analytical methods, approach, and main results from three ASCA (ANOVA Simultaneous Component Analysis) analyses conducted on *Montipora capitata* larval multi-omic data: (1) RNAseq gene expression analysis, (2) functional enrichment of RNAseq results, and (3) lipidomics analysis. These analyses examine how temperature and parental phenotype affect molecular phenotypes in coral larvae using a full factorial experimental design.
+This post describes the analytical methods, approach, and main results from ASCA (ANOVA Simultaneous Component Analysis) analyses conducted on *Montipora capitata* larval multi-omic data: (1) RNAseq gene expression ASCA analysis, (2) functional enrichment of RNAseq results, and (3) lipidomics ASCA analysis. In this project and these analyses, I am examining the predominant multivariate gene and lipid patterns in larvae from three parental phenotypes across three temperatures using a factorial design. 
 
 # Overview
 
-ASCA (ANOVA Simultaneous Component Analysis) is a powerful multivariate analysis approach that combines ANOVA with Principal Component Analysis (PCA) to identify coordinated patterns of variation in high-dimensional datasets. In this study, I applied ASCA to examine molecular responses of *M. capitata* larvae to:
+ASCA (ANOVA Simultaneous Component Analysis) is a multivariate analysis approach that combines ANOVA with Principal Component Analysis (PCA) to identify coordinated patterns of variation in high-dimensional datasets. In this study, I applied ASCA to examine molecular responses of *M. capitata* larvae to:
 
 - **Temperature treatments**: 27°C (ambient), 30°C (moderate stress), and 33°C (high stress)
 - **Parental phenotypes**: Wildtype (mixed *Cladocopium* and *Durusdinium* symbionts), Bleached (parents with bleaching history; *Cladocopium* only), and Nonbleached (parents without bleaching history; mixed symbionts)
 
+The goal of this study is to determine metabolic responses to temperature and if responses are mediated by parental history/symbiont community. 
+
 The analyses are implemented in three related scripts:
 1. [**rna-seq_ASCA.Rmd**](https://github.com/AHuffmyer/larval_symbiont_TPC/blob/main/scripts/rna-seq_ASCA.Rmd): ASCA analysis of gene expression data
-2. [**rna-seq_functional_enrichment_ASCA_topGO.Rmd**](https://github.com/AHuffmyer/larval_symbiont_TPC/blob/main/scripts/rna-seq_functional_enrichment_ASCA_topGO.Rmd): Functional enrichment of genes driving each pattern
+2. [**rna-seq_functional_enrichment_ASCA_topGO.Rmd**](https://github.com/AHuffmyer/larval_symbiont_TPC/blob/main/scripts/rna-seq_functional_enrichment_ASCA_topGO.Rmd): Functional enrichment of genes driving each pattern from ASCA
 3. [**lipids_ASCA.Rmd**](https://github.com/AHuffmyer/larval_symbiont_TPC/blob/main/scripts/lipids_ASCA.Rmd): ASCA analysis of lipidomic data
 
-# Why ASCA is Appropriate for Full Factorial Designs
+I previously [conducted preliminary ASCA analysis in genes](https://ahuffmyer.github.io/ASH_Putnam_Lab_Notebook/ASCA-RNAseq-Analysis-Temperature-Parent-Effects/) [and lipids](https://ahuffmyer.github.io/ASH_Putnam_Lab_Notebook/ASCA-Lipids-Analysis-Temperature-Parent-Effects/) but I have since made improvements and updates in the model. This post represents the revised full analysis with model validation that will be described in our publication.  
+
+# tl;dr
+
+There are clear patterns in both gene expression and lipidomics due to temperature and larval phenotype/symbiont community. These patterns relate to stress response and metabolism.  
+
+1. **Temperature responses**: Both lipid and gene datasets show strong temperature effects, with genes involved in fatty acid biosynthesis enriched in temperature PC1, consistent with lipid remodeling patterns enriched for fatty acids. 
+2. **Symbiont effects**: Both datasets separate by symbiont community, supporting the importance of symbiont identity in mediating molecular phenotypes
+3. **Parental effects**: Both datasets show constitutive differences by parental history, supporting transgenerational effects on molecular phenotypes
+
+# Why is ASCA appropriate for this study? 
 
 ASCA is particularly well-suited for analyzing -omics data from full factorial experimental designs for several key reasons:
 
 ## Advantages for High-Dimensional Data
 
-1. **Handles more variables than observations**: Unlike traditional MANOVA, ASCA can analyze datasets where the number of variables (genes, lipids) far exceeds the number of samples. In this study, we analyzed ~28,600 genes and hundreds of lipids across 54 samples.
+1. **Handles more variables than observations**: Unlike traditional MANOVA, ASCA can analyze datasets where the number of variables (genes, lipids) far exceeds the number of samples. In this study, we analyzed ~28,600 genes and ~900 lipids across 54 samples.
 
 2. **Accommodates random effects**: ASCA implemented through the ALASCA package uses a linear mixed model framework, allowing inclusion of random effects (e.g., sample as a random effect) which is limited in traditional differential expression analyses like DESeq2.
 
-3. **Captures coordinated responses**: Rather than examining each gene or lipid individually, ASCA identifies principal components that represent coordinated molecular responses across the entire dataset. This reveals underlying biological patterns that may be missed by univariate approaches.
+3. **Captures coordinated responses**: Rather than examining each gene or lipid individually, ASCA identifies principal components that represent coordinated molecular responses across the entire dataset. This allows for the dominant patterns to emerge in the analysis and overcomes the limitations of pairwise comparisons in multi-factor experimental designs. 
 
 ## Benefits for Factorial Designs
 
-4. **Partitions variance by experimental factors**: ASCA decomposes the total variance into contributions from main effects (temperature, parent) and interactions (temperature × parent), revealing which factors drive different patterns of molecular variation.
+4. **Partitions variance by experimental factors**: ASCA decomposes the total variance into contributions from main effects (temperature, parent) and interactions (temperature × parent), revealing which factors drive different patterns of molecular variation. We can set the model to examine specific effects and extract the coordinated responses for each effect individually. 
 
-5. **Handles ordered categorical variables**: Temperature can be treated as an ordered categorical variable (27°C → 30°C → 33°C), allowing detection of linear and non-linear response patterns across the gradient.
+5. **Handles ordered categorical variables**: Temperature was treated as an ordered categorical variable (27°C → 30°C → 33°C), allowing detection of linear and non-linear response patterns across the temperature gradient between parental phenotypes.
 
-6. **Robust statistical validation**: The ALASCA package implements bootstrap validation to assess the significance and reproducibility of identified components, ensuring patterns are not due to chance.
+6. **Statistical validation**: The ALASCA package implements bootstrap validation (n=1,000) to assess the significance and reproducibility of identified components. 
 
 ## Applicability to Multi-Omic Data
 
-7. **Consistent framework across data types**: The same ASCA approach can be applied to different molecular data types (transcriptomics, metabolomics, lipidomics, proteomics) as long as the data structure is similar (samples × features matrix), enabling integrated multi-omic analyses.
+7. **Consistent framework across data types**: The same ASCA approach can be applied to different molecular data types (transcriptomics, metabolomics, lipidomics, proteomics) as long as the data structure is similar (samples × features matrix). This will allow us to integratively compare the patterns from each dataset. 
 
-8. **Appropriate for count-based and continuous data**: With proper normalization and transformation, ASCA handles both count-based data (RNAseq) and continuous measurements (lipid abundances).
+8. **Appropriate for count-based and continuous data**: With proper normalization and transformation, ASCA handles both count-based data (RNAseq; no within-model normalization following VST transformation) and continuous measurements (lipid abundances; standard devation normalization of concentration data). 
+
+## Limitations of ASCA 
+
+1. **Memory and computing power**: ASCA can take a lot of computing power and memory, especially for highly dimensional data like gene expression. To overcome this limitation, I ran analyses on the Roberts Lab RStudio server, Raven. This also worked on the RStudio server on UW's HPC, Klone. To run full model validation (n=1,000 bootstrapping runs), this took ~5 min for lipid data and ~1.5 h for gene expression data. 
+
+2. **Multivariate descriptions, not individual testing**: ASCA models are descriptive and require additional follow up to test whether individual features are significantly different between groups. We will be able to see which genes and lipids are most strongly associated with each pattern, but this is slightly different than a direct univariate test. If there are features of interest that you want to test, follow up ASCA with ANOVA's or linear models as appropriate. 
+
+3. **Results depend on your choices**: Like all models, the results will vary depending on your processing choices including normalization and transformation, effects chosen, model structure, etc. 
+
+4. **Interpretation can be subjective**: Assigning biological meaning to each pattern can be interpretive and subjective. Focus on dominant patterns and components and support conclusions with additional analyses. 
 
 # Analysis 1: RNAseq ASCA Analysis
 
-**Script**: [`scripts/rna-seq_ASCA.Rmd`](https://github.com/AHuffmyer/larval_symbiont_TPC/blob/main/scripts/rna-seq_ASCA.Rmd)
+This post details the ASCA analyses for these datasets. We have also performed DESeq2, PCA and PERMANOVA analyses as well as PLSDA analyses that complement this approach.  
+
+Note that unsupervised multivariate analyses identified significant effects of phenotype, temperature, and interactions between phenotype and temperature. These effects will all be evaluated here.  
+
+- [Genes](https://ahuffmyer.github.io/ASH_Putnam_Lab_Notebook/DESeq2-Analysis-of-Mcap-2023-RNAseq/)
+- [Lipids](https://ahuffmyer.github.io/ASH_Putnam_Lab_Notebook/Preliminary-lipidomic-and-metabolomics-analysis-of-Hawaii-2023-larval-data/)
+
+**Script for ASCA analysis of genes**: [`scripts/rna-seq_ASCA.Rmd`](https://github.com/AHuffmyer/larval_symbiont_TPC/blob/main/scripts/rna-seq_ASCA.Rmd)
+
+**Script for functional enrichment of genes identified by ASCA**: [`scripts/rna-seq_functional_enrichment_ASCA_topGO.Rmd`](https://github.com/AHuffmyer/larval_symbiont_TPC/blob/main/scripts/rna-seq_functional_enrichment_ASCA_topGO.Rmd)
 
 ## Dataset and Experimental Design
 
 The RNAseq dataset includes:
+
 - **Samples**: 54 larval samples (6 biological replicates per treatment combination)
 - **Genes**: ~28,600 genes after filtering (genes present at >10 counts in at least 10% of samples)
 - **Design**: 3 temperatures × 3 parental phenotypes (full factorial)
@@ -63,7 +95,7 @@ The RNAseq dataset includes:
 
 RNAseq count data requires appropriate normalization before ASCA analysis:
 
-```r
+```
 # Filter genes using pOverA approach
 filt <- filterfun(pOverA(0.1, 10))
 gfilt <- genefilter(gcount, filt)
@@ -84,7 +116,7 @@ normalized_counts <- assay(gvst)
 
 The normalized data is converted to long format required by the ALASCA package:
 
-```r
+```
 long_data <- normalized_df %>%
   pivot_longer(cols = -c(sample, temperature, parent), 
                names_to = "variable", 
@@ -93,9 +125,9 @@ long_data <- normalized_df %>%
 
 ### Step 3: ASCA Model Specification
 
-The ASCA model is specified to test main effects and interactions:
+The ASCA model is specified to test main effects and interactions:  
 
-```r
+```
 res_all <- ALASCA(
   long_data,
   value ~ temperature * parent + (1|sample),
@@ -117,15 +149,19 @@ res_all <- ALASCA(
 - **Stratified validation**: Ensures each bootstrap includes representatives from all treatment groups (critical with small sample sizes)
 - **1000 validation runs**: Provides robust statistical assessment of component significance
 
+I ran this analysis on Raven to allow for intense memory requirements.  
+
 ### Step 4: Component Identification
 
-ASCA performs PCA on the variance attributed to each effect separately. For each effect (temperature, parent, temperature:parent), the analysis identifies principal components and their variance explained. The first 10 components are examined for each effect.
+ASCA performs PCA on the variance attributed to each effect separately. For each effect (temperature, parent, temperature:parent), the analysis identifies principal components and their variance explained. The first 10 components are examined for each effect. I selected PC's that explained >10% of total variance for further analysis and interpretation.  
 
 ### Step 5: Identifying Important Genes
 
-For each principal component, genes are ranked by their loading scores (contribution to the component). "Important" genes are identified using a cumulative variance approach:
+For each principal component, genes are then ranked by their loading scores (contribution to the component). "Important" genes are identified using a cumulative variance approach. I used a cut off of 25%. This results in a list of genes that **account for the first 25% of variance, identifying the strongest components of each pattern**. Note that if there are fewer genes that add up to that 25%, then those genes are stronger drivers accounting for more explanatory variance than a component that has more genes responsible for the first 25% variance. 
 
-```r
+For example, 
+
+```
 # Rank genes by absolute loading
 temp_pc1_load <- pc1_loadings %>%
   arrange(desc(abs_loading)) %>%
@@ -134,193 +170,291 @@ temp_pc1_load <- pc1_loadings %>%
     cum_var = cumsum(var_contrib) / sum(var_contrib)
   )
 
-# Select genes explaining first 50% of variance
+# Select genes explaining first 25% of variance
 important_genes <- temp_pc1_load %>%
-  filter(cum_var <= 0.50)
+  filter(cum_var <= 0.25)
 ```
 
-**Rationale for 50% threshold**: This stringent cutoff (tested against 60% and 80% thresholds) retains only the strongest drivers of each pattern while maintaining a manageable gene list size for functional enrichment. The number of genes identified (~3,000-4,000 per PC) is comparable to differential expression analyses but represents coordinated patterns rather than individual comparisons.
+**Rationale for 25% threshold**: This stringent cutoff (tested against 50%, 60% and 80% thresholds) retains only the strongest drivers of each pattern while maintaining a manageable gene list size for functional enrichment. The number of genes identified (~500-1,000 per PC) represents coordinated patterns rather than individual comparisons. This results in identification of the strongest genes and aids in data reduction for interpretation of the strongest results.  
 
-## Main Results
+## Main Results: Temperature
 
-The ASCA analysis identified three major patterns of coordinated gene expression:
+The ASCA analysis identified two major patterns of coordinated gene expression related to temperature:
 
 ### Pattern 1 (Temperature PC1): Linear Temperature Response
-- **Variance explained**: ~45%
-- **Pattern**: Linear gradient across temperatures (27°C → 30°C → 33°C)
-- **Genes identified**: 4,053 genes
-- **Biological interpretation**: Core thermal stress response affecting nearly all larvae similarly regardless of parental origin
 
-### Pattern 2 (Temperature:Parent PC1): Symbiont-Mediated Responses  
-- **Variance explained**: ~20%
-- **Pattern**: Separation between larvae with *Cladocopium*-only vs. mixed symbiont communities
-- **Genes identified**: 3,247 genes
-- **Biological interpretation**: Symbiont community identity drives baseline differences in gene expression, particularly pronounced at high stress (33°C)
+- **Variance explained**: ~88% (strong)
+- **Pattern**: Linear gradient across temperatures (27°C → 30°C → 33°C) including both increasing and decreasing expression
+- **Genes identified**: 808 genes
+- **Biological interpretation**: Core thermal stress response affecting larvae similarly regardless of parental phenotype
 
-### Pattern 3 (Temperature:Parent PC2): Parental History Effects
-- **Variance explained**: ~15%
-- **Pattern**: Unique expression profiles for each parental phenotype
-- **Genes identified**: 3,225 genes  
-- **Biological interpretation**: Parental history creates constitutive differences in offspring gene expression independent of temperature
+There were two PC's explaining >10% of variation due to temperature.  
 
-**Minimal overlap between patterns**: An upset plot analysis showed that >90% of "important" genes were unique to each PC, confirming that these represent distinct biological patterns rather than redundant information.
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/temp_scree_plot.png?raw=true)
 
-## Computational Requirements
+The pattern includes genes that shift linearly with temperature.  
 
-**Important**: This analysis requires substantial computational resources:
-- **Memory**: Minimum 100 GB RAM
-- **Runtime**: ~1.5 hours for full validation (1000 bootstrap runs)
-- **Recommendation**: Run as a background job on HPC or server; use n=10-50 validation runs for exploratory analysis
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/temp_PC1.png?raw=true)
 
-# Analysis 2: Functional Enrichment of ASCA Results
+808 genes were determined as "important" in this PC at the 25% variance threshold.  
 
-**Script**: [`scripts/rna-seq_functional_enrichment_ASCA_topGO.Rmd`](https://github.com/AHuffmyer/larval_symbiont_TPC/blob/main/scripts/rna-seq_functional_enrichment_ASCA_topGO.Rmd)
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/temp_PC1_abs_loadings_rank.png?raw=true)
 
-## Purpose
+Here are examples of the top loaded genes and their expression across temperatures.  
 
-After identifying important genes for each biological pattern, functional enrichment analysis determines what biological processes and molecular functions these genes represent. This reveals the mechanisms underlying each pattern.
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/Temp_PC1_top10_genes.png?raw=true)
 
-## Analytical Approach
+All genes are shown in this heatmap ordered by PC loading score.  
 
-### Step 1: Annotation Database Preparation
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/temp_PC1_heatmap.png?raw=true)
 
-Functional annotations for *M. capitata* genes were obtained from the genome annotation (version 3):
-- **Source**: EggNog functional annotation database
-- **Genes annotated**: 24,072 genes with GO terms (from http://cyanophora.rutgers.edu/montipora/)
-- **Coverage**: ~44% of predicted protein-coding genes in the genome
-- **Detected in dataset**: 11,712 annotated genes present in our filtered RNAseq data
+These genes were then analyzed using TopGO enrichment as I have preformed previously.  
 
-```r
-# Load annotation file
-Mcap.annot <- read.table("data/rna_seq/Montipora_capitata_HIv3.genes.EggNog_results.txt",
-                         quote="", sep="\t", header=TRUE)
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/functional/temp_PC1_enrichment_parent_terms.png?raw=true)
 
-# Filter to only genes detected in our dataset
-filtered_Mcap.annot <- Mcap.annot[Mcap.annot$gene %in% detected_genes, ]
-```
+Genes that change linearly with temperature include functions related to thermal stress including: 
 
-### Step 2: TopGO Enrichment Analysis
+- Microautophagy
+- Response to protein and DNA damage
+- Cellular oxidative response and detoxification
+- Regulation of DNA, mRNA splicing, and miRNA metabolism
+- Regulation of cell cycle, growth, and proliferation 
+- Fatty acid an dlipid metabolism
+- Stress, homeostasis, and apoptosis pathways 
 
-TopGO (Topology-based Gene Ontology) analysis was performed for each PC gene list:
+### Pattern 2 (Temperature PC2): Moderate Temperature Specific Response
 
-```r
-# Prepare gene-to-GO mapping
-geneID2GO <- filtered_Mcap.annot %>%
-  select(gene, GOs) %>%
-  filter(!is.na(GOs)) %>%
-  separate_rows(GOs, sep = ";")
+- **Variance explained**: ~11% (minor temperature component)
+- **Pattern**: Differential expression at moderate (30°C) temperatures
+- **Genes identified**: 742 genes
+- **Biological interpretation**: Unique response to moderate (30°C) temperature regardless of parental phenotype 
 
-geneID2GO <- split(geneID2GO$GOs, geneID2GO$gene_id)
+The pattern includes genes that are either higher or lower in expression at 30°C compared to 27°C and 33°C. This pattern is a more minor component and weaker than the response we saw in PC1.    
 
-# Create binary vector (1 = important gene, 0 = background)
-gene_vector <- as.factor(as.integer(background %in% important_gene_list))
-names(gene_vector) <- background
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/temp_PC2.png?raw=true)
 
-# Build TopGO data object
-GOdata <- new("topGOdata",
-              description = "Temperature PC1",
-              ontology = "BP",  # Biological Process
-              allGenes = gene_vector,
-              nodeSize = 5,  # Prune GO terms with <5 genes
-              gene2GO = geneID2GO,
-              annot = annFUN.gene2GO)
+742 genes were determined as "important" in this PC at the 25% variance threshold.  
 
-# Run weighted Fisher exact test
-resultWeight <- runTest(GOdata, algorithm = "weight01", statistic = "fisher")
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/temp_PC2_abs_loadings_rank.png?raw=true)
 
-# Extract results
-allRes <- GenTable(GOdata, weightFisher = resultWeight,
-                  orderBy = "weightFisher",
-                  topNodes = length(score(resultWeight)))
-```
+All genes are shown in this heatmap ordered by PC loading score.  
 
-**Key parameters**:
-- **nodeSize = 5**: Removes GO terms with fewer than 5 annotated genes to avoid spurious enrichments
-- **algorithm = "weight01"**: Accounts for GO hierarchy topology, reducing redundancy
-- **ontology = "BP"**: Focuses on Biological Process terms (also tested MF and CC separately)
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/temp_PC2_heatmap.png?raw=true)
 
-### Step 3: Reducing GO Term Redundancy
+These genes were then analyzed using TopGO enrichment as I have preformed previously.  
 
-GO terms are hierarchical and highly redundant. The rrvgo package reduces this redundancy:
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/functional/temp_PC2_enrichment_parent_terms.png?raw=true)
 
-```r
-# Calculate GO term similarity
-simMatrix <- calculateSimMatrix(significant_GO_terms,
-                               orgdb="org.Ce.eg.db",
-                               ont="BP",
-                               method="Rel")
+Genes that change at moderate temperature include functions related to thermal responses including: 
 
-# Reduce to representative terms
-reducedTerms <- reduceSimMatrix(simMatrix,
-                               scores,
-                               threshold=0.7,  # Similarity threshold
-                               orgdb="org.Ce.eg.db")
+- DNA replication
+- Bicarbonate transport and calcium ion sequestration
+- Cellular oxidative responses and detoxification 
+- Glutathione and one-carbon metabolism 
+- Innate immune responses
+- Methylation 
 
-# Group terms by parent
-results_with_parents <- results %>%
-  mutate(ParentTerm = reducedTerms$parentTerm[match(GO.ID, reducedTerms$go)])
-```
+## Main Results: Parental Phenotype/Symbiont Community 
 
-**Effect of reduction**: The reduced list typically contains 100-150 specific GO terms grouped under 30-40 parent terms, making results more interpretable while preserving biological information.
+The ASCA analysis identified two major patterns of coordinated gene expression by parental phenotype:
 
-### Step 4: Visualization
+### Pattern 1 (Parent PC1): Differential expression in larvae from bleached parents with Cladocopium symbionts 
 
-Results are visualized showing:
-- **Gene Ratio**: Proportion of significant genes associated with each GO term
-- **P-value**: Statistical significance (FDR-adjusted)
-- **Parent terms**: Broader biological categories for interpretation
+- **Variance explained**: ~55% (strong)
+- **Pattern**: Differential expression (higher or lower) in larvae with Cladocopium only symbionts (from bleaching sensitive parents) compared to those with mixed symbionts  
+- **Genes identified**: 326 genes
+- **Biological interpretation**: Core molecular characteristics of larvae with either *Cladocopium* symbionts or larvae with a mixture of symbionts regardless of temperature 
 
-```r
-# Calculate gene ratio
-results$GeneRatio <- results$Significant / results$Annotated
+There were two PC's explaining >10% of variation due to parental phenotype/symbiont.  
 
-# Plot parent terms
-ggplot(parent_term_summary, 
-       aes(x = GeneRatio, y = reorder(ParentTerm, GeneRatio))) +
-  geom_point(aes(size = N_terms, color = -log10(min_pvalue))) +
-  scale_color_gradient(low = "blue", high = "red") +
-  labs(x = "Mean Gene Ratio", y = "Parent GO Term",
-       color = "-log10(P-value)", size = "N Terms")
-```
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/parent_scree_plot.png?raw=true)
 
-## Main Results
+The pattern includes genes that are differential in the bleached group.  
 
-Functional enrichment revealed distinct biological processes for each pattern:
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/parent_PC1.png?raw=true)
 
-### Temperature Response Pattern (PC1)
-**Key processes** (4,053 genes enriched):
-- Protein folding and unfolding (heat shock response)
-- Oxidative stress response and DNA damage protection
-- Cell cycle regulation and proliferation control
-- Membrane trafficking and transport
-- Metabolic reprogramming (shifts in energy pathways)
-- Immune and symbiosis signaling
-- Structural and developmental processes
-- **Fatty acid biosynthesis** (relevant to lipid results below)
+326 genes were determined as "important" in this PC at the 25% variance threshold.  
 
-**Interpretation**: Classic thermal stress response showing cellular protection mechanisms, metabolic shifts, and stress signaling across all larvae.
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/parent_PC1_abs_loadings_rank.png?raw=true)
 
-### Symbiont-Mediated Pattern (PC2)
-**Key processes** (3,247 genes enriched):
-- Oxidative stress regulation and redox homeostasis
-- Nitrogen transport and metabolism (ammonium handling)
-- Metabolite transport and nutritional exchange
-- Cell signaling and communication (host-symbiont crosstalk)
-- Developmental and structural remodeling
-- Cell cycle regulation
+Here are examples of the top loaded genes and their expression across phenotypes.  
 
-**Interpretation**: Constitutive differences in oxidative stress capacity, nitrogen management, and nutritional exchange between larvae with different symbiont communities. These functions relate to thermal tolerance differences observed in physiological assays.
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/Parent_PC1_top10_genes.png?raw=true)
 
-### Parental History Pattern (PC3)
-**Key processes** (3,225 genes enriched):
-- Metabolic reprogramming (carbohydrate, fatty acid, amino acid metabolism)
-- Stress responses and apoptosis regulation
-- Development and cell structure
-- Cell signaling and communication
+All genes are shown in this heatmap ordered by PC loading score.  
 
-**Interpretation**: Parental history creates baseline differences in metabolic programming and stress response capacity in offspring, suggesting transgenerational effects.
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/parent_PC1_heatmap.png?raw=true)
 
-# Analysis 3: Lipidomics ASCA Analysis
+These genes were then analyzed using TopGO enrichment.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/functional/parent_PC1_enrichment_parent_terms.png?raw=true)
+
+Genes that are different in larvae with different symbiont communities include: 
+
+- Ion transport
+- Regulation of cell cycle and growth
+- Protein localization
+- Regulation of signaling 
+- Core metabolic processes 
+- Ammonium metabolism 
+- Arachidonic acid metabolism (a trophic/nutritional biomarker) 
+
+### Pattern 2 (Parent PC2): Differential expression in larvae from each parental phenotype 
+
+- **Variance explained**: ~45% (moderate)
+- **Pattern**: Differential expression between each parental phenotype wth particular deviation in the widltype group    
+- **Genes identified**: 408 genes
+- **Biological interpretation**: Core molecular characteristics of larvae unique to each parental phentype
+
+The pattern includes genes that are particularly differential in the wildtype group but vary across phenotypes.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/parent_PC2.png?raw=true)
+
+408 genes were determined as "important" in this PC at the 25% variance threshold.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/parent_PC2_abs_loadings_rank.png?raw=true)
+
+Here are examples of the top loaded genes and their expression across phenotypes.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/Parent_PC2_top10_genes.png?raw=true)
+
+All genes are shown in this heatmap ordered by PC loading score.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/parent_PC2_heatmap.png?raw=true)
+
+These genes were then analyzed using TopGO enrichment.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/functional/parent_PC2_enrichment_parent_terms.png?raw=true)
+
+Genes that are different in larvae from different parental phenotypes (and particularly different in wildtype) include: 
+
+- Microautophagy
+- Signaling and regulation of signaling 
+- Regulation of symbiotic interactions
+- ROS processes
+- RNA splicing 
+
+## Main Results: Interactive effects between temperature and phenotype 
+
+The ASCA analysis identified three major patterns of coordinated gene expression in response to temperature modulated by parental phenotype. Note that these interactive terms are more complex to interpret and we may chose to target specific components within these patterns in the future.  
+
+### Pattern 1 (Interaction PC1): Differential expression between parental phenotypes at 33°C temperature 
+
+- **Variance explained**: ~40% (moderate)
+- **Pattern**: Differential expression between parental phenotypes (particularly wildtype) at 33°C
+- **Genes identified**: 718 genes
+- **Biological interpretation**: Differential response between parental phenotypes modulated by 33°C conditions
+
+There were three PC's explaining >10% of variation due to interactive effects.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/interaction_scree_plot.png?raw=true)
+
+The pattern includes genes that are either differential in the wildtype group at 33°C or differential at 27 and 30°C.   
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/interaction_PC1.png?raw=true)
+
+718 genes were determined as "important" in this PC at the 25% variance threshold.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/interaction_PC1_abs_loadings_rank.png?raw=true)
+
+Here are examples of the top loaded genes and their expression across phenotypes.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/Interaction_PC1_top10_genes.png?raw=true)
+
+All genes are shown in this heatmap ordered by PC loading score.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/interaction_PC1_heatmap.png?raw=true)
+
+These genes were then analyzed using TopGO enrichment.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/functional/interaction_PC1_enrichment_parent_terms.png?raw=true)
+
+Genes that are different between parental phenotype modulated by 33°C: 
+
+- Cell wall structure 
+-  mRNA splicing
+-  Lipid storage
+-  Fatty acid metabolism
+-  Ammonium ion metabolism 
+-  Methylation 
+
+### Pattern 2 (Interaction PC2): Differential expression between parental phenotypes at 30-33°C temperature 
+
+- **Variance explained**: ~31% (moderate)
+- **Pattern**: Differential expression between parental phenotypes (particularly wildtype) at 30-33°C
+- **Genes identified**: 899 genes
+- **Biological interpretation**: Differential response between parental phenotypes modulated by 30-33°C conditions
+
+The pattern includes genes that are either differential in the wildtype group at 30-33°C or differential at 27°C but not 30-33°C.   
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/interaction_PC2.png?raw=true)
+
+899 genes were determined as "important" in this PC at the 25% variance threshold.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/interaction_PC2_abs_loadings_rank.png?raw=true)
+
+Here are examples of the top loaded genes and their expression across phenotypes.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/Interaction_PC2_top10_genes.png?raw=true)
+
+All genes are shown in this heatmap ordered by PC loading score.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/interaction_PC2_heatmap.png?raw=true)
+
+These genes were then analyzed using TopGO enrichment.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/functional/interaction_PC2_enrichment_parent_terms.png?raw=true)
+
+Genes that are different between parental phenotype modulated by 30-33°C: 
+
+- Anion and ion transport
+- Cell proliferation, apoptosis, and cell fate
+- Glutathione metabolic process
+- Arachidonic acid metabolism 
+- Cellular heat response and oxidant detoxification
+- Ammonium ion transport
+
+### Pattern 3 (Interaction PC3): Differential expression between parental phenotypes at 30-33°C temperature 
+
+- **Variance explained**: ~20% (moderate)
+- **Pattern**: Differential expression between all parental phenotypes at 30-33°C
+- **Genes identified**: 808 genes
+- **Biological interpretation**: Differential response between all parental phenotypes modulated by 30-33°C conditions
+
+The pattern includes genes that are either differential at 30-33°C or differential at 27°C but not 30-33°C.   
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/interaction_PC3.png?raw=true)
+
+808 genes were determined as "important" in this PC at the 25% variance threshold.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/interaction_PC3_abs_loadings_rank.png?raw=true)
+
+Here are examples of the top loaded genes and their expression across phenotypes.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/Interaction_PC3_top10_genes.png?raw=true)
+
+All genes are shown in this heatmap ordered by PC loading score.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/interaction_PC3_heatmap.png?raw=true)
+
+These genes were then analyzed using TopGO enrichment.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/functional/interaction_PC3_enrichment_parent_terms.png?raw=true)
+
+Genes that are different between parental phenotypes modulated by 30-33°C: 
+
+- Microautophagy
+- Signal regulation
+- Amino acid biosynthesis
+- Cellular detoxification
+- Lactate metabolism
+- Immune activiation
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/genes/upset.png?raw=true)
+
+**Minimal overlap between patterns**: An upset plot analysis showed that >90% of "important" genes were unique to each PC, confirming that these represent distinct biological patterns rather than redundant information. There is more overlap between interactive patterns and temperature patterns, which is not surprising.  
+
+# Analysis 2: Lipidomics ASCA Analysis
 
 **Script**: [`scripts/lipids_ASCA.Rmd`](https://github.com/AHuffmyer/larval_symbiont_TPC/blob/main/scripts/lipids_ASCA.Rmd)
 
@@ -337,8 +471,8 @@ ASCA is equally suitable for lipidomic data as for transcriptomic data because:
 ## Dataset and Experimental Design
 
 The lipidomic dataset includes:
-- **Samples**: Same 54 larval samples as RNAseq analysis
-- **Lipid features**: Hundreds of distinct lipid species quantified
+- **Samples**: 54 larval samples (different replicates than RNA samples)
+- **Lipid features**: ~900 lipid features
 - **Design**: Same 3 temperatures × 3 parental phenotypes
 - **Measurement**: Area-normalized peak intensities from MS-based lipidomics
 
@@ -346,9 +480,9 @@ The lipidomic dataset includes:
 
 ### Step 1: Data Preparation
 
-Lipidomic data requires minimal preprocessing compared to RNAseq:
+Lipidomic data processing:
 
-```r
+```
 # Load processed lipidomic data
 lipids <- read_csv("output/lipids_metabolites/lipids/processed_lipids.csv")
 
@@ -368,7 +502,7 @@ long_data$parent <- factor(long_data$parent,
 
 Unlike VST-normalized RNAseq data, raw lipidomic abundances benefit from log transformation:
 
-```r
+```
 # Check distribution
 hist(long_data$value)  # Often right-skewed
 
@@ -383,9 +517,9 @@ hist(long_data$value)  # More normally distributed
 
 ### Step 3: ASCA Model Specification
 
-The ASCA model for lipids is nearly identical to the RNAseq model:
+The ASCA model for lipids is nearly identical to the RNAseq model but includes scaling:
 
-```r
+```
 set.seed(123)
 
 res_all <- ALASCA(
@@ -402,14 +536,15 @@ res_all <- ALASCA(
 ```
 
 **Differences from RNAseq model**:
+
 - **scale_function = "sdall"**: Scales all variables by overall standard deviation (appropriate for log-transformed data; RNAseq used "none" because VST already stabilizes variance)
-- **Faster runtime**: ~5 minutes for full validation (vs. 1.5 hours for RNAseq) due to fewer features
+- **Faster runtime and less memory**: ~5 minutes for full validation (vs. 1.5 hours for RNAseq) due to fewer features
 
 ### Step 4: Identifying Important Lipids
 
-The same cumulative variance approach is used, but with a 25% threshold:
+The same cumulative variance approach is used with a 25% threshold:
 
-```r
+```
 # Rank lipids by loading contribution
 temp_pc1_load <- pc1_loadings %>%
   arrange(desc(abs_loading)) %>%
@@ -426,71 +561,226 @@ important_lipids <- temp_pc1_load %>%
   filter(rank <= idx_25_var)
 ```
 
-**Why 25% threshold for lipids?** Lipidomic datasets have fewer features than RNAseq (~hundreds vs. ~thousands), so a lower threshold still provides a reasonable number of important features while maintaining stringency.
+**Why 25% threshold for lipids?** Lipidomic datasets have fewer features than RNAseq (~hundreds vs. ~thousands), so a lower threshold still provides a reasonable number of important features while maintaining stringency. 
 
-## Main Results
+## Main Results: Temperature 
 
-ASCA identified similar patterns in lipidomic data as in gene expression:
+### Pattern 1 (Temperature PC1): Moderate temperature specific response
 
-### Pattern 1 (Temperature PC1): Linear Temperature Response in Lipids
-- **Pattern**: Linear increase/decrease across temperature gradient
-- **Biological interpretation**: Membrane lipid remodeling in response to thermal stress, consistent with temperature PC1 gene expression patterns including fatty acid biosynthesis genes
+- **Variance explained**: ~88% (strong)
+- **Pattern**: Differential lipids at 30°C moderate temperature compared to 27 and 33°C
+- **Lipids identified**: 77 lipids
+- **Biological interpretation**: Core thermal stress response affecting larvae similarly regardless of parental phenotype
 
-### Pattern 2 (Temperature PC2): Non-Linear Temperature Response
-- **Pattern**: Higher/lower at moderate temperature relative to ambient and high
-- **Biological interpretation**: Adaptive lipid remodeling at moderate stress that differs from extreme responses
+There were two PC's explaining >10% of variation due to temperature.  
 
-### Pattern 3 (Parent PC1): Symbiont-Associated Lipid Differences
-- **Pattern**: Higher/lower in Bleached vs. Wildtype and Nonbleached phenotypes
-- **Biological interpretation**: Symbiont community identity affects lipid composition, consistent with gene expression PC2 showing symbiont-mediated effects
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/lipids/temp_scree_plot.png?raw=true)
 
-### Pattern 4 (Parent PC2): Parent-Specific Lipid Profiles
-- **Pattern**: Higher/lower in Wildtype vs. other phenotypes
-- **Biological interpretation**: Parental phenotype-specific lipid signatures
+The pattern includes lipids that shift more strongly at moderate temperature.  
 
-### Pattern 5 (Interaction PC1 & PC2): Temperature Response Varies by Parent
-- **Pattern**: Responsive to temperature in Bleached and Nonbleached but not Wildtype
-- **Biological interpretation**: Parental phenotype modulates the lipid remodeling response to temperature stress
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/lipids/temp_PC1.png?raw=true)
 
-## Integration with Gene Expression Results
+77 lipids were determined as "important" in this PC at the 25% variance threshold.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/lipids/temp_PC1_abs_loadings_rank.png?raw=true)
+
+Here are examples of the top loaded lipids and their expression across temperatures.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/lipids/Temp_PC1_top10_lipids.png?raw=true)
+
+All lipids are shown in this heatmap ordered by PC loading score. Most are elevated at 30°C.   
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/lipids/temp_PC1_heatmap.png?raw=true)
+
+I then used [LION/web](http://www.lipidontology.com/) for functional enrichment analysis of important lipids as a preliminary approach to interpretation.  
+
+The lipid classes enriched in lipids differential at 30°C include:  
+
+- C16:0 
+- Fatty acids with 16 carbons
+- Sphingolipids
+- Plasma membrane
+- Fatty acid with 16-18 carbons
+- Fatty acid with <18 carbons 
+
+### Pattern 2 (Temperature PC2): Linear temperature response
+
+- **Variance explained**: ~11% (minor)
+- **Pattern**: Lipids that shift linearly with temperature
+- **Lipids identified**: 33 lipids
+- **Biological interpretation**: Core thermal stress response affecting larvae similarly regardless of parental phenotype
+
+The pattern includes lipids that shift linearly with temperature.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/lipids/temp_PC2.png?raw=true)
+
+33 lipids were determined as "important" in this PC at the 25% variance threshold.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/lipids/temp_PC2_abs_loadings_rank.png?raw=true)
+
+Here are examples of the top loaded lipids and their expression across temperatures.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/lipids/Temp_PC2_top10_lipids.png?raw=true)
+
+All lipids are shown in this heatmap ordered by PC loading score.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/lipids/temp_PC2_heatmap.png?raw=true)
+
+The lipid classes enriched in lipids differential across temperature include:  
+
+- Fatty acid with 3-5 double bonds
+
+## Main Results: Phenotype 
+
+### Pattern 1 (Phenotype PC1): Differential lipids in larvae with Cladocopium symbionts from bleaching sennsitive parents 
+
+- **Variance explained**: ~76% (strong)
+- **Pattern**: Lipids differential in larvae with Cladocopium symbionts from bleaching sensistive parents
+- **Lipids identified**: 77 lipids
+- **Biological interpretation**: Core lipidomic differences in larvae with Cladocopium symbionts from bleaching sensistive parents regardless of temperature
+
+There were two PC's explaining >10% of variation due to phenotype.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/lipids/parent_scree_plot.png?raw=true)
+
+The pattern includes lipids that are different in bleached larvae.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/lipids/parent_PC1.png?raw=true)
+
+38 lipids were determined as "important" in this PC at the 25% variance threshold.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/lipids/parent_PC1_abs_loadings_rank.png?raw=true)
+
+Here are examples of the top loaded lipids and their expression across temperatures.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/lipids/Parent_PC1_top10_lipids.png?raw=true)
+
+All lipids are shown in this heatmap ordered by PC loading score. Most are elevated in bleached larvae with a couple depleted in bleached larvae. FA 28:7 is highly differential and may be a signature of Durusdinium symbionts.     
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/lipids/parent_PC1_heatmap.png?raw=true)
+
+I then used [LION/web](http://www.lipidontology.com/) for functional enrichment analysis of important lipids as a preliminary approach to interpretation.  
+
+The lipid classes enriched in lipids differential in bleached larvae include:  
+
+- Fatty acid with <18 carbons
+- Neutral intrinsic curvature
+- 1-alkyl 2-acylglycerophosphocholines
+
+### Pattern 2 (Phenotype PC2): Differential lipids in wildtype larvae
+
+- **Variance explained**: ~24% (minor-moderate)
+- **Pattern**: Lipids differential in wildtype larvae 
+- **Lipids identified**: 23 lipids
+- **Biological interpretation**: Core lipidomic differences in wildtype larvae 
+
+The pattern includes lipids that are different in wildtype larvae.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/lipids/parent_PC2.png?raw=true)
+
+23 lipids were determined as "important" in this PC at the 25% variance threshold.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/lipids/parent_PC2_abs_loadings_rank.png?raw=true)
+
+Here are examples of the top loaded lipids and their expression across temperatures.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/lipids/Parent_PC2_top10_lipids.png?raw=true)
+
+All lipids are shown in this heatmap ordered by PC loading score.     
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/lipids/parent_PC2_heatmap.png?raw=true)
+
+I then used [LION/web](http://www.lipidontology.com/) for functional enrichment analysis of important lipids as a preliminary approach to interpretation.  
+
+The lipid classes enriched in lipids differential in bleached larvae include:  
+
+- Fatty acid with 26 carbons
+
+## Main Results: Interaction 
+
+Interactive effects were weak in unsupervised models and are weak in this analysis, so these may not be analyzed in detail in the paper.  
+
+### Pattern 1 (Interaction PC1): Differential lipids in larvae with wildtype symbionts at 30°C
+
+- **Variance explained**: ~67% (strong)
+- **Pattern**: Lipids differential in wildtype larvae at moderate temperature
+- **Lipids identified**: 55 lipids
+- **Biological interpretation**: Lipidomic response to moderate temperature modulated by parental phentype
+
+There were two PC's explaining >10% of variation due to interactive effects.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/lipids/interaction_scree_plot.png?raw=true)
+
+The pattern includes lipids that are different between phentypes at moderate temperature.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/lipids/interaction_PC1.png?raw=true)
+
+55 lipids were determined as "important" in this PC at the 25% variance threshold.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/lipids/interaction_PC1_abs_loadings_rank.png?raw=true)
+
+Here are examples of the top loaded lipids and their expression across temperatures.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/lipids/Interaction_PC1_top10_lipids.png?raw=true)
+
+All lipids are shown in this heatmap ordered by PC loading score. Most are higher in wildtype larvae at 30°C.      
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/lipids/interaction_PC1_heatmap.png?raw=true)
+
+I then used [LION/web](http://www.lipidontology.com/) for functional enrichment analysis of important lipids as a preliminary approach to interpretation.  
+
+The lipid classes enriched in lipids differential in bleached larvae include:  
+
+- Membrane component
+- Ceramide phosphocholines (sphingomeylins)
+- Endosome/lysosome
+- High transition temperature
+- Headgroup with positive charge
+- Diacylglycerophosphocholines
+- Bilayer thickness 
+- Lateral diffusion 
+
+### Pattern 2 (Interaction PC2): Differential lipids between phenotypes at elevated temperature
+
+- **Variance explained**: ~23% (minor-moderate)
+- **Pattern**: Lipids differential between phenotypes at elevated temperature
+- **Lipids identified**: 53 lipids
+- **Biological interpretation**: Lipidomic response to temperature modulated by parental phentype
+
+The pattern includes lipids that are different between phenotypes at 30-33°C temperature.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/lipids/interaction_PC2.png?raw=true)
+
+53 lipids were determined as "important" in this PC at the 25% variance threshold.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/lipids/interaction_PC2_abs_loadings_rank.png?raw=true)
+
+Here are examples of the top loaded lipids and their expression across temperatures.  
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/lipids/Interaction_PC2_top10_lipids.png?raw=true)
+
+All lipids are shown in this heatmap ordered by PC loading score. Differences are minor.    
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/lipids/interaction_PC2_heatmap.png?raw=true)
+
+I then used [LION/web](http://www.lipidontology.com/) for functional enrichment analysis of important lipids as a preliminary approach to interpretation.  
+
+The lipid classes enriched in lipids differential in bleached larvae include:  
+
+- Alkyldiacylglycerols
+- Headgroup with neural charge
+
+![](https://github.com/AHuffmyer/ASH_Putnam_Lab_Notebook/blob/master/images/NotebookImages/Hawaii2023/asca/20251219/lipids/upset.png?raw=true)
+
+**Minimal overlap between patterns**: An upset plot analysis showed that >90% of "important" lipids were unique to each PC, confirming that these represent distinct biological patterns rather than redundant information. There is more overlap between interactive patterns and temperature patterns, which is not surprising. The strongest PCs have the most unique lipids.   
+
+## Integration with Gene Expression Results and overall findings 
 
 The lipidomic ASCA results complement and validate the gene expression findings:
 
-1. **Temperature responses**: Both datasets show strong linear temperature effects, with genes involved in fatty acid biosynthesis enriched in temperature PC1, consistent with lipid remodeling patterns
+1. **Temperature responses**: Both datasets show strong temperature effects, with genes involved in fatty acid biosynthesis enriched in temperature PC1, consistent with lipid remodeling patterns enriched for fatty acids. 
 2. **Symbiont effects**: Both datasets separate by symbiont community, supporting the importance of symbiont identity in mediating molecular phenotypes
 3. **Parental effects**: Both datasets show constitutive differences by parental history, supporting transgenerational effects on molecular phenotypes
-
-# Comparison: RNAseq vs. Lipidomics ASCA
-
-| Feature | RNAseq ASCA | Lipidomics ASCA |
-|---------|-------------|-----------------|
-| **Features** | ~28,600 genes | ~hundreds of lipids |
-| **Normalization** | VST (DESeq2) | Log1p transformation |
-| **Scaling** | None (pre-normalized) | sdall (scale by overall SD) |
-| **Runtime** | ~1.5 hours | ~5 minutes |
-| **Memory** | 100 GB | Standard (16-32 GB) |
-| **Important features threshold** | 50% cumulative variance | 25% cumulative variance |
-| **Functional enrichment** | TopGO (BP, MF, CC) | Lipid class enrichment |
-| **Main patterns** | Temperature, symbiont, parent | Temperature, symbiont, parent |
-
-# Methodological Considerations
-
-## Strengths of ASCA for This Study
-
-1. **Unified framework**: Same analysis approach for different -omic data types enables direct comparison
-2. **Factorial design**: Explicitly models main effects and interactions rather than pairwise comparisons
-3. **Coordinated patterns**: Identifies biological modules rather than individual features
-4. **Random effects**: Accounts for sample-level variation not captured by treatment factors
-5. **Validation**: Bootstrap approach provides robust assessment of pattern significance
-6. **Ordered variables**: Treats temperature as ordered gradient rather than discrete groups
-
-## Limitations and Considerations
-
-1. **Normalization matters**: Different data types require appropriate transformation (VST for counts, log for abundances)
-2. **Threshold selection**: Choice of cumulative variance threshold for "important" features is somewhat arbitrary (addressed by testing multiple thresholds)
-3. **Computational cost**: RNAseq ASCA requires substantial computing resources for full validation
-4. **Annotation coverage**: Functional enrichment limited to annotated genes (~44% of detected genes)
-5. **Interpretation**: PC loadings indicate contribution but not directionality of effect (addressed by examining effect plots and example genes/lipids)
 
 ## Comparison to Alternative Approaches
 
