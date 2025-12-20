@@ -150,6 +150,24 @@ colnames(gcount_filt)
 head(gcount_filt)
 ```
 
+# Remove outliers 
+
+Remove the two outlier samples detected in unsupervised analysis. 
+
+```{r}
+metadata_ordered<-metadata_ordered%>%
+  filter(!sample=="R93")%>%
+  filter(!sample=="R57")
+
+dim(metadata_ordered)
+
+gcount_filt<-gcount_filt%>%
+  select(!R93)%>%
+  select(!R57)
+
+dim(gcount_filt)
+```
+
 # Normalize data using VST transformation
 
 Create a DESeqDataSet and apply variance stabilizing transformation for normalization.
@@ -286,7 +304,7 @@ res_all <- ALASCA(
   long_data,
   value ~ temperature * parent + (1|sample),
   effects=c("temperature", "parent", "temperature:parent"),
-  n_validation_runs = 1000,
+  n_validation_runs = 10,
   scale_function = "none",
   validate = TRUE,
   stratification_column = "code",
@@ -294,12 +312,12 @@ res_all <- ALASCA(
   reduce_dimensions = TRUE
 )
 
-saveRDS(res_all, file = "output/rna_seq/asca/asca_results_genes.rds")
+#saveRDS(res_all, file = "output/rna_seq/asca/asca_results_genes.rds")
 ```
 
 Read in R data file of full validation run if not running full validation.
 ```{r}
-res_all <- readRDS("output/rna_seq/asca/asca_results_genes.rds")
+#res_all <- readRDS("output/rna_seq/asca/asca_results_genes.rds")
 ```
 
 ```{r}
@@ -346,7 +364,7 @@ plot(res_all, effect = 2, component = 1, type = 'effect',
      palette = c("black"),
      my_theme = theme_classic())
 
-#Different between all parents
+#Higher in wildtype
 plot(res_all, effect = 2, component = 2, type = 'effect', 
      n_limit=20, 
      ribbon = TRUE,
@@ -357,7 +375,7 @@ plot(res_all, effect = 2, component = 2, type = 'effect',
 
 #parent:temperature
 
-#Different between parents at high temperature, linear response to temperature 
+#Different between wildtype and other parents at 30-33C 
 plot(res_all, effect = 3, component = 1, type = 'effect', 
      n_limit=20, 
      ribbon = TRUE,
@@ -366,7 +384,7 @@ plot(res_all, effect = 3, component = 1, type = 'effect',
      palette = c("darkgray", "orange", "darkred"),
      my_theme = theme_classic())
 
-#Different between parents at high temperature, with peak/decrease at 30C 
+#Different between wildtype/bleached and nonbleached at 30-33
 plot(res_all, effect = 3, component = 2, type = 'effect', 
      n_limit=20, 
      ribbon = TRUE,
@@ -858,19 +876,6 @@ write.csv(parent_pc1_important_25,
           row.names = FALSE)
 
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 ## Parent: PC2 
 
@@ -1411,7 +1416,7 @@ int_pc3_important_25<-int_pc3_important_25%>%mutate(PC="Interaction 3")
 
 importance<-rbind(temp_pc1_important_25, temp_pc2_important_25, parent_pc1_important_25, parent_pc2_important_25, int_pc1_important_25, int_pc2_important_25, int_pc3_important_25)
 
-importance<-importance%>%select(gene, abs_loading, var_contrib, PC)%>%rename(gene="variable")
+importance<-importance%>%select(gene, abs_loading, var_contrib, PC)%>%rename("variable"=gene)
 head(importance)
 
 #add in expression data 
@@ -2257,16 +2262,6 @@ Heatmap(
 )
 dev.off()
 ```
-
-
-
-
-
-
-
-
-
-
 
 ## Interaction PC3 
 ```{r}
