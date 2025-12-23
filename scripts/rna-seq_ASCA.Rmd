@@ -66,10 +66,10 @@ gcount<-gcount %>%
 dim(gcount)
 ```
 
-Conduct data filtering using pOverA approach.
+Conduct data filtering using pOverA approach. Filter to keep genes at counts >10 in at least 9% of samples. 
 
 ```{r}
-filt <- filterfun(pOverA(0.1,10))
+filt <- filterfun(pOverA(0.5,10))
 
 #create filter for the counts data
 gfilt <- genefilter(gcount, filt)
@@ -200,6 +200,9 @@ Extract normalized counts.
 
 ```{r}
 normalized_counts <- assay(gvst)
+```
+
+```{r}
 dim(normalized_counts)
 head(normalized_counts)
 ```
@@ -2595,11 +2598,14 @@ top10_int_pc3<-pc_conc%>%
 
 pc_plot7<-pc_conc%>%
   filter(variable %in% top10_int_pc3)%>%
+  #group_by(temperature, parent, variable)%>%
+  #summarise(mean=mean(value, na.rm=TRUE), se=sd(value, na.rm=TRUE)/sqrt(length(value)))%>%
   
   ggplot(aes(x=temperature, y=value, colour=parent))+
   facet_wrap(~variable, scales="free_y")+
   geom_boxplot(outliers=FALSE)+
   geom_point(position=position_dodge(0.8))+
+  #geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0, position=position_dodge(0.8))+
   scale_colour_manual(name="Phenotype", values=parent_cols, labels=parent_labels)+
   ggtitle("Interaction PC3 Effects")+
   xlab("Temperature")+
@@ -2609,5 +2615,4 @@ pc_plot7<-pc_conc%>%
   
 ggsave(pc_plot7, filename="figures/rna_seq/asca/Interaction_PC3_top10_genes.png", height=6, width=12)
 ```
-
 

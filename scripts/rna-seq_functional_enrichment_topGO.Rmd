@@ -217,7 +217,6 @@ View number of DEGs
 ```{r}
 length(parent_test_set)
 ```
-2540 DEGs with annotation informaiton
 
 Run TopGO
 
@@ -234,7 +233,7 @@ numSigGenes(GOdata)
 sum(feasible(GOdata))
 
 #684 sig genes
-#8509 genes used in analysis 
+#8128 genes used in analysis 
 ```
 
 Run fisher test. 

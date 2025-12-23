@@ -93,12 +93,12 @@ We started with 54,384 genes. which is the total number in the annotation. About
 
 Conduct data filtering, this includes:  
 
-*pOverA*: Specifying the minimum count for a proportion of samples for each gene. Here, we are using a pOverA of 0.05. This is because we have 54 samples with a minimum of n=6 samples  per group. Therefore, we will accept genes that are present in 6/54 = 0.11 of the samples because we expect different expression by treatment group (parent x temperature). We are further setting the minimum count of genes to 10, such that 11% of the samples must have a gene count of >10 in order for the gene to remain in the data set.  
+*pOverA*: Specifying the minimum count for a proportion of samples for each gene. Here, we are using a pOverA of 0.5, or 50% of samples. We are further setting the minimum count of genes to 10, such that 50% of the samples must have a gene count of >10 in order for the gene to remain in the data set. This prevents low count genes from being retained in the dataset and focuses on the most robust genes.   
 
 Filter in the package "genefilter". Pre-filtering our dataset to reduce the memory size dataframe, increase the speed of the transformation and testing functions, and improve quality of statistical analysis by removing low-coverage counts. Removed counts could represent outliers in the data and removing these improves sensitivity of statistical tests.
 
 ```{r}
-filt <- filterfun(pOverA(0.1,10))
+filt <- filterfun(pOverA(0.5,10))
 
 #create filter for the counts data
 gfilt <- genefilter(gcount, filt)
@@ -117,7 +117,7 @@ nrow(gcount) #Before
 nrow(gcount_filt) #After
 ```
 
-Before filtering, we had approximately 48,332 genes. After filtering for pOverA, we have approximately 28,613 genes. This indicates that there were 28,613 genes present in 10% of samples at <10 counts per gene. 6/54 = 0.11, so I selected 10% filter because I want to keep genes that are uniquely expressed in one treatment group (n=6 out of 54).  
+Before filtering, we had approximately 48,332 genes. After filtering for pOverA, we have approximately 22,348 genes. This indicates that there were 22,348 genes present in 50% of samples at <>0 counts per gene. 
 
 Prepare sample names. Keep R and any numbers following R in the colnames of gcount_filt.  
 
@@ -343,11 +343,11 @@ library(vegan)
 library(factoextra)
 
 dim(test)
-scaled_test <-prcomp(test[c(1:28613)], scale=TRUE, center=TRUE)
+scaled_test <-prcomp(test[c(1:22348)], scale=TRUE, center=TRUE)
 fviz_eig(scaled_test)
 
 # scale data
-vegan <- scale(test[c(1:28613)])
+vegan <- scale(test[c(1:22348)])
 
 # PerMANOVA 
 permanova<-adonis2(vegan ~ parent*temperature, data = test, method='eu')
@@ -355,12 +355,12 @@ permanova
 ```
 
 adonis2(formula = vegan ~ parent * temperature, data = test, method = "eu")
-                   Df SumOfSqs      R2      F Pr(>F)    
-parent              2   207617 0.14228 5.3258  0.001 ***
-temperature         2   323578 0.22174 8.3004  0.001 ***
-parent:temperature  4    89923 0.06162 1.1534  0.157    
-Residual           43   838145 0.57436                  
-Total              51  1459263 1.00000     
+                   Df SumOfSqs      R2       F Pr(>F)    
+parent              2   172440 0.15130  6.1653  0.001 ***
+temperature         2   299137 0.26246 10.6952  0.001 ***
+parent:temperature  4    66832 0.05864  1.1947  0.133    
+Residual           43   601339 0.52761                   
+Total              51  1139748 1.00000      
 
 Gene expression is significantly different between temperature and parent, no interactive effect detected.  
 
@@ -381,9 +381,9 @@ allgenesfilt_PCA <- ggplot(gPCAdata, aes(PC1, PC2, color=parent, shape=temperatu
   ylab(paste0("PC2: ",percentVar[2],"% variance")) +
   scale_color_manual(name="Phenotype (Symbiont)", values=c("Wildtype"="gray", "Bleached"="orange", "Nonbleached"="brown4"), labels=parent_names)+
   scale_shape_manual(name="Temperature", values=c(19,17,15))+
-  geom_text(x=0, y=-8, label="p[Phenotype]=0.001", color="black")+
-  geom_text(x=0, y=-9, label="p[Temperature]=0.001", color="black")+
-  geom_text(x=0, y=-10, label="p[Interaction]=0.157", color="darkgray")+
+  geom_text(x=0, y=-5.5, label="p[Phenotype]=0.001", color="black")+
+  geom_text(x=0, y=-6.5, label="p[Temperature]=0.001", color="black")+
+  geom_text(x=0, y=-7.5, label="p[Interaction]=0.133", color="darkgray")+
   theme_classic() + #Set background color
   ggtitle("A")+
   theme(panel.border = element_blank(), # Set border
@@ -432,7 +432,6 @@ temp30_deg$gene <- rownames(temp30_deg)
 rownames(temp30_deg) <- NULL
 
 dim(temp30_deg)
-#2162 DEGS
 
 temp33_deg<-results(DEG_T, contrast=c("temperature","33","27"))
 temp33_deg <- as.data.frame(subset(temp33_deg, padj<0.05))
@@ -442,7 +441,6 @@ temp33_deg$gene <- rownames(temp33_deg)
 rownames(temp33_deg) <- NULL
 
 dim(temp33_deg)
-#9098 DEGs
 
 temp30vs33_deg<-results(DEG_T, contrast=c("temperature","33","30"))
 temp30vs33_deg <- as.data.frame(subset(temp30vs33_deg, padj<0.05))
@@ -452,7 +450,6 @@ temp30vs33_deg$gene <- rownames(temp30vs33_deg)
 rownames(temp30vs33_deg) <- NULL
 
 dim(temp30vs33_deg)
-#5867 DEGs
 ```
 
 In these contrasts, positive fold changes indicate higher expression in the first listed contrast.  
@@ -464,7 +461,7 @@ DEG_temperature<-rbind(temp30_deg, temp33_deg, temp30vs33_deg)
 dim(DEG_temperature)
 length(unique(DEG_temperature$gene))
 ```
-There are 17,127 total genes and 9715 unique genes, indicating that some are shared in the contrasts. 
+There are 17,121 total genes and 9664 unique genes, indicating that some are shared in the contrasts. 
 
 Get a VST normalized gene count matrix for these DEGs. 
 ```{r}
@@ -554,11 +551,11 @@ Build PERMANOVA model for DEG's that are different between temperatures.
 ```{r}
 dim(test_DEG_temp)
 
-scaled_test_DEG_temp <-prcomp(test_DEG_temp[c(1:9715)], scale=TRUE, center=TRUE)
+scaled_test_DEG_temp <-prcomp(test_DEG_temp[c(1:9664)], scale=TRUE, center=TRUE)
 fviz_eig(scaled_test_DEG_temp)
 
 # scale data
-vegan_DEG_temp <- scale(test_DEG_temp[c(1:9715)])
+vegan_DEG_temp <- scale(test_DEG_temp[c(1:9664)])
 
 # PerMANOVA 
 permanova_DEG<-adonis2(vegan_DEG_temp ~ parent*temperature, data = test_DEG_temp, method='eu')
@@ -573,11 +570,11 @@ Number of permutations: 999
 
 adonis2(formula = vegan_DEG_temp ~ parent * temperature, data = test_DEG_temp, method = "eu")
                    Df SumOfSqs      R2       F Pr(>F)    
-parent              2    60594 0.12230  7.3965  0.001 ***
-temperature         2   235575 0.47546 28.7559  0.001 ***
-parent:temperature  4    23163 0.04675  1.4137  0.124    
-Residual           43   176133 0.35549                   
-Total              51   495465 1.00000               
+parent              2    61027 0.12382  7.5161  0.001 ***
+temperature         2   234596 0.47599 28.8928  0.001 ***
+parent:temperature  4    22670 0.04600  1.3960  0.150    
+Residual           43   174570 0.35420                   
+Total              51   492864 1.00000        
 
 Temperature is significant as expected because we are analyzing temperature DEGs. Parent is also significant. This makes sense because in our global gene expression PERMANOVA and PCA above we see that global expression is different between parental phenotypes. This shows that parental separation is present in differentially expressed genes between temperatures. We will look into this further below.  
 
@@ -595,7 +592,7 @@ DEG_PCA_temp <- ggplot(gPCAdata_DEG_temp, aes(PC1, PC2, color=parent, shape=temp
   scale_shape_manual(name="Temperature", values=c(19,17,15))+
   geom_text(x=0, y=12.5, label="p[Phenotype]=0.001", color="black")+
   geom_text(x=0, y=11, label="p[Temperature]=0.001", color="black")+
-  geom_text(x=0, y=9.5, label="p[Interaction]=0.124", color="darkgray")+
+  geom_text(x=0, y=9.5, label="p[Interaction]=0.150", color="darkgray")+
   theme_classic() + #Set background color
   theme(panel.border = element_blank(), # Set border
                      #panel.grid.major = element_blank(), #Set major gridlines 
@@ -629,7 +626,6 @@ BvsWT_deg$gene <- rownames(BvsWT_deg)
 rownames(BvsWT_deg) <- NULL
 
 dim(BvsWT_deg)
-#2071 DEGs
 
 NBvsWT_deg<-results(DEG_P, contrast=c("parent","Nonbleached","Wildtype"))
 NBvsWT_deg <- as.data.frame(subset(NBvsWT_deg, padj<0.05))
@@ -639,7 +635,6 @@ NBvsWT_deg$gene <- rownames(NBvsWT_deg)
 rownames(NBvsWT_deg) <- NULL
 
 dim(NBvsWT_deg)
-#2621 DEGs
 
 NBvsB_deg<-results(DEG_P, contrast=c("parent","Nonbleached","Bleached"))
 NBvsB_deg <- as.data.frame(subset(NBvsB_deg, padj<0.05))
@@ -649,7 +644,6 @@ NBvsB_deg$gene <- rownames(NBvsB_deg)
 rownames(NBvsB_deg) <- NULL
 
 dim(NBvsB_deg)
-#2540 DEGs
 ```
 In these contrasts, positive fold changes indicate higher expression in the first listed contrast.  
 
@@ -660,7 +654,7 @@ DEG_parent<-rbind(BvsWT_deg, NBvsWT_deg, NBvsB_deg)
 dim(DEG_parent)
 length(unique(DEG_parent$gene))
 ```
-There are 7232 total DEGs and 4863 unique genes, indicating that some are shared in the contrasts. 
+There are 7011 total DEGs and 4675 unique genes, indicating that some are shared in the contrasts. 
 
 Get a VST normalized gene count matrix for these DEGs. 
 ```{r}
@@ -749,11 +743,11 @@ Build PERMANOVA model for DEG's that are different between temperatures.
 ```{r}
 dim(test_DEG_parent)
 
-scaled_test_DEG_parent <-prcomp(test_DEG_parent[c(1:4863)], scale=TRUE, center=TRUE)
+scaled_test_DEG_parent <-prcomp(test_DEG_parent[c(1:4675)], scale=TRUE, center=TRUE)
 fviz_eig(scaled_test_DEG_parent)
 
 # scale data
-vegan_DEG_parent <- scale(test_DEG_parent[c(1:4863)])
+vegan_DEG_parent <- scale(test_DEG_parent[c(1:4675)])
 
 # PerMANOVA 
 permanova_DEG_parent<-adonis2(vegan_DEG_parent ~ parent*temperature, data = test_DEG_parent, method='eu')
@@ -768,11 +762,11 @@ Number of permutations: 999
 
 adonis2(formula = vegan_DEG_parent ~ parent * temperature, data = test_DEG_parent, method = "eu")
                    Df SumOfSqs      R2       F Pr(>F)    
-parent              2    85809 0.34599 21.2935  0.001 ***
-temperature         2    62465 0.25186 15.5008  0.001 ***
-parent:temperature  4    13098 0.05281  1.6251  0.026 *  
-Residual           43    86641 0.34934                   
-Total              51   248013 1.00000            
+parent              2    81648 0.34245 21.5160  0.001 ***
+temperature         2    62870 0.26369 16.5678  0.001 ***
+parent:temperature  4    12320 0.05167  1.6232  0.033 *  
+Residual           43    81587 0.34219                   
+Total              51   238425 1.00000           
 
 Parent is significant as expected because we are analyzing parental DEGs. There are still temperature effects, which also makes sense because there was such a strong temperature effect on global expression. Interestingly, there is a parent x temperature interaction, indicating response to temperature is mediated by parental phenotype. We will look into this more next.   
 
@@ -789,7 +783,7 @@ DEG_PCA_parent <- ggplot(gPCAdata_DEG_parent, aes(PC1, PC2, color=parent, shape=
   scale_shape_manual(name="Temperature", values=c(19,17,15))+
   geom_text(x=-2, y=10, label="p[Phenotype]=0.001", color="black")+
   geom_text(x=-2, y=8, label="p[Temperature]=0.001", color="black")+
-  geom_text(x=-2, y=6, label="p[Interaction]=0.026", color="black")+
+  geom_text(x=-2, y=6, label="p[Interaction]=0.033", color="black")+
   theme_classic() + #Set background color
   theme(panel.border = element_blank(), # Set border
                      #panel.grid.major = element_blank(), #Set major gridlines 
@@ -853,7 +847,6 @@ NBvsB_30_deg$gene <- rownames(NBvsB_30_deg)
 rownames(NBvsB_30_deg) <- NULL
 
 dim(NBvsB_30_deg)
-#2844 DEGs
 
 #NBvsB_33_deg<-results(DEG_I, contrast=list("temperature33.parentNonbleached", "temperature33.parentBleached"))
 
@@ -876,7 +869,6 @@ NBvsB_33_deg$gene <- rownames(NBvsB_33_deg)
 rownames(NBvsB_33_deg) <- NULL
 
 dim(NBvsB_33_deg)
-#3853 DEGs
 ```
 
 Combine this list of DEGs into one dataframe. 
@@ -886,7 +878,7 @@ DEG_interaction<-rbind(NBvsB_30_deg, NBvsB_33_deg)
 dim(DEG_interaction)
 length(unique(DEG_interaction$gene))
 ```
-There are 6697 total genes and 5007 unique DEGs.
+There are 6239 total genes and 4626 unique DEGs.
 
 ```{r}
 #DEG_interaction_unique <- anti_join(DEG_interaction, DEG_parent, by = "gene")
@@ -897,7 +889,7 @@ dim(DEG_interaction_unique)
 str(DEG_interaction_unique)
 length(unique(DEG_interaction_unique$gene))
 ```
-There are 5007 genes that are uniquely differentially expressed between NB and B at elevated temperature (30 or 33°C). 
+There are 4624 genes that are uniquely differentially expressed between NB and B at elevated temperature (30 or 33°C). 
 
 Get a VST normalized gene count matrix for these DEGs. 
 ```{r}
@@ -981,11 +973,11 @@ Build PERMANOVA model for DEG's that are different between NB and B at 30-33°C
 ```{r}
 dim(test_DEG_interaction)
 
-scaled_test_DEG_interaction <-prcomp(test_DEG_interaction[c(1:5007)], scale=TRUE, center=TRUE)
+scaled_test_DEG_interaction <-prcomp(test_DEG_interaction[c(1:4626)], scale=TRUE, center=TRUE)
 fviz_eig(scaled_test_DEG_interaction)
 
 # scale data
-vegan_DEG_interaction <- scale(test_DEG_interaction[c(1:5007)])
+vegan_DEG_interaction <- scale(test_DEG_interaction[c(1:4626)])
 
 # PerMANOVA 
 permanova_DEG_interaction<-adonis2(vegan_DEG_interaction ~ parent*temperature, data = test_DEG_interaction, method='eu')
@@ -1000,11 +992,11 @@ Number of permutations: 999
 
 adonis2(formula = vegan_DEG_interaction ~ parent * temperature, data = test_DEG_interaction, method = "eu")
                    Df SumOfSqs      R2       F Pr(>F)    
-parent              2    81975 0.32102 18.0796  0.001 ***
-temperature         2    59791 0.23414 13.1869  0.001 ***
-parent:temperature  4    16109 0.06308  1.7764  0.009 ** 
-Residual           43    97483 0.38175                   
-Total              51   255357 1.00000                   
+parent              2    74769 0.31692 18.5741  0.001 ***
+temperature         2    60079 0.25465 14.9247  0.001 ***
+parent:temperature  4    14531 0.06159  1.8049  0.007 ** 
+Residual           43    86547 0.36684                   
+Total              51   235926 1.00000                      
 
 Interaction is significant as expected. Strong parent and temperature effects are also present as expected.   
 
@@ -1023,7 +1015,7 @@ DEG_PCA_interaction <- ggplot(gPCAdata_DEG_interaction, aes(PC1, PC2, color=pare
   scale_shape_manual(name="Temperature", values=c(19,17,15))+
   geom_text(x=-2, y=-3.75, label="p[Parent]=0.001", color="black")+
   geom_text(x=-2, y=-5.25, label="p[Temperature]=0.001", color="black")+
-  geom_text(x=-2, y=-6.75, label="p[Interaction]=0.009", color="black")+
+  geom_text(x=-2, y=-6.75, label="p[Interaction]=0.007", color="black")+
   theme_classic() + #Set background color
   theme(panel.border = element_blank(), # Set border
                      #panel.grid.major = element_blank(), #Set major gridlines 
