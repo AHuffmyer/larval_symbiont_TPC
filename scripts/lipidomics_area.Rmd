@@ -12,13 +12,6 @@ editor_options:
   chunk_output_type: console
 ---
 
-ADD LOG TRANSFORM? mutate(value = log1p(value)) 
-
-
-
-
-
-
 # Set Up    
 
 ```{r setup, include=FALSE}

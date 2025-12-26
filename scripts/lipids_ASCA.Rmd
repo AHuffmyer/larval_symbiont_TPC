@@ -33,7 +33,7 @@ library(ComplexHeatmap)
 
 # Data input and filtering
 
-Read in data. 
+Read in data that has been filtered, normalized, with outliers removed. 
 
 ```{r}
 lipids<-read_csv("output/lipids_metabolites/lipids/processed_lipids.csv")
@@ -329,6 +329,64 @@ write.csv(temp_pc1_important_25,
 
 ```
 
+Plot lipids colored by lipid class. 
+
+```{r}
+lollipop_temp_pc1<-temp_pc1_important_25%>%
+   mutate(class = str_extract(gene, "^[A-Za-z]+"))
+
+library(RColorBrewer)
+
+okabe_ito_19 <- c(
+  "#E69F00", # orange
+  "#56B4E9", # sky blue
+  "#009E73", # bluish green
+  "#F0E442", # yellow
+  "#0072B2", # blue
+  "#D55E00", # vermillion
+  "#CC79A7", # reddish purple
+  "#000000", # black
+  "#999999", # grey
+  "#117733", # dark green
+  "#882255", # wine
+  "#88CCEE", # light teal
+  "#44AA99", # turquoise
+  "#332288", # dark navy
+  "#DDCC77", # sand
+  "#999933", # olive
+  "#AA4499", # magenta
+  "#661100", # dark brown
+  "#6699CC"  # steel blue
+)
+
+lollipop_temp_pc1 <- lollipop_temp_pc1 %>%
+  arrange(rank) %>%
+  mutate(panel = ceiling(row_number() / (n()/2)))%>%
+  mutate(pattern = if_else(panel=="1", "Elevated at 30°C", 
+                           if_else(panel=="2", "Elevated at 30°C ", NA))) 
+
+lolli_temp_pc1_plot<-lollipop_temp_pc1%>%
+  
+  ggplot(aes(x=loading, y=reorder(gene, -rank), color=class))+
+  facet_wrap(~pattern, ncol = 2, scales = "free_y") +
+  geom_point()+
+  geom_segment(aes(x = 0, xend = loading, y = gene, yend = gene), linewidth = 0.8) +
+  ylab("Lipid")+
+  scale_color_manual(values = okabe_ito_19) +
+  xlab("PC1 Loading Score")+
+  ggtitle("C")+
+  theme_classic()+
+  theme(
+    legend.title=element_blank(), 
+    axis.text=element_text(color="black", size=12), 
+    axis.title=element_text(color="black", size=14, face="bold"), 
+    #strip.text = element_blank(), 
+    title=element_text(size=14, color="black", face="bold")
+  );lolli_temp_pc1_plot
+
+ggsave(lolli_temp_pc1_plot, filename="figures/lipids/asca/temp_pc1_lipid_loadings.png", width=14, height=7)
+```
+
 ## Temperature: PC2 
 
 ```{r}
@@ -449,19 +507,40 @@ write.csv(temp_pc2_important_25,
 
 ```
 
+Plot lipids colored by lipid class. 
 
+```{r}
+lollipop_temp_pc2<-temp_pc2_important_25%>%
+   mutate(class = str_extract(gene, "^[A-Za-z]+"))
 
+lollipop_temp_pc2 <- lollipop_temp_pc2 %>%
+  arrange(rank) %>%
+  mutate(panel = ceiling(row_number() / (n()/2)))%>%
+  mutate(pattern = if_else(loading<0, "Higher at 27°C", 
+                           if_else(loading>0, "Lower at 27°C", NA)))%>%
+  mutate(pattern = factor(pattern, levels=c("Lower at 27°C", "Higher at 27°C")))
 
+lolli_temp_pc2_plot<-lollipop_temp_pc2%>%
+  
+  ggplot(aes(x=loading, y=reorder(gene, -rank), color=class))+
+  facet_wrap(~pattern, ncol = 2, scales = "free_y") +
+  geom_point()+
+  geom_segment(aes(x = 0, xend = loading, y = gene, yend = gene), linewidth = 0.8) +
+  ylab("Lipid")+
+  scale_color_manual(values = okabe_ito_19) +
+  xlab("PC2 Loading Score")+
+  ggtitle("C")+
+  theme_classic()+
+  theme(
+    legend.title=element_blank(), 
+    axis.text=element_text(color="black", size=12), 
+    axis.title=element_text(color="black", size=14, face="bold"), 
+    #strip.text = element_blank(), 
+    title=element_text(size=14, color="black", face="bold")
+  );lolli_temp_pc2_plot
 
-
-
-
-
-
-
-
-
-
+ggsave(lolli_temp_pc2_plot, filename="figures/lipids/asca/temp_pc2_lipid_loadings.png", width=14, height=7)
+```
 
 ## Parent: PC1 
 
@@ -583,14 +662,37 @@ write.csv(parent_pc1_important_25,
 
 ```
 
+Plot lipids colored by lipid class. 
 
+```{r}
+lollipop_parent_pc1<-parent_pc1_important_25%>%
+   mutate(class = str_extract(gene, "^[A-Za-z]+"))
 
+lollipop_parent_pc1 <- lollipop_parent_pc1 %>%
+  arrange(rank) %>%
+  mutate(panel = ceiling(row_number() / (n()/2)))
 
+lolli_parent_pc1_plot<-lollipop_parent_pc1%>%
+  
+  ggplot(aes(x=loading, y=reorder(gene, -rank), color=class))+
+  facet_wrap(~panel, ncol = 2, scales = "free_y") +
+  geom_point()+
+  geom_segment(aes(x = 0, xend = loading, y = gene, yend = gene), linewidth = 0.8) +
+  ylab("Lipid")+
+  scale_color_manual(values = okabe_ito_19) +
+  xlab("PC1 Loading Score")+
+  ggtitle("C")+
+  theme_classic()+
+  theme(
+    legend.title=element_blank(), 
+    axis.text=element_text(color="black", size=12), 
+    axis.title=element_text(color="black", size=14, face="bold"), 
+    strip.text = element_blank(), 
+    title=element_text(size=14, color="black", face="bold")
+  );lolli_parent_pc1_plot
 
-
-
-
-
+ggsave(lolli_parent_pc1_plot, filename="figures/lipids/asca/parent_pc1_lipid_loadings.png", width=14, height=7)
+```
 
 ## Parent: PC2 
 
@@ -713,13 +815,37 @@ write.csv(parent_pc2_important_25,
 ```
 
 
+Plot lipids colored by lipid class. 
 
+```{r}
+lollipop_parent_pc2<-parent_pc2_important_25%>%
+   mutate(class = str_extract(gene, "^[A-Za-z]+"))
 
+lollipop_parent_pc2 <- lollipop_parent_pc2 %>%
+  arrange(rank) %>%
+  mutate(panel = ceiling(row_number() / (n()/2)))
 
+lolli_parent_pc2_plot<-lollipop_parent_pc2%>%
+  
+  ggplot(aes(x=loading, y=reorder(gene, -rank), color=class))+
+  facet_wrap(~panel, ncol = 2, scales = "free_y") +
+  geom_point()+
+  geom_segment(aes(x = 0, xend = loading, y = gene, yend = gene), linewidth = 0.8) +
+  ylab("Lipid")+
+  scale_color_manual(values = okabe_ito_19) +
+  xlab("PC2 Loading Score")+
+  ggtitle("C")+
+  theme_classic()+
+  theme(
+    legend.title=element_blank(), 
+    axis.text=element_text(color="black", size=12), 
+    axis.title=element_text(color="black", size=14, face="bold"), 
+    strip.text = element_blank(), 
+    title=element_text(size=14, color="black", face="bold")
+  );lolli_parent_pc2_plot
 
-
-
-
+ggsave(lolli_parent_pc2_plot, filename="figures/lipids/asca/parent_pc2_lipid_loadings.png", width=14, height=7)
+```
 
 ## ParentxTemperature: PC1 
 
@@ -2177,6 +2303,30 @@ temp_pc1_lion<-read_csv("output/lipids_metabolites/lipids/asca/lion_results/LION
 temp_pc1_lion
 #no significant enrichment according to FDR q values 
 #C16:0, fatty acids with 16 carbons, sphingolipids, plasma membrane, fatty acid with 16-18 cabons, and fatty acid with <18 carbons are significant at p<0.05
+
+lolli_temp_pc1<-temp_pc1_lion%>%
+  mutate(logp=-log10(`p-value`))%>%
+  arrange(desc(logp))%>%
+  filter(logp>1)%>%
+  
+  ggplot(aes(x=logp, y=reorder(Discription, logp)))+
+  geom_point(size=3)+
+  geom_segment(aes(x = 0, xend = logp, y = Discription, yend = Discription), linewidth = 0.8) +
+  ylab("LION Term")+
+  #xlim(2, 2.8)+
+  xlab("-Log(p-value)")+
+  ylab("LION Term")+
+  ggtitle("B")+
+  geom_vline(xintercept=1.3, linetype="dashed")+
+  theme_classic()+
+  theme(
+    legend.title=element_blank(), 
+    axis.text=element_text(color="black", size=12), 
+    axis.title=element_text(color="black", size=14), 
+    title=element_text(color="black", size=14, face="bold")
+  );lolli_temp_pc1
+
+ggsave(lolli_temp_pc1, filename="figures/lipids/asca/lion/temp_pc1_terms.png", width=9, height=5)
 ```
 
 Temperature PC2
@@ -2185,6 +2335,29 @@ temp_pc2_lion<-read_csv("output/lipids_metabolites/lipids/asca/lion_results/LION
 temp_pc2_lion
 #no significant enrichment according to FDR q values 
 #fatty acid with 3-5 double bonds are significant at p<0.05 
+
+lolli_temp_pc2<-temp_pc2_lion%>%
+  mutate(logp=-log10(`p-value`))%>%
+  arrange(desc(logp))%>%
+  filter(logp>1)%>%
+  
+  ggplot(aes(x=logp, y=reorder(Discription, logp)))+
+  geom_point(size=3)+
+  geom_segment(aes(x = 0, xend = logp, y = Discription, yend = Discription), linewidth = 0.8) +
+  ylab("LION Term")+
+  xlab("-Log(p-value)")+
+  ylab("LION Term")+
+  ggtitle("B")+
+  geom_vline(xintercept=1.3, linetype="dashed")+
+  theme_classic()+
+  theme(
+    legend.title=element_blank(), 
+    axis.text=element_text(color="black", size=12), 
+    axis.title=element_text(color="black", size=14), 
+    title=element_text(color="black", size=14, face="bold")
+  );lolli_temp_pc2
+
+ggsave(lolli_temp_pc2, filename="figures/lipids/asca/lion/temp_pc2_terms.png", width=7, height=5)
 ```
 
 Parent PC1
@@ -2193,6 +2366,30 @@ parent_pc1_lion<-read_csv("output/lipids_metabolites/lipids/asca/lion_results/LI
 parent_pc1_lion
 #no significant enrichment according to FDR q values 
 #fatty acid with <18 carbons, neutral intrinsic curvature, and 1-alkyl 2-acylglycerophosphocholines are significant at p<0.05
+
+lolli_parent_pc1<-parent_pc1_lion%>%
+  mutate(logp=-log10(`p-value`))%>%
+  arrange(desc(logp))%>%
+  filter(logp>1)%>%
+  
+  ggplot(aes(x=logp, y=reorder(Discription, logp)))+
+  geom_point(size=3)+
+  geom_segment(aes(x = 0, xend = logp, y = Discription, yend = Discription), linewidth = 0.8) +
+  ylab("LION Term")+
+  #xlim(2, 2.8)+
+  xlab("-Log(p-value)")+
+  ylab("LION Term")+
+  ggtitle("B")+
+  geom_vline(xintercept=1.3, linetype="dashed")+
+  theme_classic()+
+  theme(
+    legend.title=element_blank(), 
+    axis.text=element_text(color="black", size=12), 
+    axis.title=element_text(color="black", size=14), 
+    title=element_text(color="black", size=14, face="bold")
+  );lolli_parent_pc1
+
+ggsave(lolli_parent_pc1, filename="figures/lipids/asca/lion/parent_pc1_terms.png", width=7, height=5)
 ```
 
 Parent PC2
@@ -2201,6 +2398,29 @@ parent_pc2_lion<-read_csv("output/lipids_metabolites/lipids/asca/lion_results/LI
 parent_pc2_lion
 #no significant enrichment according to FDR q values 
 #fatty acid with 26 carbons enriched at p<0.05
+
+lolli_parent_pc2<-parent_pc2_lion%>%
+  mutate(logp=-log10(`p-value`))%>%
+  arrange(desc(logp))%>%
+  filter(logp>1)%>%
+  
+  ggplot(aes(x=logp, y=reorder(Discription, logp)))+
+  geom_point(size=3)+
+  geom_segment(aes(x = 0, xend = logp, y = Discription, yend = Discription), linewidth = 0.8) +
+  ylab("LION Term")+
+  #xlim(2, 2.8)+
+  xlab("-Log(p-value)")+
+  ylab("LION Term")+
+  ggtitle("C")+
+  geom_vline(xintercept=1.3, linetype="dashed")+
+  theme_classic()+
+  theme(
+    legend.title=element_blank(), 
+    axis.text=element_text(color="black", size=12), 
+    axis.title=element_text(color="black", size=14)
+  );lolli_parent_pc2
+
+ggsave(lolli_parent_pc1, filename="figures/lipids/asca/lion/parent_pc2_terms.png", width=9, height=5)
 ```
 
 Interaction PC1
@@ -2209,6 +2429,29 @@ int_pc1_lion<-read_csv("output/lipids_metabolites/lipids/asca/lion_results/LION_
 int_pc1_lion
 #no significant enrichment according to FDR q values 
 #membrane component, ceramide phosphocholines (sphingomeylins), endosome/lysosome, high transition temperature, headgroup with positive charge, diacylglycerophosphocholines, low bilayer thickness, high bilayer thickness, above average bilayer thickness, and low lateral diffusion are significant at p<0.05
+
+lolli_int_pc1<-int_pc1_lion%>%
+  mutate(logp=-log10(`p-value`))%>%
+  arrange(desc(logp))%>%
+  filter(logp>1)%>%
+  
+  ggplot(aes(x=logp, y=reorder(Discription, logp)))+
+  geom_point(size=3)+
+  geom_segment(aes(x = 0, xend = logp, y = Discription, yend = Discription), linewidth = 0.8) +
+  ylab("LION Term")+
+  #xlim(2, 2.8)+
+  xlab("-Log(p-value)")+
+  ylab("LION Term")+
+  ggtitle("C")+
+  geom_vline(xintercept=1.3, linetype="dashed")+
+  theme_classic()+
+  theme(
+    legend.title=element_blank(), 
+    axis.text=element_text(color="black", size=12), 
+    axis.title=element_text(color="black", size=14)
+  );lolli_int_pc1
+
+ggsave(lolli_int_pc1, filename="figures/lipids/asca/lion/interaction_pc1_terms.png", width=9, height=5)
 ```
 
 Interaction PC2
@@ -2217,6 +2460,29 @@ int_pc2_lion<-read_csv("output/lipids_metabolites/lipids/asca/lion_results/LION_
 int_pc2_lion
 #no significant enrichment according to FDR q values 
 #alkyldiacylglycerols and headgroup with neural charge are significant at p<0.05
+
+lolli_int_pc2<-int_pc2_lion%>%
+  mutate(logp=-log10(`p-value`))%>%
+  arrange(desc(logp))%>%
+  filter(logp>1)%>%
+  
+  ggplot(aes(x=logp, y=reorder(Discription, logp)))+
+  geom_point(size=3)+
+  geom_segment(aes(x = 0, xend = logp, y = Discription, yend = Discription), linewidth = 0.8) +
+  ylab("LION Term")+
+  #xlim(2, 2.8)+
+  xlab("-Log(p-value)")+
+  ylab("LION Term")+
+  ggtitle("C")+
+  geom_vline(xintercept=1.3, linetype="dashed")+
+  theme_classic()+
+  theme(
+    legend.title=element_blank(), 
+    axis.text=element_text(color="black", size=12), 
+    axis.title=element_text(color="black", size=14)
+  );lolli_int_pc2
+
+ggsave(lolli_int_pc2, filename="figures/lipids/asca/lion/interaction_pc2_terms.png", width=9, height=5)
 ```
 
 
