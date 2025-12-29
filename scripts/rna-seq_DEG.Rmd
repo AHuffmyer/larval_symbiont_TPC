@@ -117,7 +117,7 @@ nrow(gcount) #Before
 nrow(gcount_filt) #After
 ```
 
-Before filtering, we had approximately 48,332 genes. After filtering for pOverA, we have approximately 22,348 genes. This indicates that there were 22,348 genes present in 50% of samples at <>0 counts per gene. 
+Before filtering, we had approximately 48,332 genes. After filtering for pOverA, we have approximately 22,348 genes. This indicates that there were 22,348 genes present in 50% of samples at >10 counts per gene. 
 
 Prepare sample names. Keep R and any numbers following R in the colnames of gcount_filt.  
 
@@ -349,6 +349,7 @@ fviz_eig(scaled_test)
 # scale data
 vegan <- scale(test[c(1:22348)])
 
+set.seed(123)
 # PerMANOVA 
 permanova<-adonis2(vegan ~ parent*temperature, data = test, method='eu')
 permanova
@@ -383,7 +384,7 @@ allgenesfilt_PCA <- ggplot(gPCAdata, aes(PC1, PC2, color=parent, shape=temperatu
   scale_shape_manual(name="Temperature", values=c(19,17,15))+
   geom_text(x=0, y=-5.5, label="p[Phenotype]=0.001", color="black")+
   geom_text(x=0, y=-6.5, label="p[Temperature]=0.001", color="black")+
-  geom_text(x=0, y=-7.5, label="p[Interaction]=0.133", color="darkgray")+
+  geom_text(x=0, y=-7.5, label="p[Interaction]=0.140", color="darkgray")+
   theme_classic() + #Set background color
   ggtitle("A")+
   theme(panel.border = element_blank(), # Set border
@@ -399,7 +400,7 @@ ggsave("figures/rna_seq/pca.jpeg", allgenesfilt_PCA, width=8, height=4)
 Add a plot with elipses.  
 
 ```{r}
-allgenes_ellipse<-allgenesfilt_PCA + stat_ellipse();allgenes_ellipse
+allgenes_ellipse<-allgenesfilt_PCA + stat_ellipse(type="norm");allgenes_ellipse
 
 ggsave("figures/rna_seq/pca_ellipse.pdf", allgenes_ellipse, width=9, height=5)
 ggsave("figures/rna_seq/pca_ellipse.jpeg", allgenes_ellipse, width=9, height=5)
