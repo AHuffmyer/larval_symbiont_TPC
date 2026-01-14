@@ -183,6 +183,8 @@ No outliers before removing metabolites for presence/absence filtering.
 
 Keep only metabolites detected in all samples. 
 ```{r}
+length(unique(metabolites$Name))
+
 # Find metabolites that have a value > 0 for every tube
 filtered_data <- metabolites %>%
   group_by(Name) %>%

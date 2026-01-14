@@ -572,6 +572,11 @@ write_csv(lipids_filtered, file="output/lipids_metabolites/lipids/processed_lipi
 
 # Unsupervised analysis 
 
+Reorder factor. 
+```{r}
+lipids_filtered$temperature<-factor(lipids_filtered$temperature, levels=c("Ambient", "Moderate (+3)", "High (+6)"))
+```
+
 Conduct a PCA and PERMANOVA to examine the effects of parent and temperature on the lipidome of coral larvae. 
 
 Convert to wide format. 
@@ -2388,7 +2393,6 @@ etag_plot2<-ether_tags%>%
         legend.position="right");etag_plot2
 ```
 
-
 ## TAG:FA Ratios 
 
 Calculate FFA:TAG ratio of percent composition of total lipid pool. A higher ratio indicates relative increases in FFA compared to TAGs. 
@@ -2429,3 +2433,126 @@ anova(model)
 ```
 
 No effects 
+
+# Proportion oxidation in PC lipids
+
+```{r}
+ox_pc<-lipids_filtered %>%
+  mutate(class = str_extract(lipid, "^[A-Za-z]+"))%>%
+  filter(class=="PC")%>%
+  
+  #add column for oxidized vs not oxidized 
+  mutate(
+    ox = if_else(
+      str_detect(lipid, "O-"),
+      "oxidized",
+      "not oxidized"
+    )
+  )
+```
+
+Summarize total concentration of oxidized vs non oxidized PC lipids. 
+
+```{r}
+ox_pc<-ox_pc%>%
+  group_by(sample, temperature, parent, ox)%>%
+  summarise(total_area=sum(area_normalized))
+```
+
+Plot oxidized PCs
+```{r}
+pc_plot1<-ox_pc%>%
+  filter(ox=="oxidized")%>%
+  
+  ggplot(aes(x = temperature, y = total_area, colour = parent)) +
+  geom_boxplot()+
+  geom_point(position=position_dodge(0.75)) +
+  scale_colour_manual(values=c("orange", "darkred", "darkgray"))+
+  labs(x = "", y = "Oxidized PC Lipids") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+        legend.position="right");pc_plot1
+```
+
+Calculate oxidized:non-oxidized ratio. 
+
+```{r}
+ox_pc2<-ox_pc%>%
+  pivot_wider(names_from = ox, values_from = total_area)%>%
+  mutate(ratio = oxidized/`not oxidized`)
+```
+
+Plot
+```{r}
+pc_plot2<-ox_pc2%>%
+  ggplot(aes(x = temperature, y = ratio, colour = parent)) +
+  geom_boxplot()+
+  geom_point(position=position_dodge(0.75)) +
+  scale_colour_manual(values=c("orange", "darkred", "darkgray"))+
+  labs(x = "", y = "Oxidized:Non-Oxidized PC Lipids") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+        legend.position="right");pc_plot2
+```
+
+
+# Proportion oxidation in FA lipids
+
+```{r}
+ox_fa<-lipids_filtered %>%
+  mutate(class = str_extract(lipid, "^[A-Za-z]+"))%>%
+  filter(class=="FA")%>%
+  
+  #add column for oxidized vs not oxidized 
+  mutate(
+    ox = if_else(
+      str_detect(lipid, ";O"),
+      "oxidized",
+      "not oxidized"
+    )
+  )
+```
+
+Summarize total concentration of oxidized vs non oxidized FA lipids. 
+
+```{r}
+ox_fa<-ox_fa%>%
+  group_by(sample, temperature, parent, ox)%>%
+  summarise(total_area=sum(area_normalized))
+```
+
+Plot oxidized FAs
+```{r}
+fa_plot1<-ox_fa%>%
+  filter(ox=="oxidized")%>%
+  
+  ggplot(aes(x = temperature, y = total_area, colour = parent)) +
+  geom_boxplot()+
+  geom_point(position=position_dodge(0.75)) +
+  scale_colour_manual(values=c("orange", "darkred", "darkgray"))+
+  labs(x = "", y = "Oxidized FA Lipids") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+        legend.position="right");fa_plot1
+```
+
+Calculate oxidized:non-oxidized ratio. 
+
+```{r}
+ox_fa2<-ox_fa%>%
+  pivot_wider(names_from = ox, values_from = total_area)%>%
+  mutate(ratio = oxidized/`not oxidized`)
+```
+
+Plot
+```{r}
+fa_plot2<-ox_fa2%>%
+  ggplot(aes(x = temperature, y = ratio, colour = parent)) +
+  geom_boxplot()+
+  geom_point(position=position_dodge(0.75)) +
+  scale_colour_manual(values=c("orange", "darkred", "darkgray"))+
+  labs(x = "", y = "Oxidized:Non-Oxidized FA Lipids") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+        legend.position="right");fa_plot2
+```

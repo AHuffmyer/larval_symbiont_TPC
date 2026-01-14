@@ -304,7 +304,7 @@ QY (relative quantum yield) values do not require any normalization.
 
 ## NPQ
 
-First calculate Fm for each well as average of values from the first 15 min dark period. Then calculate NPQ as (Fm-value)/value. 
+First calculate Fm for each well as average of values from the first 15 min dark period. Then calculate NPQ as (Fm-value)/value. Note that we use NPQ raw values.  
 
 ```{r}
 df <- df %>%
@@ -392,7 +392,7 @@ Select only required columns.
 
 ```{r}
 df<-df%>%
-  dplyr::select(Plate, well, code, Time, Light, Gradient_Temperature, Symbiont, O2_Fm_norm, NPQ_norm, QY, Phase)
+  dplyr::select(Plate, well, code, Time, Light, Gradient_Temperature, Symbiont, O2_Fm_norm, NPQ_raw, QY, Phase)
 ```
 
 Plot the data from the PI Curve faceted by parent type.
@@ -777,18 +777,18 @@ Normalize NPQ to starting value, view across RLC temperature gradient, and merge
 
 ```{r}
 npq<-rlc%>%
-  select(Plate, Phase, well, code, Time, Light, Gradient_Temperature,Symbiont, NPQ_norm)%>%
+  dplyr::select(Plate, Phase, well, code, Time, Light, Gradient_Temperature,Symbiont, NPQ_raw)%>%
   ungroup()%>%
   filter(Phase == "Rapid light curve - Temp Gradient") %>%
   arrange(Plate, well, code, Time, Light, Gradient_Temperature) %>%
   mutate(
-    baseline = dplyr::first(NPQ_norm),           # within each group thanks to .by
-    NPQrlc   = NPQ_norm / baseline,
+    baseline = dplyr::first(NPQ_raw),           # within each group thanks to .by
+    NPQrlc   = NPQ_raw / baseline,
     .by = c(Plate, well, code)
   )%>%
-  select(!Phase)%>%
-  select(!baseline)%>%
-  select(!c(Plate, well, Time))
+  dplyr::select(!Phase)%>%
+  dplyr::select(!baseline)%>%
+  dplyr::select(!c(Plate, well, Time))
 
 head(npq)
 ```
@@ -799,8 +799,8 @@ hist(npq$NPQrlc)
 
 #filter upper outliers 
 
-npq<-npq%>%
-  filter(NPQrlc<6)
+#npq<-npq%>%
+#  filter(NPQrlc<6)
 
 hist(npq$NPQrlc)
 ```
@@ -879,4 +879,293 @@ pairs(emm)
 emm<-emmeans(model, ~Symbiont | Gradient_Temperature)
 pairs(emm)
 ```
-WT is higher than the other two at 21, 24, 26, 28, 29, 31, 34, 37. No differences between C and MIX. 
+C is different than others at 34C, 37C, 38C. Values are higher at these temperatures in larvae with C. 
+
+Conduct K-S test on distribution of values. 
+
+```{r}
+# Pairwise phenotype comparisons (e.g., C vs MIX, C vs WT, MIX vs WT)
+pairwise_pheno <- combn(levels(npq$Symbiont), 2, simplify = FALSE)
+
+ks_by_temp <- npq %>%
+  filter(!is.na(NPQrlc), !is.na(Gradient_Temperature), !is.na(Symbiont)) %>%
+  group_by(Gradient_Temperature) %>%
+  group_modify(~{
+    dat <- .x
+    
+    map_dfr(pairwise_pheno, \(p) {
+      g1 <- dat %>% filter(Symbiont == p[1]) %>% pull(NPQrlc)
+      g2 <- dat %>% filter(Symbiont == p[2]) %>% pull(NPQrlc)
+      
+      # skip bins with too little data
+      if (length(g1) < 10 || length(g2) < 10) {
+        return(tibble(
+          pheno_1 = p[1], pheno_2 = p[2],
+          n1 = length(g1), n2 = length(g2),
+          D = NA_real_, p_value = NA_real_
+        ))
+      }
+      
+      # jitter helps with ties; does not change values meaningfully
+      kt <- ks.test(jitter(g1, 1e-8), jitter(g2, 1e-8), exact = FALSE)
+      
+      tibble(
+        pheno_1 = p[1], pheno_2 = p[2],
+        n1 = length(g1), n2 = length(g2),
+        D = unname(kt$statistic),
+        p_value = kt$p.value
+      )
+    })
+  }) %>%
+  ungroup() %>%
+  # adjust within each pairwise comparison across temperatures
+  group_by(pheno_1, pheno_2) %>%
+  mutate(p_adj_FDR = p.adjust(p_value, method = "BH")) %>%
+  ungroup()
+
+ks_by_temp
+
+ks_by_temp %>%
+  mutate(comparison = paste(pheno_1, "vs", pheno_2)) %>%
+  select(Gradient_Temperature, comparison, D, p_adj_FDR) %>%
+  arrange(Gradient_Temperature, comparison)%>%
+  filter(p_adj_FDR<0.05)
+
+ks_D_table <- ks_by_temp %>%
+  mutate(comparison = paste(pheno_1, "vs", pheno_2)) %>%
+  select(Gradient_Temperature, comparison, D, p_adj_FDR) %>%
+  arrange(Gradient_Temperature, comparison)
+
+ks_D_table
+
+ks_by_temp %>%
+  mutate(comparison = paste(pheno_1, "vs", pheno_2)) %>%
+  ggplot(aes(x = Gradient_Temperature, y = D, group = comparison)) +
+  geom_point() +
+  geom_line() +
+  facet_wrap(~comparison) +
+  theme_classic() +
+  labs(
+    x = "Temperature",
+    y = "K–S D statistic",
+    title = "Temperature-dependent phenotype differences in NPQ_raw (pooled across all light)"
+  )
+
+```
+
+```{r}
+
+library(ggridges)
+library(ggtext)
+
+df <- npq  
+stopifnot(exists("ks_D_table"))
+
+# -----------------------------
+# 1) Filter + relabel phenotypes + palette
+# -----------------------------
+target_temps <- c("34", "37", "38")
+pheno_levels <- c("C", "MIX", "WT")
+
+pheno_labels <- c(
+  C   = "Susceptible (C)",
+  MIX = "Resistant (C/D)",
+  WT  = "Wildtype (C/D)"
+)
+
+pheno_cols <- c(
+  "Susceptible (C)" = "orange",
+  "Resistant (C/D)" = "darkred",
+  "Wildtype (C/D)"  = "darkgray"
+)
+
+df_pub <- df %>%
+  filter(
+    !is.na(NPQrlc),
+    !is.na(Gradient_Temperature),
+    !is.na(Symbiont),
+    as.character(Gradient_Temperature) %in% target_temps,
+    as.character(Symbiont) %in% pheno_levels
+  ) %>%
+  mutate(
+    Gradient_Temperature = factor(as.character(Gradient_Temperature), levels = target_temps),
+    Symbiont = factor(as.character(Symbiont), levels = pheno_levels),
+    phenotype = factor(pheno_labels[as.character(Symbiont)], levels = unname(pheno_labels))
+  )
+
+# -----------------------------
+# 2) Pull K–S stats from ks_D_table (robust parsing)
+#    Includes: C vs MIX, C vs WT, WT vs MIX (either order)
+# -----------------------------
+stopifnot(exists("ks_D_table"))
+
+q_col <- dplyr::case_when(
+  "p_adj_FDR" %in% names(ks_D_table) ~ "p_adj_FDR",
+  "q_FDR"     %in% names(ks_D_table) ~ "q_FDR",
+  TRUE ~ NA_character_
+)
+if (is.na(q_col)) {
+  stop("ks_D_table must contain an adjusted p-value column named 'p_adj_FDR' or 'q_FDR'.")
+}
+
+# Map short codes to publication labels
+code_to_label <- c(
+  C   = "Susceptible (C)",
+  MIX = "Resistant (C/D)",
+  WT  = "Wildtype (C/D)"
+)
+
+# Parse "comparison" into two tokens, then standardize
+parse_comp_to_labels <- function(comp) {
+  comp <- as.character(comp)
+
+  # Normalize separators (handles "C vs MIX", "C vs. MIX", "C-VS-MIX", etc.)
+  comp2 <- gsub("vs\\.", "vs", comp, ignore.case = TRUE)
+  comp2 <- gsub("\\s+", " ", comp2)
+  comp2 <- trimws(comp2)
+
+  # Split on " vs " (case-insensitive) or "-" if needed
+  parts <- unlist(strsplit(comp2, "\\s+vs\\s+|\\s+-\\s+|\\s+VS\\s+", perl = TRUE))
+  parts <- trimws(parts)
+
+  if (length(parts) < 2) return(c(NA_character_, NA_character_))
+
+  # Reduce to codes if codes are present; otherwise try to infer from words
+  to_code <- function(x) {
+    x_up <- toupper(x)
+    if (grepl("\\bC\\b", x_up)) return("C")
+    if (grepl("\\bMIX\\b", x_up)) return("MIX")
+    if (grepl("\\bWT\\b", x_up)) return("WT")
+
+    # if comparison already uses pretty labels
+    if (grepl("Susceptible", x, ignore.case = TRUE)) return("C")
+    if (grepl("Resistant",  x, ignore.case = TRUE)) return("MIX")
+    if (grepl("Wildtype",   x, ignore.case = TRUE)) return("WT")
+
+    NA_character_
+  }
+
+  c1 <- to_code(parts[1])
+  c2 <- to_code(parts[2])
+
+  c(code_to_label[c1], code_to_label[c2])
+}
+
+# Canonicalize ordering so "WT vs MIX" and "MIX vs WT" become the same key
+canon_key <- function(a, b) {
+  if (is.na(a) || is.na(b)) return(NA_character_)
+  paste(sort(c(a, b)), collapse = " | ")
+}
+
+# Create a table of annotations per temperature
+ks_annot <- ks_D_table %>%
+  filter(as.character(Gradient_Temperature) %in% target_temps) %>%
+  mutate(
+    Gradient_Temperature = factor(as.character(Gradient_Temperature), levels = target_temps),
+    lbls = purrr::map(comparison, parse_comp_to_labels),
+    g1 = purrr::map_chr(lbls, 1),
+    g2 = purrr::map_chr(lbls, 2),
+    key = purrr::map2_chr(g1, g2, canon_key)
+  ) %>%
+  filter(!is.na(key)) %>%
+  # Keep only the three comparisons we want (in canonical form)
+  filter(key %in% c(
+    canon_key("Susceptible (C)", "Resistant (C/D)"),
+    canon_key("Susceptible (C)", "Wildtype (C/D)"),
+    canon_key("Wildtype (C/D)",  "Resistant (C/D)")
+  )) %>%
+  group_by(Gradient_Temperature, key) %>%
+  summarize(
+    D = dplyr::first(na.omit(D)),
+    q = dplyr::first(na.omit(.data[[q_col]])),
+    g1 = dplyr::first(na.omit(g1)),
+    g2 = dplyr::first(na.omit(g2)),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    comp_std = paste(g1, "vs", g2),
+    q_txt = ifelse(is.na(q), "NA", format.pval(q, digits = 2, eps = 1e-16)),
+    q_markup = ifelse(!is.na(q) & q < 0.05, paste0("<b>", q_txt, "</b>"), q_txt),
+    line = paste0(comp_std, ": D=", round(D, 3), ", q=", q_markup)
+  ) %>%
+  group_by(Gradient_Temperature) %>%
+  summarize(label = paste(line, collapse = "<br>"), .groups = "drop")
+
+# -----------------------------
+# 3) Publication-friendly x-axis range
+#    (extra space on BOTH left and right)
+# -----------------------------
+
+# Use a wider central range
+x_min_raw <- quantile(df_pub$NPQrlc, 0.005, na.rm = TRUE)
+x_max_raw <- quantile(df_pub$NPQrlc, 0.995, na.rm = TRUE)
+
+x_range <- x_max_raw - x_min_raw
+
+# Expand BOTH sides
+x_min <- x_min_raw - 0.25 * x_range   # 👈 left padding (KEY FIX)
+x_max <- x_max_raw
+
+# Annotation placement and extended right edge
+x_annot <- x_max + 0.20 * x_range
+x_end   <- x_max + 0.90 * x_range
+
+
+# -----------------------------
+# 4) Move test-statistics ABOVE the ridges (avoid overlap)
+# -----------------------------
+# We'll place labels at y = temp + offset, using numeric y positions.
+temp_num_map <- tibble(
+  Gradient_Temperature = factor(target_temps, levels = target_temps),
+  y_num = seq_along(target_temps)
+)
+
+ks_annot_pos <- ks_annot %>%
+  left_join(temp_num_map, by = "Gradient_Temperature") %>%
+  mutate(y_pos = y_num + 0.42)  # raise above ridge centers; tweak 0.35–0.55 as needed
+
+# -----------------------------
+# 5) Ridge plot (raw NPQrlc distributions) + rich-text annotations
+# -----------------------------
+p_pub <- ggplot(df_pub, aes(x = NPQrlc, y = Gradient_Temperature, fill = phenotype)) +
+  geom_density_ridges(
+    aes(group = interaction(Gradient_Temperature, phenotype)),
+    alpha = 0.75,
+    color = "black",
+    linewidth = 0.25,
+    scale = 0.95,
+    rel_min_height = 0.01,
+    trim = TRUE
+  ) +
+  ggtext::geom_richtext(
+    data = ks_annot_pos,
+    aes(x = x_annot, y = y_pos, label = label),
+    inherit.aes = FALSE,
+    hjust = 0,
+    vjust = 0.5,
+    size = 3.0,
+    label.color = NA,
+    fill = NA,
+    lineheight = 1.05
+  ) +
+  scale_fill_manual(values = pheno_cols) +
+  scale_x_continuous(limits = c(x_min, x_end), expand = c(0, 0)) +
+  coord_cartesian(clip = "off") +
+  theme_classic(base_size = 12) +
+  labs(
+    x = "Normalized NPQ",
+    y = "Temperature (°C)") +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "bottom",
+    plot.title = element_text(face = "bold"),
+    axis.text = element_text(color = "black"),
+    axis.title = element_text(color = "black"),
+    plot.margin = margin(6, 170, 6, 10) # extra right margin for long annotation block
+  )
+
+p_pub
+
+ggsave(filename="figures/phenoplate/rlc_npq_distributions_sign.jpeg", p_pub, width=8, height=6)
+```
+

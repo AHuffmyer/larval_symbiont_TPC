@@ -36,7 +36,7 @@ Note we will not be using oxygen data as they were not reliable.
 
 RLC phase analyzed in phenoplate_RLC_analysis.Rmd script. 
 
-We will use the last 5 min averaged for QY and NPQ  in these phases to give final value reached in each phase since phase conditions were static.  
+We will use the last 5 min averaged for QY and NPQ in these phases to give final value reached in each phase since phase conditions were static.  
 
 # Setup  
 
@@ -327,7 +327,7 @@ QY (relative quantum yield) values do not require any normalization.
 
 ## NPQ
 
-First calculate Fm for each well as average of values from the first 15 min dark period. Then calculate NPQ as (Fm-value)/value. 
+First calculate Fm for each well as average of values from the first 15 min dark period. Then calculate normalized NPQ as (Fm-value)/value. Note that below we use NPQ_raw values. 
 
 ```{r}
 df <- df %>%
@@ -451,7 +451,7 @@ NPQ
 c_o2_npq_plot<-df%>%
   filter(Symbiont=="C")%>%
   group_by(Symbiont, Gradient_Temperature, Time, Light)%>%
-  summarise(mean=mean(NPQ_norm, na.rm=TRUE), se=sd(NPQ_norm, na.rm=TRUE)/sqrt(length(NPQ_norm)))%>%
+  summarise(mean=mean(NPQ_raw, na.rm=TRUE), se=sd(NPQ_raw, na.rm=TRUE)/sqrt(length(NPQ_raw)))%>%
   
   ggplot(aes(x=Time, y=mean, colour=Gradient_Temperature, fill=Gradient_Temperature))+
   geom_ribbon(aes(ymin = mean - se, ymax = mean + se), alpha=0.2, linewidth=0) +
@@ -459,7 +459,7 @@ c_o2_npq_plot<-df%>%
   xlab("Time (min)")+
   ylab("NPQ")+
   ggtitle("Cladocopium - Bleached Parents")+
-  ylim(-0.5,1.8)+
+  #ylim(-0.5,1.8)+
   scale_colour_manual(values=palette, name="Gradient \nTemperature")+
   scale_fill_manual(values=palette, name="Gradient \nTemperature")+
   theme_classic()+
@@ -526,7 +526,7 @@ NPQ
 mix_o2_npq_plot<-df%>%
   filter(Symbiont=="MIX")%>%
   group_by(Symbiont, Gradient_Temperature, Time, Light)%>%
-  summarise(mean=mean(NPQ_norm, na.rm=TRUE), se=sd(NPQ_norm, na.rm=TRUE)/sqrt(length(NPQ_norm)))%>%
+  summarise(mean=mean(NPQ_raw, na.rm=TRUE), se=sd(NPQ_raw, na.rm=TRUE)/sqrt(length(NPQ_raw)))%>%
   
   ggplot(aes(x=Time, y=mean, colour=Gradient_Temperature, fill=Gradient_Temperature))+
   geom_ribbon(aes(ymin = mean - se, ymax = mean + se), alpha=0.2, linewidth=0) +
@@ -534,7 +534,7 @@ mix_o2_npq_plot<-df%>%
   xlab("Time (min)")+
   ylab("NPQ")+
   ggtitle("Mixed - Non-Bleached Parents")+
-  ylim(-0.5,1.8)+
+  #ylim(-0.5,1.8)+
   scale_colour_manual(values=palette, name="Gradient \nTemperature")+
   scale_fill_manual(values=palette, name="Gradient \nTemperature")+
   theme_classic()+
@@ -598,7 +598,7 @@ NPQ
 wt_o2_npq_plot<-df%>%
   filter(Symbiont=="WT")%>%
   group_by(Symbiont, Gradient_Temperature, Time, Light)%>%
-  summarise(mean=mean(NPQ_norm, na.rm=TRUE), se=sd(NPQ_norm, na.rm=TRUE)/sqrt(length(NPQ_norm)))%>%
+  summarise(mean=mean(NPQ_raw, na.rm=TRUE), se=sd(NPQ_raw, na.rm=TRUE)/sqrt(length(NPQ_raw)))%>%
   
   ggplot(aes(x=Time, y=mean, colour=Gradient_Temperature, fill=Gradient_Temperature))+
   geom_ribbon(aes(ymin = mean - se, ymax = mean + se), alpha=0.2, linewidth=0) +
@@ -606,7 +606,7 @@ wt_o2_npq_plot<-df%>%
   xlab("Time (min)")+
   ylab("NPQ")+
   ggtitle("Wildtype")+
-  ylim(-0.5,1.8)+
+  #ylim(-0.5,1.8)+
   scale_colour_manual(values=palette, name="Gradient \nTemperature")+
   scale_fill_manual(values=palette, name="Gradient \nTemperature")+
   theme_classic()+
@@ -623,7 +623,7 @@ Grab the legend from the plot.
 my_plot <- df%>%
   filter(Symbiont=="WT")%>%
   group_by(Symbiont, Gradient_Temperature, Time, Light)%>%
-  summarise(mean=mean(NPQ_norm, na.rm=TRUE), se=sd(NPQ_norm, na.rm=TRUE)/sqrt(length(NPQ_norm)))%>%
+  summarise(mean=mean(NPQ_raw, na.rm=TRUE), se=sd(NPQ_raw, na.rm=TRUE)/sqrt(length(NPQ_raw)))%>%
   
   ggplot(aes(x=Time, y=mean, colour=Gradient_Temperature, fill=Gradient_Temperature))+
   geom_ribbon(aes(ymin = mean - se, ymax = mean + se), alpha=0.2, linewidth=0) +
@@ -697,7 +697,7 @@ Select only required columns.
 
 ```{r}
 df<-df%>%
-  dplyr::select(Plate, well, code, Time, Light, Gradient_Temperature, Symbiont, O2_Fm_norm, NPQ_norm, QY, Phase)
+  dplyr::select(Plate, well, code, Time, Light, Gradient_Temperature, Symbiont, O2_Fm_norm, NPQ_raw, QY, Phase)
 ```
 
 Note that there is oxygen data in this data frame, but because this data did not pass QC checks we will not be analyzing it here. 
@@ -787,14 +787,14 @@ light_26c_NPQ_plot1<-df%>%
   filter(Phase=="Light 26C")%>%
   group_by(Symbiont, Phase, Time, Light)%>%
   
-  ggplot(aes(x=Time, y=NPQ_norm, colour=Symbiont, fill=Symbiont))+
+  ggplot(aes(x=Time, y=NPQ_raw, colour=Symbiont, fill=Symbiont))+
   geom_point()+
   xlab("Time (min)")+
   ylab("NPQ")+
   ggtitle("Light 26°C")+
   scale_colour_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
   scale_fill_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
-  ylim(0.0, 0.75)+
+  #ylim(0.0, 0.75)+
   theme_classic()+
   theme(legend.position="none", 
         text=element_text(size=18, color="black"), 
@@ -808,7 +808,7 @@ NPQ_light26<-df%>%
   filter(Phase=="Light 26C")%>%
   filter(Time>=25)%>%
   group_by(Plate, well, code, Symbiont)%>%
-  summarise(NPQlight26=mean(NPQ_norm, na.rm=TRUE))
+  summarise(NPQlight26=mean(NPQ_raw, na.rm=TRUE))
 ```
 
 Plot values. 
@@ -821,14 +821,14 @@ light_26c_NPQ_plot2<-NPQ_light26%>%
   geom_point(size=4, position=position_jitterdodge(), alpha=0.5)+
   xlab("Parent (Symbiont)")+
   ylab("Non-Photochemical Quenching")+
-  geom_text(x=2, y=0.1, label="p=0.006", size=6, color="black")+
-  geom_text(x=1, y=0.77, label="a", size=6, color="black")+
-  geom_text(x=2, y=0.77, label="a", size=6, color="black")+
-  geom_text(x=3, y=0.72, label="b", size=6, color="black")+
+  geom_text(x=2, y=1000, label="p=0.142", size=6, color="black")+
+  #geom_text(x=1, y=6800, label="a", size=6, color="black")+
+  #geom_text(x=2, y=6400, label="a", size=6, color="black")+
+  #geom_text(x=3, y=5800, label="b", size=6, color="black")+
   scale_colour_manual(values=c("orange", "brown4", "gray"), name="Parent (Symbiont)", labels=parent_names)+
   ggtitle("B")+
   scale_x_discrete(labels=parent_names)+
-  ylim(0, 0.8)+
+  ylim(0, 7500)+
   theme_classic()+
   theme(legend.position="none", 
         text=element_text(size=14, color="black"), 
@@ -846,7 +846,7 @@ summary(model)
 
 emm<-emmeans(model, ~Symbiont)
 pairs(emm)
-cld(emm, Letters=letters)
+#cld(emm, Letters=letters)
 ```
 
 Create a new master data frame to populate and add in light NPQ data. 
@@ -917,17 +917,17 @@ low_light_26c_NPQ_plot2<-df%>%
   filter(Phase=="Low Light 26C")%>%
   filter(Time>70)%>%
   
-  ggplot(aes(x=Gradient_Temperature, y=NPQ_norm, colour=Symbiont))+
+  ggplot(aes(x=Gradient_Temperature, y=NPQ_raw, colour=Symbiont))+
   geom_boxplot(position=position_dodge(0.5))+
   geom_point(size=3, alpha=0.5, position = position_dodge(0.5))+
   xlab("Temperature (°C)")+
   ylab("Non-Photochemical Quenching")+
-  geom_text(x=6, y=0.55, label="p[temperature x phenotype]<0.001", size=4, color="black")+
+  geom_text(x=6, y=2000, label="p[temperature x phenotype]=0.001", size=4, color="black")+
   ggtitle("D")+
   scale_colour_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
   scale_fill_manual(values=c("orange", "brown4", "gray"), name="Symbiont")+
   theme_classic()+
-  ylim(-0.3, 0.7)+
+  ylim(0, 8500)+
   theme(legend.position="none", 
         text=element_text(size=14, color="black"), 
         axis.title=element_text(size=12, color="black"), 
@@ -940,13 +940,15 @@ model<-df%>%
   filter(Phase=="Low Light 26C")%>%
   filter(Time>70)%>%
   
-  aov(NPQ_norm~Symbiont*Gradient_Temperature, data=.)
+  aov(NPQ_raw~Symbiont*Gradient_Temperature, data=.)
 
 summary(model)
 
 emm<-emmeans(model, ~Symbiont | Gradient_Temperature)
 pairs(emm)
 ```
+
+Wildtype different than other phenotypes. 
 
 ### Plot all for this phase together 
 ```{r}
@@ -955,6 +957,9 @@ lowlight26_grid<-plot_grid(low_light_26c_QY_plot2, low_light_26c_NPQ_plot2,
 
 ggsave(filename="figures/phenoplate/lowlight_26c_metrics.jpeg", lowlight26_grid, width=10, height=5)
 ```
+
+
+
 
 
 
